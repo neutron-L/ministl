@@ -5,7 +5,7 @@
 #ifndef MINISTL_UNINITIALIZED_HH
 #define MINISTL_UNINITIALIZED_HH
 
-#include "stl/type_traits.hh"
+#include "type_traits.hh"
 
 
 namespace stl
