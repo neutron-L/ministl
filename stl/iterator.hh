@@ -7,6 +7,8 @@
 
 #include <cstddef>
 
+#include <cstdint>
+
 namespace stl
 {
     /*
@@ -561,5 +563,6 @@ namespace stl
         advance_aux(i, n, iterator_category(i));
     }
 } // namespace stl
+
 
 #endif //UNTITLED_ITERATOR_H

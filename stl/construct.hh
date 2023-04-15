@@ -5,14 +5,15 @@
 #ifndef MINISTL_CONSTRUCT_HH
 #define MINISTL_CONSTRUCT_HH
 
-#include "stl/type_traits.hh"
+
+#include "type_traits.hh"
 
 namespace stl
 {
     template<typename T1, typename T2>
-    inline void construct(T1 * p, const T2 & value)
+    inline void construct(T1 * p, const T2 & val)
     {
-        new (p) T1(value);
+        new (p) T1(val);
     }
 
     template<typename T>
