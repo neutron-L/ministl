@@ -267,7 +267,8 @@ namespace stl
      * 1. back inserter，其内部调用push_back，在容器末端插入元素
      * 2. front inserter，其内部调用push_front，在容器头部插入元素
      * 3. general inserter，在初始化时接收的第二个参数所指向的位置前面插入元素，调用成员函数insert
-     * 4. normal iterator
+     * TODO:
+     * 4. normal iterator 
      * 5. move iterator
      * */
 
@@ -392,14 +393,14 @@ namespace stl
 
         insert_iterator & operator=(const typename Container::value_type & val)
         {
-            container->insert(iter, val);
+            iter = container->insert(iter, val);
             ++iter;
             return *this;
         }
 
         insert_iterator & operator=(typename Container::value_type && val)
         {
-            container->insert(iter, std::move(val));
+            iter = container->insert(iter, std::move(val));
             ++iter;
             return *this;
         }
