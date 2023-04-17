@@ -38,7 +38,7 @@ int main()
     test_back_iterator();
     test_front_iterator();
     test_insert_iterator();
-    
+
     return 0;
 }
 
@@ -57,6 +57,11 @@ void test_back_iterator()
 {
     printf("===========%s===========\n", __FUNCTION__);
     // int
+    test_back_iterator_aux<vector<int>>({});
+    test_back_iterator_aux<vector<int>>({1});
+    test_back_iterator_aux<vector<int>>({1, 2, 3});
+    test_back_iterator_aux<vector<int>>({1, 3, 5, 7});
+
     test_back_iterator_aux<list<int>>({});
     test_back_iterator_aux<list<int>>({1});
     test_back_iterator_aux<list<int>>({1, 2, 3});
@@ -67,6 +72,11 @@ void test_back_iterator()
     test_back_iterator_aux<deque<int>>({1, 2, 3});
     test_back_iterator_aux<deque<int>>({1, 3, 5, 7});
     // double
+    test_back_iterator_aux<vector<double>>({});
+    test_back_iterator_aux<vector<double>>({1.12});
+    test_back_iterator_aux<vector<double>>({1.12, 2.34, 3.76});
+    test_back_iterator_aux<vector<double>>({1.32, 3.54, 5.132, 7.901});
+
     test_back_iterator_aux<list<double>>({});
     test_back_iterator_aux<list<double>>({1.12});
     test_back_iterator_aux<list<double>>({1.12, 2.34, 3.76});
@@ -78,6 +88,11 @@ void test_back_iterator()
     test_back_iterator_aux<deque<double>>({1.32, 3.54, 5.132, 7.901});
 
     // char
+    test_back_iterator_aux<vector<char>>({});
+    test_back_iterator_aux<vector<char>>({'a'});
+    test_back_iterator_aux<vector<char>>({'a', 'b', 'c'});
+    test_back_iterator_aux<vector<char>>({'A', 'B', 'C', 'D'});
+
     test_back_iterator_aux<list<char>>({});
     test_back_iterator_aux<list<char>>({'a'});
     test_back_iterator_aux<list<char>>({'a', 'b', 'c'});
@@ -89,6 +104,11 @@ void test_back_iterator()
     test_back_iterator_aux<deque<char>>({'A', 'B', 'C', 'D'});
 
     // struct type
+    test_back_iterator_aux<vector<string>>({});
+    test_back_iterator_aux<vector<string>>({"hello"});
+    test_back_iterator_aux<vector<string>>({"apple", "box", "cat"});
+    test_back_iterator_aux<vector<string>>({"Cpp", "Java", "C-sharp", "Python"});
+
     test_back_iterator_aux<list<string>>({});
     test_back_iterator_aux<list<string>>({"hello"});
     test_back_iterator_aux<list<string>>({"apple", "box", "cat"});
@@ -152,6 +172,11 @@ void test_insert_iterator()
 {
     printf("===========%s===========\n", __FUNCTION__);
     // int
+    // test_insert_iterator_aux<vector<int>>({});
+    // test_insert_iterator_aux<vector<int>>({1});
+    // test_insert_iterator_aux<vector<int>>({1, 2, 3});
+    // test_insert_iterator_aux<vector<int>>({1, 3, 5, 7});
+
     test_insert_iterator_aux<list<int>>({});
     test_insert_iterator_aux<list<int>>({1});
     test_insert_iterator_aux<list<int>>({1, 2, 3});
@@ -162,6 +187,11 @@ void test_insert_iterator()
     test_insert_iterator_aux<deque<int>>({1, 2, 3});
     test_insert_iterator_aux<deque<int>>({1, 3, 5, 7});
     // double
+    // test_insert_iterator_aux<vector<double>>({});
+    // test_insert_iterator_aux<vector<double>>({1.12});
+    // test_insert_iterator_aux<vector<double>>({1.12, 2.34, 3.76});
+    // test_insert_iterator_aux<vector<double>>({1.32, 3.54, 5.132, 7.901});
+
     test_insert_iterator_aux<list<double>>({});
     test_insert_iterator_aux<list<double>>({1.12});
     test_insert_iterator_aux<list<double>>({1.12, 2.34, 3.76});
@@ -173,6 +203,11 @@ void test_insert_iterator()
     test_insert_iterator_aux<deque<double>>({1.32, 3.54, 5.132, 7.901});
 
     // char
+    // test_insert_iterator_aux<vector<char>>({});
+    // test_insert_iterator_aux<vector<char>>({'a'});
+    // test_insert_iterator_aux<vector<char>>({'a', 'b', 'c'});
+    // test_insert_iterator_aux<vector<char>>({'A', 'B', 'C', 'D'});
+
     test_insert_iterator_aux<list<char>>({});
     test_insert_iterator_aux<list<char>>({'a'});
     test_insert_iterator_aux<list<char>>({'a', 'b', 'c'});
@@ -184,6 +219,11 @@ void test_insert_iterator()
     test_insert_iterator_aux<deque<char>>({'A', 'B', 'C', 'D'});
 
     // struct type
+    // test_insert_iterator_aux<vector<string>>({});
+    // test_insert_iterator_aux<vector<string>>({"hello"});
+    // test_insert_iterator_aux<vector<string>>({"apple", "box", "cat"});
+    // test_insert_iterator_aux<vector<string>>({"Cpp", "Java", "C-sharp", "Python"});
+
     test_insert_iterator_aux<list<string>>({});
     test_insert_iterator_aux<list<string>>({"hello"});
     test_insert_iterator_aux<list<string>>({"apple", "box", "cat"});
@@ -285,6 +325,7 @@ static void test_insert_iterator_aux(const std::initializer_list<typename Contai
     using T = typename Container::value_type;
     Container c1 = lst;
     Container c2 = lst;
+
     vector<T> vi {T(), T(), T()};
     deque<T> di(3);
     list<T> li(di.cbegin(), di.cend());
