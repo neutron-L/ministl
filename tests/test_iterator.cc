@@ -9,18 +9,16 @@
 #include "iterator.hh"
 using namespace std;
 
-
 /* Internal aux-functions */
 // test container such as vector、list and so on
-template<typename Container>
-static void test_reverse_iterator_aux(const std::initializer_list<typename Container::value_type> & lst);
-template<typename Container>
-static void test_back_iterator_aux(const std::initializer_list<typename Container::value_type> & lst);
-template<typename Container>
-static void test_front_iterator_aux(const std::initializer_list<typename Container::value_type> & lst);
-template<typename Container>
-static void test_insert_iterator_aux(const std::initializer_list<typename Container::value_type> & lst);
-
+template <typename Container>
+static void test_reverse_iterator_aux(const std::initializer_list<typename Container::value_type> &lst);
+template <typename Container>
+static void test_back_iterator_aux(const std::initializer_list<typename Container::value_type> &lst);
+template <typename Container>
+static void test_front_iterator_aux(const std::initializer_list<typename Container::value_type> &lst);
+template <typename Container>
+static void test_insert_iterator_aux(const std::initializer_list<typename Container::value_type> &lst);
 
 /* Test Functions */
 void test_iter_traits();
@@ -38,20 +36,45 @@ int main()
     test_back_iterator();
     test_front_iterator();
     test_insert_iterator();
-
+    std::cout << "Pass!\n";
+    
     return 0;
 }
 
 void test_iter_traits()
 {
-
 }
 
 void test_reverse_iterator()
 {
+    printf("===========%s===========\n", __FUNCTION__);
+    vector<int> vec{1, 2, 3, 4};
+    stl::reverse_iterator<vector<int>::iterator> riter_end = stl::reverse_iterator<vector<int>::iterator>(vec.begin());
+    stl::reverse_iterator<vector<int>::iterator> riter_begin = stl::reverse_iterator<vector<int>::iterator>(vec.end());
+    vector<int>::reverse_iterator ref_end = vec.rend();
+    vector<int>::reverse_iterator ref_begin = vec.rbegin();
 
+    assert(ref_begin < ref_end);
+
+
+    assert(*ref_end == *riter_end && ref_end.base() == riter_end.base());
+    ref_end++;
+    riter_end++;
+    assert(*ref_end == *riter_end && ref_end.base() == riter_end.base());
+
+    assert(*ref_begin == *riter_begin && ref_begin.base() == riter_begin.base());
+    --ref_end;
+    --riter_end;
+    assert(*ref_begin == *riter_begin && ref_begin.base() == riter_begin.base());
+
+    ref_end -= 2;
+    riter_end -= 2;
+    assert(*ref_end == *riter_end && ref_end.base() == riter_end.base());
+
+    ref_begin += 2;
+    riter_begin += 2;
+    assert(*ref_begin == *riter_begin && ref_begin.base() == riter_begin.base());
 }
-
 
 void test_back_iterator()
 {
@@ -119,7 +142,6 @@ void test_back_iterator()
     test_back_iterator_aux<deque<string>>({"apple", "box", "cat"});
     test_back_iterator_aux<deque<string>>({"Cpp", "Java", "C-sharp", "Python"});
 }
-
 
 void test_front_iterator()
 {
@@ -235,32 +257,26 @@ void test_insert_iterator()
     test_insert_iterator_aux<deque<string>>({"Cpp", "Java", "C-sharp", "Python"});
 }
 
-
 void test_distance()
 {
-
 }
 
 void test_advance()
 {
-
 }
 
-
-template<typename Container>
-static void test_reverse_iterator_aux(const std::initializer_list<typename Container::value_type> & lst)
+template <typename Container>
+static void test_reverse_iterator_aux(const std::initializer_list<typename Container::value_type> &lst)
 {
-
 }
 
-
-template<typename Container>
-static void test_back_iterator_aux(const std::initializer_list<typename Container::value_type> & lst)
+template <typename Container>
+static void test_back_iterator_aux(const std::initializer_list<typename Container::value_type> &lst)
 {
     using T = typename Container::value_type;
     Container c1 = lst;
     Container c2 = lst;
-    vector<T> vi {T(), T(), T()};
+    vector<T> vi{T(), T(), T()};
     deque<T> di(3);
     list<T> li(di.cbegin(), di.cend());
 
@@ -273,7 +289,7 @@ static void test_back_iterator_aux(const std::initializer_list<typename Containe
     *iter2 = *vi.begin();
     *iter2 = *(vi.end() - 1);
     *iter2 = *(di.begin() + 1);
-    
+
     assert(c1 == c2);
     std::copy(vi.begin(), vi.end(), iter1);
     std::copy(vi.begin(), vi.end(), iter2);
@@ -286,13 +302,13 @@ static void test_back_iterator_aux(const std::initializer_list<typename Containe
     assert(c1 == c2);
 }
 
-template<typename Container>
-static void test_front_iterator_aux(const std::initializer_list<typename Container::value_type> & lst)
+template <typename Container>
+static void test_front_iterator_aux(const std::initializer_list<typename Container::value_type> &lst)
 {
     using T = typename Container::value_type;
     Container c1 = lst;
     Container c2 = lst;
-    vector<T> vi {T(), T(), T()};
+    vector<T> vi{T(), T(), T()};
     deque<T> di(3);
     list<T> li(di.cbegin(), di.cend());
 
@@ -305,7 +321,7 @@ static void test_front_iterator_aux(const std::initializer_list<typename Contain
     *iter2 = *vi.begin();
     *iter2 = *(vi.end() - 1);
     *iter2 = *(di.begin() + 1);
-    
+
     assert(c1 == c2);
     std::copy(vi.begin(), vi.end(), iter1);
     std::copy(vi.begin(), vi.end(), iter2);
@@ -318,15 +334,14 @@ static void test_front_iterator_aux(const std::initializer_list<typename Contain
     assert(c1 == c2);
 }
 
-
-template<typename Container>
-static void test_insert_iterator_aux(const std::initializer_list<typename Container::value_type> & lst)
+template <typename Container>
+static void test_insert_iterator_aux(const std::initializer_list<typename Container::value_type> &lst)
 {
     using T = typename Container::value_type;
     Container c1 = lst;
     Container c2 = lst;
 
-    vector<T> vi {T(), T(), T()};
+    vector<T> vi{T(), T(), T()};
     deque<T> di(3);
     list<T> li(di.cbegin(), di.cend());
 
@@ -340,7 +355,7 @@ static void test_insert_iterator_aux(const std::initializer_list<typename Contai
     *iter2 = *vi.begin();
     *iter2 = *(vi.end() - 1);
     *iter2 = *(di.begin() + 1);
-    
+
     assert(c1 == c2);
     std::copy(vi.begin(), vi.end(), iter1);
     std::copy(vi.begin(), vi.end(), iter2);
@@ -371,7 +386,7 @@ static void test_insert_iterator_aux(const std::initializer_list<typename Contai
     *iter2 = *vi.begin();
     *iter2 = *(vi.end() - 1);
     *iter2 = *(di.begin() + 1);
-    
+
     assert(c1 == c2);
     std::copy(vi.begin(), vi.end(), iter1);
     std::copy(vi.begin(), vi.end(), iter2);
@@ -393,7 +408,7 @@ static void test_insert_iterator_aux(const std::initializer_list<typename Contai
     *iter2 = *vi.begin();
     *iter2 = *(vi.end() - 1);
     *iter2 = *(di.begin() + 1);
-    
+
     assert(c1 == c2);
     std::copy(vi.begin(), vi.end(), iter1);
     std::copy(vi.begin(), vi.end(), iter2);
@@ -405,4 +420,3 @@ static void test_insert_iterator_aux(const std::initializer_list<typename Contai
     std::copy(li.begin(), li.end(), iter2);
     assert(c1 == c2);
 }
-
