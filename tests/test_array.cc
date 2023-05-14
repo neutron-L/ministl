@@ -214,10 +214,11 @@ void test_iter_method()
 {
     printf("=============%s=================\n", __FUNCTION__);
     // begin end
-    stl::array<long, 10> al{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+    const int num = 10;
+    stl::array<long, num> al{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
     cout << "begin: " << *al.begin() << endl;
     cout << "end: " << *(al.end() - 1) << endl;
-    array<long, 10>::iterator bg = al.begin();
+    stl::array<long, num>::iterator bg = al.begin();
     *bg = 11;
     auto ed = al.end();
     *(ed - 1) = 12;
@@ -228,20 +229,23 @@ void test_iter_method()
     auto cbg = al.cbegin();
     // *cbg = 12;  // error. cannot modify const iterator
     auto ced = al.cend();
+    int i = 0;
     while (cbg != ced)
-        cout << *cbg++ << ' ';
+        assert(*cbg++ == al[i++]);
+    assert(i == num);
     cout << endl;
 
-    // // rbegin rend
-    // auto rbg = al.rbegin();
-    // auto red = al.rend();
-    // while (rbg != red)
-    //     *rbg++ *= 2;
-    // rbg = al.rbegin();
-    // red = al.rend();
-    // while (rbg != red)
-    //     cout << *rbg-- << ' ';
-    // cout << endl;
+    // rbegin rend
+    auto rbg = al.rbegin();
+    auto red = al.rend();
+    while (rbg != red)
+        *rbg++ *= 2;
+    rbg = al.rbegin();
+    red = al.rend();
+    i = 0;
+    while (rbg != red)
+        assert(*--red == al[i++]);
+    cout << endl;
 }
 
 int main()
