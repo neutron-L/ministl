@@ -5,15 +5,16 @@
 #ifndef MINISTL_CONSTRUCT_HH
 #define MINISTL_CONSTRUCT_HH
 
+#include <iostream>
 
 #include "type_traits.hh"
 
 namespace stl
 {
-    template<typename T1, typename T2>
-    inline void construct(T1 * p, const T2 & val)
+    template<typename T1, typename... Args>
+    inline void construct(T1 * p, Args&&... val)
     {
-        new (p) T1(val);
+        new (p) T1(std::forward<Args>(val)...);
     }
 
     template<typename T>
@@ -23,21 +24,11 @@ namespace stl
     }
 
     template<typename ForwardIterator>
-    inline void destroy(ForwardIterator first, ForwardIterator last)
+    static inline void destroy_aux(ForwardIterator first, ForwardIterator last, __false_type)
     {
-        __destroy(first, last, value_type(first));
-    }
-
-    template<typename ForwardIterator, typename T>
-    inline void destroy(ForwardIterator first, ForwardIterator last, T*)
-    {
-        using trivial_destructor = typename type_traits<T>::has_trivial_destructor;
-        __destroy_aux(first, last, trivial_destructor());
-    }
-
-    template<typename ForwardIterator>
-    inline void __destroy_aux(ForwardIterator first, ForwardIterator last, __false_type)
-    {
+        #ifdef DEBUG
+        std::cout << "call destroy (has non-trivial destroctor)\n";
+        #endif
         while (first != last)
         {
             destroy(&*first);
@@ -46,9 +37,27 @@ namespace stl
     }
 
     template<typename ForwardIterator>
-    inline void __destroy_aux(ForwardIterator first, ForwardIterator last, __true_type)
+    static inline void destroy_aux(ForwardIterator first, ForwardIterator last, __true_type)
     {
+        #ifdef DEBUG
+        std::cout << "call destroy (has trivial destroctor)\n";
+        #endif
     }
+
+    
+    template<typename ForwardIterator, typename T>
+    static inline void destroy(ForwardIterator first, ForwardIterator last, T*)
+    {
+        using trivial_destructor = typename type_traits<T>::has_trivial_destructor;
+        destroy_aux(first, last, trivial_destructor());
+    }
+
+    template<typename ForwardIterator>
+    inline void destroy(ForwardIterator first, ForwardIterator last)
+    {
+        destroy(first, last, value_type(first));
+    }
+
 } // namespace stl
 
 
