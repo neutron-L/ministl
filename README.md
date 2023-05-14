@@ -19,3 +19,4 @@ This is a simple implementation of STL. There are three main parts, namely conta
 ## Algorithm
 
 ## test cases
+there are some test files in folder tests/
