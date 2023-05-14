@@ -1,47 +1,10 @@
 #include <iostream>
 #include <algorithm>
 #include <cassert>
+#include "type.hh"
 #include "array.hh"
 using namespace std;
 
-struct Item
-{
-    void * ptr;
-
-    Item()=default;
-    Item(const Item & rhs)
-    {
-        ptr = rhs.ptr;
-        cout << "copy-constructor" << endl;
-    }
-
-    Item(Item && rhs)
-    {
-        ptr = rhs.ptr;
-        rhs.ptr = nullptr;
-        cout << "move-constructor" << endl;
-    }
-
-    Item & operator=(const Item & rhs)
-    {
-        if (this != &rhs)
-            ptr = rhs.ptr;
-        cout << "copy-assignment" << endl;
-        return *this;
-    }
-
-    Item & operator=(Item && rhs)
-    {
-        if (this != &rhs)
-        {
-            ptr = rhs.ptr;
-            rhs.ptr = nullptr;
-            cout << "move-assginment" << endl;
-        }
-        
-        return *this;
-    }
-};
 
 template <typename Array>
 void test_array()
@@ -250,11 +213,13 @@ void test_iter_method()
 
 int main()
 {
+    test_array<stl::array<int, 4>>();
     test_constructors();
     test_compare();
     test_assignment();
     test_access();
     test_iter_method();
+    std::cout << "Pass!\n";
 
     return 0;
 }
