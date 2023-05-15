@@ -12,6 +12,34 @@
 
 namespace stl
 {
+
+    template <typename InputIterator, typename ForwardIterator>
+    ForwardIterator uninitiazed_copy_aux(InputIterator first, InputIterator last,
+                                         ForwardIterator result, __true_type)
+    {
+        return std::copy(first, last, result); // TODO: replace by our own copy function, as stl:copy
+    }
+
+    template <typename InputIterator, typename ForwardIterator>
+    ForwardIterator uninitiazed_copy_aux(InputIterator first, InputIterator last,
+                                         ForwardIterator result, __false_type)
+    {
+        while (first != last)
+        {
+            construct(&*result, *first);
+            ++first;
+            ++result;
+        }
+        return result;
+    }
+
+    template <typename InputIterator, typename ForwardIterator, typename T>
+    ForwardIterator uninitiazed_copy(InputIterator first, InputIterator last,
+                                     ForwardIterator result, T *)
+    {
+        using is_POD = typename type_traits<T>::is_POD_type;
+        return uninitialized_copy_aux(first, last, result, is_POD());
+    }
     /**
      * copy elements in [first, last) to [result, result + (last - first)), but it does not initialize the destination elements.
      * @param   first	the beginning iterator of source range.
@@ -69,34 +97,6 @@ namespace stl
     ForwardIterator uninitialized_fill_n(ForwardIterator first, Size n, const T &x)
     {
         return uninitialized_fill_n(first, n, x, value_type(first));
-    }
-
-    template <typename InputIterator, typename ForwardIterator, typename T>
-    ForwardIterator uninitiazed_copy(InputIterator first, InputIterator last,
-                                     ForwardIterator result, T *)
-    {
-        using is_POD = typename type_traits<T>::is_POD_type;
-        return uninitialized_copy_aux(first, last, result, is_POD());
-    }
-
-    template <typename InputIterator, typename ForwardIterator>
-    ForwardIterator uninitiazed_copy_aux(InputIterator first, InputIterator last,
-                                         ForwardIterator result, __true_type)
-    {
-        return std::copy(first, last, result); // TODO: replace by our own copy function, as stl:copy
-    }
-
-    template <typename InputIterator, typename ForwardIterator>
-    ForwardIterator uninitiazed_copy_aux(InputIterator first, InputIterator last,
-                                         ForwardIterator result, __false_type)
-    {
-        while (first != last)
-        {
-            construct(&*result, *first);
-            ++first;
-            ++result;
-        }
-        return result;
     }
 
     template <typename ForwardIterator, typename T, typename T1>
