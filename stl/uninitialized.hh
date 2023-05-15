@@ -12,7 +12,6 @@
 
 namespace stl
 {
-
     template <typename InputIterator, typename ForwardIterator>
     ForwardIterator uninitiazed_copy_aux(InputIterator first, InputIterator last,
                                          ForwardIterator result, __true_type)

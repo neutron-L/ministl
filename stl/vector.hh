@@ -95,10 +95,14 @@ namespace stl
          * non-modifying operation
          * */
         bool empty() const
-        { return begin() == end(); }
+        {
+            return begin() == end();
+        }
 
         size_type size() const
-        { return size_type(finish - start); }
+        {
+            return size_type(finish - start);
+        }
 
         size_type max_size() const // copy from std
         {
@@ -106,7 +110,9 @@ namespace stl
         }
 
         size_type capacity() const
-        { return size_type(end_of_storage - start); }
+        {
+            return size_type(end_of_storage - start);
+        }
 
         void reserve(size_type newsize) const;
 
@@ -123,7 +129,6 @@ namespace stl
                     return false;
             return lstart == lend && rstart == rend;
         }
-
 
         bool operator!=(const vector &rhs) const
         {
@@ -175,15 +180,16 @@ namespace stl
 
         vector &assign(size_type n, const T &elem);
 
-        template<typename InputIterator>
+        template <typename InputIterator>
         vector &assign(InputIterator first, InputIterator last);
-
 
         /*
          * element access
          * */
         reference operator[](size_type idx)
-        { return *(begin() + idx); }
+        {
+            return *(begin() + idx);
+        }
 
         reference at(size_type idx)
         {
@@ -206,10 +212,14 @@ namespace stl
          * iterator function
          * */
         iterator begin()
-        { return start; }
+        {
+            return start;
+        }
 
         iterator end()
-        { return finish; }
+        {
+            return finish;
+        }
 
         const_iterator cbegin() const
         {
@@ -236,14 +246,14 @@ namespace stl
 
         void insert(iterator pos, size_type n, T &&elem);
 
-        template<typename InputIterator>
+        template <typename InputIterator>
         void insert(iterator pos, InputIterator first, InputIterator last);
 
         void insert(iterator pos, std::initializer_list<T>);
 
         iterator erase(iterator pos);
 
-        void erase(iterator first, iterator last);
+        iterator erase(iterator first, iterator last);
 
         void resize(size_type size);
 
@@ -322,10 +332,10 @@ namespace stl
         end_of_storage = finish;
     }
 
-     /*
-    * inserting and removing
-    * */
-    template<typename T, typename Alloc>
+    /*
+     * inserting and removing
+     * */
+    template <typename T, typename Alloc>
     void vector<T, Alloc>::push_back(const T &elem)
     {
         if (finish != end_of_storage)
@@ -334,7 +344,7 @@ namespace stl
             insert_aux(end(), elem);
     }
 
-    template<typename T, typename Alloc>
+    template <typename T, typename Alloc>
     void vector<T, Alloc>::push_back(T &&elem)
     {
         if (finish != end_of_storage)
@@ -343,7 +353,7 @@ namespace stl
             insert_aux(end(), std::move(elem));
     }
 
-    template<typename T, typename Alloc>
+    template <typename T, typename Alloc>
     void vector<T, Alloc>::insert(iterator pos, const T &elem)
     {
         if (pos == end())
@@ -359,47 +369,120 @@ namespace stl
                 iterator new_finish;
                 try
                 {
-                  new_finish = uninitiazed_copy(start, pos, new_start);
-                  construct(new_finish, elem);
-                  ++new_finish;
-                  new_finish = uninitiazed_copy(pos , finish, new_finish);
-                } catch (std::exception e)
-                {}
+                    new_finish = uninitiazed_copy(start, pos, new_start);
+                    construct(new_finish, elem);
+                    ++new_finish;
+                    new_finish = uninitiazed_copy(pos, finish, new_finish);
+                }
+                catch (std::exception e)
+                {
+                }
             }
         }
     }
 
-    template<typename T, typename Alloc>
+    template <typename T, typename Alloc>
     void vector<T, Alloc>::insert(iterator pos, T &&elem)
     {
-
+        if (pos == end())
+            push_back(elem);
+        else
+        {
+            // re-allocate and copy
+            if (finish == end_of_storage)
+            {
+                const size_type old_size = size();
+                const size_type new_size = old_size ? old_size << 1 : 1;
+                iterator new_start = data_allocator ::allocate(new_size);
+                iterator new_finish;
+                try
+                {
+                    new_finish = uninitiazed_copy(start, pos, new_start);
+                    construct(new_finish, std::move(elem));
+                    ++new_finish;
+                    new_finish = uninitiazed_copy(pos, finish, new_finish);
+                }
+                catch (std::exception e)
+                {
+                }
+            }
+        }
     }
 
-    template<typename T, typename Alloc>
-    void vector<T, Alloc>::insert(iterator pos, size_type n, const T & elem)
+    template <typename T, typename Alloc>
+    void vector<T, Alloc>::insert(iterator pos, size_type n, const T &elem)
     {
+        if (n == 0)
+            return;
 
+        // remaining space is enough
+        if (finish - pos >= n)
+        {
+            auto num_after_pos = finish - pos;
+
+            if (num_after_pos >= n)
+            {
+                auto old_finish = finish;
+                finish = stl::uninitiazed_copy(finish - n, finish, finish);
+                stl::uninitialized_copy(pos, old_finish - n, old_finish - (num_after_pos - n));
+                stl::uninitialized_fill_n(pos, n, elem);
+            }
+            else
+            {
+                auto old_finish = finish;
+                finish = stl::uninitialized_fill_n(finish, n - num_after_pos, elem);
+                finish += n - num_after_pos;
+                finish = stl::uninitiazed_copy(pos, old_finish, finish);
+                stl::uninitialized_fill(pos, old_finish, elem);
+            }
+            assert(finish == old_finish + n);
+        }
+        else // re-allocate
+        {
+            const size_type old_size = std::max(size(), n);
+            const size_type new_size = old_size ? old_size << 1 : 1;
+            iterator new_start = data_allocator ::allocate(new_size);
+            iterator new_finish;
+            try
+            {
+                new_finish = uninitiazed_copy(start, pos, new_start);
+                new_finish = uninitialized_fill_n(new_finish, n, elem);
+                new_finish = uninitiazed_copy(pos, finish, new_finish);
+                
+                // release old space
+                stl::destroy(start, finish);
+                deallocate();
+
+                start = new_start;
+                finish = new_finish;
+                end_of_storage = start + new_size;
+            }
+            catch (std::exception e)
+            {
+            }
+        }
     }
-    template<typename T, typename Alloc>
-    void vector<T, Alloc>::insert(iterator pos, size_type n, T && elem)
+    template <typename T, typename Alloc>
+    void vector<T, Alloc>::insert(iterator pos, size_type n, T &&elem)
     {
-
+        if (n == 1)
+            insert(pos, std::move(elem));
+        insert(pos, n, elem);
     }
 
-    template<typename T, typename Alloc>
-    template<typename InputIterator>
+    template <typename T, typename Alloc>
+    template <typename InputIterator>
     void vector<T, Alloc>::insert(iterator pos, InputIterator first, InputIterator last)
     {
-
     }
 
-    template<typename T, typename Alloc>
+    template <typename T, typename Alloc>
     void vector<T, Alloc>::insert(iterator pos, std::initializer_list<T> lst)
     {
         insert(pos, lst.begin(), lst.end());
     }
 
-    template<typename T, typename Alloc>
+    template <typename T, typename Alloc>
     typename vector<T, Alloc>::iterator vector<T, Alloc>::erase(iterator pos)
     {
         if (pos + 1 != end())
@@ -409,22 +492,23 @@ namespace stl
         return pos;
     }
 
-    template<typename T, typename Alloc>
-    void vector<T, Alloc>::erase(iterator first, iterator last)
+    template <typename T, typename Alloc>
+    typename vector<T, Alloc>::iterator vector<T, Alloc>::erase(iterator first, iterator last)
     {
         iterator new_finish = std::copy(last, finish, first);
         destroy(new_finish, finish);
         finish = new_finish;
+        return last;
     }
 
-    template<typename T, typename Alloc>
+    template <typename T, typename Alloc>
     void vector<T, Alloc>::resize(size_type size)
     {
         resize(size, T());
     }
 
-    template<typename T, typename Alloc>
-    void vector<T, Alloc>::resize(size_type size, const T & elem)
+    template <typename T, typename Alloc>
+    void vector<T, Alloc>::resize(size_type size, const T &elem)
     {
         if (size < finish)
         {
@@ -438,8 +522,8 @@ namespace stl
         }
     }
 
-    template<typename T, typename Alloc>
-    void vector<T, Alloc>::resize(size_type size, T && elem)
+    template <typename T, typename Alloc>
+    void vector<T, Alloc>::resize(size_type size, T &&elem)
     {
         if (size < finish)
         {
@@ -456,7 +540,7 @@ namespace stl
         }
     }
 
-    template<typename T, typename Alloc>
+    template <typename T, typename Alloc>
     void vector<T, Alloc>::clear()
     {
         erase(begin(), end());
