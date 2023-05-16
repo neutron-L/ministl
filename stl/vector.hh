@@ -183,6 +183,8 @@ namespace stl
         template <typename InputIterator>
         vector &assign(InputIterator first, InputIterator last);
 
+        void swap(vector &rhs);
+
         /*
          * element access
          * */
@@ -333,6 +335,73 @@ namespace stl
     }
 
     /*
+     * assignment operation
+     * */
+    template <typename T, typename Alloc>
+    vector<T, Alloc> &vector<T, Alloc>::operator=(const vector<T, Alloc> &rhs)
+    {
+        start = finish = data_allocator::allocate(rhs.size());
+        for (auto &elem : rhs)
+            construct(finish++, elem);
+        end_of_storage = finish;
+
+        return *this;
+    }
+
+    template <typename T, typename Alloc>
+    vector<T, Alloc> &vector<T, Alloc>::operator=(vector<T, Alloc> &&rhs)
+    {
+        start = rhs.start;
+        finish = rhs.finish;
+        end_of_storage = rhs.end_of_storage;
+
+        rhs.start = rhs.finish = rhs.end_of_storage = nullptr;
+
+        return *this;
+
+    }
+
+    template <typename T, typename Alloc>
+    vector<T, Alloc> &vector<T, Alloc>::operator=(std::initializer_list<T> lst)
+    {
+        start = finish = data_allocator::allocate(lst.size());
+        for (auto &elem : lst)
+            construct(finish++, elem);
+        end_of_storage = finish;
+
+        return *this;
+    }
+
+    template <typename T, typename Alloc>
+    vector<T, Alloc> &vector<T, Alloc>::assign(size_type n, const T &elem)
+    {
+        start = finish = data_allocator::allocate(n);
+        finish = stl::uninitialized_fill_n(finish, n, elem);
+        end_of_storage = finish;
+
+        return *this;
+    }
+
+    template <typename T, typename Alloc>
+    template <typename InputIterator>
+    vector<T, Alloc> &vector<T, Alloc>::assign(InputIterator first, InputIterator last)
+    {
+        start = finish = data_allocator::allocate(n);
+        finish = stl::uninitiazed_copy(first, last, finish);
+        end_of_storage = finish;
+
+        return *this;
+    }
+
+    template <typename T, typename Alloc>
+    void vector<T, Alloc>::swap(vector<T, Alloc> &rhs)
+    {
+        std::swap(start, rhs.start);
+        std::swap(finsih, rhs.finish);
+        std::swap(end_of_storage, rhs.end_of_storage);
+    }
+
+    /*
      * inserting and removing
      * */
     template <typename T, typename Alloc>
@@ -448,7 +517,7 @@ namespace stl
                 new_finish = uninitiazed_copy(start, pos, new_start);
                 new_finish = uninitialized_fill_n(new_finish, n, elem);
                 new_finish = uninitiazed_copy(pos, finish, new_finish);
-                
+
                 // release old space
                 stl::destroy(start, finish);
                 deallocate();
