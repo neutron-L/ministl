@@ -21,6 +21,57 @@ namespace stl
         template<typename F, typename Ref, typename Ptr>
         struct list_iterator
         {
+            using iterator = list_iterator<F,F&, F*>;
+            using self = list_iterator<F, Ref, Ptr>;
+            using iterator_category = stl::bidirectional_iterator_tag;
+            using value_type = F;
+            using pointer = Ptr;
+            using reference =  Ref;
+            using link_type = list_node<F> *;
+            using size_type = size_t;
+            using difference_type = ptrdiff_t;
+
+            link_type node; // point to normal node
+
+            /* constructor */
+            list_iterator(link_type x) : node(x) {}
+            list_iterator() {} 
+            list_iterator(const iterator& x) : node(x.node) {}
+
+            /* non-modifying operation */
+            bool operator==(const self & x) const { return node == x.node; }
+            bool operator!=(const self & x) const { return node != x.node; }
+        
+            reference operator*() const { return (*node).data; }
+            pointer operator->() const { return & (operator*()); }
+
+
+            /* modifying operation */
+            self & operator++() 
+            {
+                node = (link_type)((*node).next);
+                return *this;
+            }
+
+            self operator++(int) 
+            {
+                self tmp = *this;
+                node = (link_type)((*node).next);
+                return tmp;
+            }
+
+            self & operator--() 
+            {
+                node = (link_type)((*node).prev);
+                return *this;
+            }
+
+            self operator--(int) 
+            {
+                self tmp = *this;
+                node = (link_type)((*node).prev);
+                return tmp;
+            }
 
         };
     public:
