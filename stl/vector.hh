@@ -20,60 +20,6 @@ namespace stl
     template <typename T, typename Alloc = alloc>
     class vector
     {
-        bool operator==(const vector &rhs) const
-        {
-            auto lstart = begin();
-            auto lend = end();
-            auto rstart = rhs.begin();
-            auto rend = rhs.end();
-            while (lstart != lend && rstart != rend)
-                if (*lstart != *rstart)
-                    return false;
-            return lstart == lend && rstart == rend;
-        }
-
-        bool operator!=(const vector &rhs) const
-        {
-            return !(this->operator==(rhs));
-        }
-
-        bool operator<(const vector &rhs) const
-        {
-            auto lstart = begin();
-            auto lend = end();
-            auto rstart = rhs.begin();
-            auto rend = rhs.end();
-            while (lstart != lend && rstart != rend)
-                if (*lstart >= *rstart)
-                    return false;
-            return lstart == lend;
-        }
-
-        bool operator>(const vector &rhs) const
-        {
-            auto lstart = begin();
-            auto lend = end();
-            auto rstart = rhs.begin();
-            auto rend = rhs.end();
-            while (lstart != lend && rstart != rend)
-                if (*lstart <= *rstart)
-                    return false;
-            return rstart == rend;
-        }
-
-        bool operator<=(const vector &rhs) const
-        {
-            return !(this->operator>(rhs));
-        }
-
-        bool operator>=(const vector &rhs) const
-        {
-            return !(this->operator<(rhs));
-        }
-
-        
-
-        void swap(vector &rhs) noexcept;
     public:
         using value_type = T;
         using allocator_type = Alloc;
@@ -146,7 +92,6 @@ namespace stl
             deallocate();
         }
 
-
         /*
          * assignment operation
          * */
@@ -165,48 +110,15 @@ namespace stl
 
         allocator_type get_allocator() const noexcept;
 
-        
-        /*
-         * Capacity
-         * */
-        bool empty() const
-        {
-            return begin() == end();
-        }
-
-        size_type size() const
-        {
-            return size_type(finish - start);
-        }
-
-        size_type max_size() const // copy from std
-        {
-            return 0x2000000000000000;
-        }
-
-        void reserve(size_type newsize) const;
-
-
-        size_type capacity() const
-        {
-            return size_type(end_of_storage - start);
-        }
-
-
-        void shrink_to_fit();
-
-        
-
         /*
          * Element access
          * */
-         reference at(size_type idx)
+        reference at(size_type idx)
         {
             if (idx >= size())
                 throw new std::out_of_range("");
             return *(begin() + idx);
         }
-
 
         const_reference at(size_type idx) const
         {
@@ -245,6 +157,14 @@ namespace stl
             return *(end() - 1);
         }
 
+        T *data() noexcept
+        {
+            return start;
+        }
+        const T *data() const noexcept
+        {
+            return start;
+        }
 
         /*
          * Iterator function
@@ -254,9 +174,9 @@ namespace stl
             return start;
         }
 
-        iterator end()
+        const_iterator begin() const noexcept
         {
-            return finish;
+            return start;
         }
 
         const_iterator cbegin() const
@@ -264,45 +184,111 @@ namespace stl
             return start;
         }
 
+        iterator end()
+        {
+            return finish;
+        }
+
+        const_iterator end() const noexcept
+        {
+            return finish;
+        }
+
         const_iterator cend() const
         {
             return finish;
         }
 
-        reverse_iterator rbegin();
-        reverse_iterator rend();
-        const_reverse_iterator rbegin() const noexcept;
-        const_reverse_iterator rend() const noexcept;
-        const_reverse_iterator crbegin() const noexcept;
-        const_reverse_iterator crend() const noexcept;
+        reverse_iterator rbegin()
+        {
+            return reverse_iterator(end());
+        }
+
+        const_reverse_iterator rbegin() const noexcept
+        {
+            return const_reverse_iterator(end());
+        }
+
+        const_reverse_iterator crbegin() const noexcept
+        {
+            return const_reverse_iterator(end());
+        }
+
+        reverse_iterator rend()
+        {
+            return reverse_iterator(begin());
+        }
+
+        const_reverse_iterator rend() const noexcept
+        {
+            return const_reverse_iterator(begin());
+        }
+
+        const_reverse_iterator crend() const noexcept
+        {
+            return const_reverse_iterator(begin());
+        }
 
         /*
-         * inserting and removing
+         * Capacity
          * */
+        bool empty() const
+        {
+            return begin() == end();
+        }
+
+        size_type size() const
+        {
+            return size_type(finish - start);
+        }
+
+        size_type max_size() const // copy from std
+        {
+            return std::numeric_limits<difference_type>::max();
+        }
+
+        void reserve(size_type newsize) const;
+
+        size_type capacity() const
+        {
+            return size_type(end_of_storage - start);
+        }
+
+        void shrink_to_fit();
+
+        /*
+         * Modifiers
+         * */
+        void clear() noexcept;
+
+        // insert
+        iterator insert(const_iterator pos, const T &elem);
+        iterator insert(const_iterator pos, T &&elem);
+        iterator insert(const_iterator pos, size_type n, const T &elem);
+        template <typename InputIt>
+        iterator insert(const_iterator pos, InputIt first, InputIt last);
+        iterator insert(const_iterator pos, std::initializer_list<T>);
+
+        template <typename... Args>
+        iterator emplace(const_iterator pos, Args &&...args);
+
+        iterator erase(const_iterator pos);
+
+        iterator erase(const_iterator first, const_iterator last);
+
         void push_back(const T &elem);
 
         void push_back(T &&elem);
 
-        void insert(iterator pos, const T &elem);
+        template <typename... Args>
+        reference emplace_back(Args &&...args);
 
-        void insert(iterator pos, size_type n, const T &elem);
-
-        template <typename InputIterator>
-        void insert(iterator pos, InputIterator first, InputIterator last);
-
-        void insert(iterator pos, std::initializer_list<T>);
-
-        iterator erase(iterator pos);
-
-        iterator erase(iterator first, iterator last);
+        void pop_back();
 
         void resize(size_type size);
 
         void resize(size_type size, const T &elem);
-
-        void resize(size_type size, T &&elem);
-
-        void clear();
+        void swap(vector &other) noexcept;
     };
 
     /*
@@ -648,6 +634,50 @@ namespace stl
     void vector<T, Alloc>::clear()
     {
         erase(begin(), end());
+    }
+
+    /* Non-member functions */
+    template <typename T, typename Alloc>
+    bool operator==(const stl::vector<T, Alloc> &lhs,
+                    const stl::vector<T, Alloc> &rhs)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    bool operator!=(const stl::vector<T, Alloc> &lhs,
+                    const stl::vector<T, Alloc> &rhs)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    bool operator<(const stl::vector<T, Alloc> &lhs,
+                   const stl::vector<T, Alloc> &rhs)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    bool operator<=(const stl::vector<T, Alloc> &lhs,
+                    const stl::vector<T, Alloc> &rhs)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    bool operator>(const stl::vector<T, Alloc> &lhs,
+                   const stl::vector<T, Alloc> &rhs)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    bool operator>=(const stl::vector<T, Alloc> &lhs,
+                    const stl::vector<T, Alloc> &rhs)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    void swap(const stl::vector<T, Alloc> &lhs,
+              const stl::vector<T, Alloc> &rhs) noexcept(noexcept(lhs.swap(rhs)))
+    {
+        lhs.swap(rhs);
     }
 
 } // namespace stl
