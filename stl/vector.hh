@@ -113,33 +113,31 @@ namespace stl
         /*
          * Element access
          * */
-        reference at(size_type idx)
+        reference at(size_type pos)
         {
-            if (idx >= size())
+            return const_cast<reference>(static_cast<const vector &>(*this).at());
+        }
+
+        const_reference at(size_type pos) const
+        {
+            if (pos >= size())
                 throw new std::out_of_range("");
-            return *(begin() + idx);
+            return *(begin() + pos);
         }
 
-        const_reference at(size_type idx) const
+        reference operator[](size_type pos)
         {
-            if (idx >= size())
-                throw new std::out_of_range("");
-            return *(begin() + idx);
+            return const_cast<reference>(static_cast<const vector &>(*this)[pos]);
         }
 
-        reference operator[](size_type idx)
+        const_reference operator[](size_type pos) const
         {
-            return *(begin() + idx);
-        }
-
-        const_reference operator[](size_type idx) const
-        {
-            return *(begin() + idx);
+            return *(begin() + pos);
         }
 
         reference front()
         {
-            return *begin();
+            return const_cast<reference>(static_cast<const vector &>(*this).front());
         }
 
         const_reference front() const
@@ -149,7 +147,7 @@ namespace stl
 
         reference back()
         {
-            return *(end() - 1);
+            return const_cast<reference>(static_cast<const vector &>(*this).back());
         }
 
         const_reference back() const
@@ -159,7 +157,7 @@ namespace stl
 
         T *data() noexcept
         {
-            return start;
+            return const_cast<T *>(static_cast<const vector &>(*this).data());
         }
         const T *data() const noexcept
         {
@@ -171,7 +169,7 @@ namespace stl
          * */
         iterator begin()
         {
-            return start;
+            return const_cast<iterator>(static_cast<const vector &>(*this).begin());
         }
 
         const_iterator begin() const noexcept
@@ -186,7 +184,7 @@ namespace stl
 
         iterator end()
         {
-            return finish;
+            return const_cast<iterator>(static_cast<const vector &>(*this).end());
         }
 
         const_iterator end() const noexcept
@@ -201,7 +199,7 @@ namespace stl
 
         reverse_iterator rbegin()
         {
-            return reverse_iterator(end());
+            return const_cast<reverse_iterator>(static_cast<const vector &>(*this).rbegin());
         }
 
         const_reverse_iterator rbegin() const noexcept
@@ -216,7 +214,7 @@ namespace stl
 
         reverse_iterator rend()
         {
-            return reverse_iterator(begin());
+            return const_cast<reverse_iterator>(static_cast<const vector &>(*this).rend());
         }
 
         const_reverse_iterator rend() const noexcept
@@ -239,7 +237,7 @@ namespace stl
 
         size_type size() const
         {
-            return size_type(finish - start);
+            return stl::distance(begin(), end());
         }
 
         size_type max_size() const // copy from std
@@ -331,7 +329,7 @@ namespace stl
     }
 
     template <typename T, typename Alloc>
-    vector<T, Alloc>::vector(vector &&rhs)
+    vector<T, Alloc>::vector(vector &&rhs) noexcept
     {
         start = rhs.start;
         finish = rhs.finish;
@@ -365,17 +363,16 @@ namespace stl
     template <typename T, typename Alloc>
     vector<T, Alloc> &vector<T, Alloc>::operator=(const vector<T, Alloc> &rhs)
     {
-        start = finish = data_allocator::allocate(rhs.size());
-        for (auto &elem : rhs)
-            construct(finish++, elem);
-        end_of_storage = finish;
-
-        return *this;
+        return assign(rhs.begin(), rhs.end());
     }
 
     template <typename T, typename Alloc>
-    vector<T, Alloc> &vector<T, Alloc>::operator=(vector<T, Alloc> &&rhs)
+    vector<T, Alloc> &vector<T, Alloc>::operator=(vector<T, Alloc> &&rhs) noexcept
     {
+        // release old storage
+        destroy(begin(), end());
+        deallocate();
+
         start = rhs.start;
         finish = rhs.finish;
         end_of_storage = rhs.end_of_storage;
@@ -388,18 +385,17 @@ namespace stl
     template <typename T, typename Alloc>
     vector<T, Alloc> &vector<T, Alloc>::operator=(std::initializer_list<T> lst)
     {
-        start = finish = data_allocator::allocate(lst.size());
-        for (auto &elem : lst)
-            construct(finish++, elem);
-        end_of_storage = finish;
-
-        return *this;
+        return assign(lst.begin(), lst.end());
     }
 
     template <typename T, typename Alloc>
     vector<T, Alloc> &vector<T, Alloc>::assign(size_type n, const T &elem)
     {
-        start = finish = data_allocator::allocate(n);
+        destroy(begin(), end());
+
+        if (capacity() < n)
+            start = data_allocator::allocate(n);
+        finish = start;
         finish = stl::uninitialized_fill_n(finish, n, elem);
         end_of_storage = finish;
 
@@ -410,7 +406,12 @@ namespace stl
     template <typename InputIterator>
     vector<T, Alloc> &vector<T, Alloc>::assign(InputIterator first, InputIterator last)
     {
-        start = finish = data_allocator::allocate(n);
+        destroy(begin(), end());
+        size_type n = stl::distance(first, last);
+
+        if (capacity() < n)
+            start = data_allocator::allocate(n);
+        finish = start;
         finish = stl::uninitiazed_copy(first, last, finish);
         end_of_storage = finish;
 
@@ -424,7 +425,7 @@ namespace stl
     }
 
     template <typename T, typename Alloc>
-    void vector<T, Alloc>::swap(vector<T, Alloc> &rhs)
+    void vector<T, Alloc>::swap(vector<T, Alloc> &rhs) noexcept
     {
         std::swap(start, rhs.start);
         std::swap(finsih, rhs.finish);
