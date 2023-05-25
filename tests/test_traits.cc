@@ -55,5 +55,7 @@ int main()
     // const pointer
     test_pointer_type_traits<const int>();
 
+    std::cout << "Pass!\n";
+
     return 0;
 }
