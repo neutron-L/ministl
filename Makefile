@@ -13,7 +13,7 @@ all: $(PROGRAM)
 test_traits: $(TEST)/test_traits.cc $(STL)/type_traits.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^ 
 
-test_construct: $(TEST)/test_construct.cc $(STL)/construct.hh $(STL)/array.hh $(STL)/complex.hh $(STL)/string.hh
+test_construct: $(TEST)/test_construct.cc $(STL)/complex.hh $(STL)/string.hh $(STL)/array.hh $(STL)/construct.hh $(STL)/type_traits.hh 
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 	
@@ -21,7 +21,7 @@ test_iterator: $(TEST)/test_iterator.cc $(STL)/iterator.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 
-test_array: $(TEST)/test_array.cc $(STL)/array.hh $(TEST)/type.hh
+test_array: $(TEST)/test_array.cc $(STL)/array.hh $(STL)/string.hh $(STL)/complex.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 	

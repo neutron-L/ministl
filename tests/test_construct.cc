@@ -5,8 +5,6 @@
 #include "array.hh"
 #include "construct.hh"
 #include "type_traits.hh"
-#include "string.hh"
-#include "complex.hh"
 
 // built-in type
 void test_built_in_type()
@@ -121,6 +119,15 @@ void test_mix_user_defined_type()
     complex c4(1.1, 3.4);
     stl::construct(mix, std::move(s4), std::move(c4));
     stl::destroy(mix);
+    std::cout << "---test Mix(const & Mix)----\n";
+    String s5("hello world");
+    complex c5(1.1, 3.4);
+    Mix m1(s5, c5);
+    Mix m2(m1);
+    std::cout << "---test Mix(&& Mix)----\n";
+    Mix m3 = std::move(m1);
+    Mix m4;
+    m4 = std::move(m2);
     std::cout << "----------------------------\n";
 }
 

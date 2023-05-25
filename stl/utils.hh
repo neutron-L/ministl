@@ -1,4 +1,5 @@
 /* Logging */
+#include <stdio.h>
 
 #ifdef DEBUG
 #define debug(M, ...) \

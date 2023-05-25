@@ -33,6 +33,8 @@ public:
 
     re = c.real();
     im = c.imag();
+
+    return *this;
   }
   
   complex & operator=(complex && c)
@@ -40,6 +42,8 @@ public:
     debug("complex:  = complex &&");
     re = c.real();
     im = c.imag();
+
+    return *this;
   }
   #endif
   complex& operator += (const complex&);
