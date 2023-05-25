@@ -21,6 +21,7 @@ namespace stl
     class vector
     {
     public:
+        /* Member types */
         using value_type = T;
         using allocator_type = Alloc;
         using size_type = size_t;
@@ -34,10 +35,11 @@ namespace stl
         using iterator = value_type *;
         using const_iterator = const value_type *;
         using reverse_iterator = stl::reverse_iterator<iterator>;
-        using const_reverse_iterator = const stl::reverse_iterator<iterator>;
+        using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
     protected:
         using data_allocator = simple_alloc<value_type, Alloc>;
+        
         iterator start{};
         iterator finish{};
         iterator end_of_storage{};
@@ -54,16 +56,16 @@ namespace stl
          * */
         vector() = default;
 
-        vector(const vector &rhs);
+        vector(const vector & other);
 
-        vector(vector &&rhs) noexcept;
+        vector(vector && other) noexcept;
 
         explicit vector(size_type n)
         {
             fill_initialize(n, T());
         }
 
-        vector(size_t n, const T &elem)
+        vector(size_type n, const T &elem)
         {
             fill_initialize(n, elem);
         }
@@ -95,18 +97,18 @@ namespace stl
         /*
          * assignment operation
          * */
-        vector &operator=(const vector &rhs);
+        vector &operator=(const vector & other);
 
-        vector &operator=(vector &&rhs) noexcept;
+        vector &operator=(vector && other) noexcept;
 
-        vector &operator=(std::initializer_list<T>);
+        vector &operator=(std::initializer_list<T> ilist);
 
-        vector &assign(size_type n, const T &elem);
+        void assign(size_type count, const T & elem);
 
-        template <typename InputIterator>
-        vector &assign(InputIterator first, InputIterator last);
+        template <typename InputIt>
+        void assign(InputIt first, InputIt last);
 
-        vector &assign(std::initializer_list<T>);
+        void assign(std::initializer_list<T>);
 
         allocator_type get_allocator() const noexcept;
 
@@ -167,7 +169,7 @@ namespace stl
         /*
          * Iterator function
          * */
-        iterator begin()
+        iterator begin() noexcept
         {
             return const_cast<iterator>(static_cast<const vector &>(*this).begin());
         }
@@ -177,12 +179,12 @@ namespace stl
             return start;
         }
 
-        const_iterator cbegin() const
+        const_iterator cbegin() const noexcept
         {
             return start;
         }
 
-        iterator end()
+        iterator end() noexcept
         {
             return const_cast<iterator>(static_cast<const vector &>(*this).end());
         }
@@ -192,12 +194,12 @@ namespace stl
             return finish;
         }
 
-        const_iterator cend() const
+        const_iterator cend() const noexcept
         {
             return finish;
         }
 
-        reverse_iterator rbegin()
+        reverse_iterator rbegin() noexcept
         {
             return const_cast<reverse_iterator>(static_cast<const vector &>(*this).rbegin());
         }
@@ -212,7 +214,7 @@ namespace stl
             return const_reverse_iterator(end());
         }
 
-        reverse_iterator rend()
+        reverse_iterator rend() noexcept
         {
             return const_cast<reverse_iterator>(static_cast<const vector &>(*this).rend());
         }
@@ -230,24 +232,24 @@ namespace stl
         /*
          * Capacity
          * */
-        bool empty() const
+        bool empty() const noexcept
         {
             return begin() == end();
         }
 
-        size_type size() const
+        size_type size() const noexcept
         {
             return stl::distance(begin(), end());
         }
 
-        size_type max_size() const // copy from std
+        size_type max_size() const noexcept // copy from cppreference
         {
             return std::numeric_limits<difference_type>::max();
         }
 
-        void reserve(size_type newsize) const;
+        void reserve(size_type new_cap);
 
-        size_type capacity() const
+        size_type capacity() const noexcept
         {
             return size_type(end_of_storage - start);
         }
@@ -262,10 +264,10 @@ namespace stl
         // insert
         iterator insert(const_iterator pos, const T &elem);
         iterator insert(const_iterator pos, T &&elem);
-        iterator insert(const_iterator pos, size_type n, const T &elem);
+        iterator insert(const_iterator pos, size_type count, const T &elem);
         template <typename InputIt>
         iterator insert(const_iterator pos, InputIt first, InputIt last);
-        iterator insert(const_iterator pos, std::initializer_list<T>);
+        iterator insert(const_iterator pos, std::initializer_list<T> ilist);
 
         template <typename... Args>
         iterator emplace(const_iterator pos, Args &&...args);
@@ -284,8 +286,8 @@ namespace stl
         void pop_back();
 
         void resize(size_type size);
-
-        void resize(size_type size, const T &elem);
+        void resize(size_type size, const value_type &elem);
+        
         void swap(vector &other) noexcept;
     };
 
