@@ -1,5 +1,5 @@
 //
-// Created by 20550 on 2023/4/6.
+// Created by rda on 2023/4/6.
 //
 
 #ifndef MINISTL_ARRAY_H
@@ -38,14 +38,14 @@ namespace stl
         using iterator = value_type *;
         using const_iterator = const value_type *;
         using reverse_iterator = stl::reverse_iterator<iterator>;
-        using const_reverse_iterator = const stl::reverse_iterator<iterator>;
+        using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
         /*
          * Constructors
          * */
         array() = default;
-        array(const array &);
-        array(array &&) noexcept;
+        // array(const array &);
+        // array(array &&) noexcept;
         array(std::initializer_list<T>);
 
         /*
@@ -93,14 +93,14 @@ namespace stl
             return arr[N - 1];
         }
 
-        T *data() noexcept
+        pointer data() noexcept
         {
-            return const_cast<T *>(static_cast<const array &>(*this).data());
+            return arr;
         }
 
-        const T *data() const noexcept
+        const_pointer data() const noexcept
         {
-            return data;
+            return const_cast<const_pointer>(arr);
         }
 
         /*
@@ -123,7 +123,7 @@ namespace stl
 
         iterator end() noexcept
         {
-            return const_cast<iterator>(static_cast<const array &>(*this).end());
+            return &arr[N];
         }
 
         const_iterator end() const noexcept
@@ -138,32 +138,32 @@ namespace stl
 
         reverse_iterator rbegin() noexcept
         {
-            return const_cast<reverse_iterator>(static_cast<const array &>(*this).rbegin());
+            return reverse_iterator(end());
         }
 
         const_reverse_iterator rbegin() const noexcept
         {
-            return reverse_iterator(end());
+            return const_reverse_iterator(end());
         }
 
         const_reverse_iterator crbegin() const noexcept
         {
-            return reverse_iterator(end());
+            return const_reverse_iterator(end());
         }
 
         reverse_iterator rend() noexcept
         {
-            return const_cast<reverse_iterator>(static_cast<const array &>(*this).rend());
+            return reverse_iterator(begin());
         }
 
         const_reverse_iterator rend() const noexcept
         {
-            return reverse_iterator(begin());
+            return const_reverse_iterator(begin());
         }
 
         const_reverse_iterator crend() const
         {
-            return reverse_iterator(begin());
+            return const_reverse_iterator(begin());
         }
 
         /*
@@ -178,28 +178,34 @@ namespace stl
          */
         void fill(const T &value)
         {
-            stl::uninitialized_fill_n(data, N, value);
+            stl::uninitialized_fill_n(begin(), N, value);
         }
         void swap(array &other) noexcept
         {
-            stl::swap_ranges(begin(), end(), other.begin());
+            // stl::swap_ranges(begin(), end(), other.begin());
         }
+
+        // array &operator=(const array &rhs) = default;
+
+        // array &operator=(array &&rhs) = default;
+
+        // const array &operator=(const array &rhs) const = default;
     };
 
     /* Constructors */
-    template <typename T, size_t N>
-    array<T, N>::array(const array &rhs)
-    {
-        for (int i = 0; i < N; ++i)
-            new (std::__addressof(arr[i])) T(rhs[i]);
-    }
+    // template <typename T, size_t N>
+    // array<T, N>::array(const array &rhs)
+    // {
+    //     for (int i = 0; i < N; ++i)
+    //         new (std::__addressof(arr[i])) T(rhs[i]);
+    // }
 
-    template <typename T, size_t N>
-    array<T, N>::array(array &&rhs) noexcept
-    {
-        for (int i = 0; i < N; ++i)
-            new (std::__addressof(arr[i])) T(std::move(rhs[i]));
-    }
+    // template <typename T, size_t N>
+    // array<T, N>::array(array &&rhs) noexcept
+    // {
+    //     for (int i = 0; i < N; ++i)
+    //         new (std::__addressof(arr[i])) T(std::move(rhs[i]));
+    // }
 
     template <typename T, size_t N>
     array<T, N>::array(std::initializer_list<T> lst)
@@ -218,39 +224,52 @@ namespace stl
 
     /* Non-member functions */
     template <typename T, std::size_t N>
-    bool operator==(const stl::array<T, N> &lhs, 
+    bool operator==(const stl::array<T, N> &lhs,
                     const stl::array<T, N> &rhs)
     {
+        return false;
     }
 
     template <typename T, std::size_t N>
-    bool operator!=(const stl::array<T, N> &lhs, 
+    bool operator!=(const stl::array<T, N> &lhs,
                     const stl::array<T, N> &rhs)
     {
+        return false;
     }
 
     template <typename T, std::size_t N>
-    bool operator<(const stl::array<T, N> &lhs, 
-                    const stl::array<T, N> &rhs)
+    bool operator<(const stl::array<T, N> &lhs,
+                   const stl::array<T, N> &rhs)
     {
+        return false;
     }
 
     template <typename T, std::size_t N>
-    bool operator<=(const stl::array<T, N> &lhs, 
+    bool operator<=(const stl::array<T, N> &lhs,
                     const stl::array<T, N> &rhs)
     {
+        return false;
     }
 
     template <typename T, std::size_t N>
-    bool operator>(const stl::array<T, N> &lhs, 
-                    const stl::array<T, N> &rhs)
+    bool operator>(const stl::array<T, N> &lhs,
+                   const stl::array<T, N> &rhs)
     {
+        return false;
     }
 
     template <typename T, std::size_t N>
-    bool operator>=(const stl::array<T, N> &lhs, 
+    bool operator>=(const stl::array<T, N> &lhs,
                     const stl::array<T, N> &rhs)
     {
+        return false;
+    }
+
+    template <typename T, std::size_t N>
+    void swap(stl::array<T, N> &lhs,
+              stl::array<T, N> &rhs) noexcept(noexcept(lhs.swap(rhs)))
+    {
+        lhs.swap(rhs);
     }
 } // namespace stl
 

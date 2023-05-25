@@ -3,7 +3,7 @@ TEST = tests
 BIN = bin
 
 CXX = g++
-CFLAGS = -I$(IDIR) -DDEBUG -O2 -g -Wall -std=c++17
+CFLAGS = -I$(IDIR) -DDEBUG -O0 -g -Wall -std=c++17
 STL = stl
 PROGRAM = test_traits test_construct test_iterator test_array test_vector
 BIN = bin
