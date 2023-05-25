@@ -10,10 +10,38 @@ complex&
   __doaml (complex* ths, const complex& r);
 
 
+#include "utils.hh"
+
 class complex
 {
 public:
   complex (double r = 0, double i = 0): re (r), im (i) { }
+  #ifdef DEBUG
+  complex(const complex & c) : re(c.real()), im(c.imag()) 
+  {
+        debug("complex: copy constructor");
+  }
+
+  complex(complex && c) : re(c.real()), im(c.imag()) 
+  {
+        debug("complex: move constructor");
+  }
+
+  complex & operator=(const complex & c)
+  {
+    debug("complex:  = const complex &");
+
+    re = c.real();
+    im = c.imag();
+  }
+  
+  complex & operator=(complex && c)
+  {
+    debug("complex:  = complex &&");
+    re = c.real();
+    im = c.imag();
+  }
+  #endif
   complex& operator += (const complex&);
   complex& operator -= (const complex&);
   complex& operator *= (const complex&);

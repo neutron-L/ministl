@@ -43,6 +43,7 @@ inline String::~String()
 
 inline String &String::operator=(const String &str)
 {
+    debug("String:  = const String &");
     if (this == &str)
         return *this;
 
@@ -54,6 +55,7 @@ inline String &String::operator=(const String &str)
 
 inline String &String::operator=(String &&str)
 {
+    debug("String:  = String &&");
     if (this == &str)
         return *this;
 
