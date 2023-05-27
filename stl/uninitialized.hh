@@ -13,14 +13,14 @@
 namespace stl
 {
     template <typename InputIterator, typename ForwardIterator>
-    ForwardIterator uninitiazed_copy_aux(InputIterator first, InputIterator last,
+    ForwardIterator uninitialized_copy_aux(InputIterator first, InputIterator last,
                                          ForwardIterator result, __true_type)
     {
         return std::copy(first, last, result); // TODO: replace by our own copy function, as stl:copy
     }
 
     template <typename InputIterator, typename ForwardIterator>
-    ForwardIterator uninitiazed_copy_aux(InputIterator first, InputIterator last,
+    ForwardIterator uninitialized_copy_aux(InputIterator first, InputIterator last,
                                          ForwardIterator result, __false_type)
     {
         while (first != last)
@@ -33,7 +33,7 @@ namespace stl
     }
 
     template <typename InputIterator, typename ForwardIterator, typename T>
-    ForwardIterator uninitiazed_copy(InputIterator first, InputIterator last,
+    ForwardIterator uninitialized_copy(InputIterator first, InputIterator last,
                                      ForwardIterator result, T *)
     {
         using is_POD = typename type_traits<T>::is_POD_type;

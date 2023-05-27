@@ -25,7 +25,7 @@ test_array: $(TEST)/test_array.cc $(STL)/array.hh $(STL)/string.hh $(STL)/comple
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 	
-test_vector: $(TEST)/test_vector.cc $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh
+test_vector: $(TEST)/test_vector.cc $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(STL)/utils.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 

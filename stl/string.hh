@@ -3,12 +3,14 @@
 
 class String
 {
+    friend bool operator==(const String & lhs, const String & rhs);
+    friend bool operator!=(const String & lhs, const String & rhs);
 public:
     String(const char *cstr = 0);
     String(const String &str);
     String(String &&str);
     String &operator=(const String &str);
-    String &operator=(String &&str);
+    String &operator=(String &&str) noexcept;
     ~String();
     char *get_c_str() const { return m_data; }
 
@@ -53,7 +55,7 @@ inline String &String::operator=(const String &str)
     return *this;
 }
 
-inline String &String::operator=(String &&str)
+inline String &String::operator=(String &&str) noexcept
 {
     debug("String:  = String &&");
     if (this == &str)
@@ -88,4 +90,14 @@ ostream &operator<<(ostream &os, const String &str)
     return os;
 }
 
+
+/* Friend functions */
+bool operator==(const String & lhs, const String & rhs)
+{
+    return !strcmp(lhs.get_c_str(), rhs.get_c_str());
+}
+bool operator!=(const String & lhs, const String & rhs)
+{
+    return strcmp(lhs.get_c_str(), rhs.get_c_str());
+}
 #endif
