@@ -19,37 +19,42 @@ namespace stl
     /*
      * @brief   Input Iterator: 所指向的对象不允许外界改变，read only
      * */
-    struct input_iterator_tag
-    {
-    };
+    // struct input_iterator_tag
+    // {
+    // };
+    using std::input_iterator_tag;
 
     /*
      * @brief   Output Iterator: write only
      * */
-    struct output_iterator_tag
-    {
-    };
+    // struct output_iterator_tag
+    // {
+    // };
+    using std::output_iterator_tag;
 
     /*
      * @brief   Forward Iterator: 允许“写入型“算法在此迭代器指定的区间上进行读写操作
      * */
-    struct forward_iterator_tag : public input_iterator_tag
-    {
-    };
+    // struct forward_iterator_tag : public input_iterator_tag
+    // {
+    // };
+    using std::forward_iterator_tag;
 
     /*
      * 可以双向移动的迭代器
      * */
-    struct bidirectional_iterator_tag : public forward_iterator_tag
-    {
-    };
+    // struct bidirectional_iterator_tag : public forward_iterator_tag
+    // {
+    // };
+    using std::bidirectional_iterator_tag;
 
     /*
      * @brief   随机访问迭代器，支持所有指针的运算操作的迭代器
      * */
-    struct random_access_iterator_tag : public bidirectional_iterator_tag
-    {
-    };
+    // struct random_access_iterator_tag : public bidirectional_iterator_tag
+    // {
+    // };
+    using std::random_access_iterator_tag;
 
     /*
      * @brief   迭代器类型，该类的派生类符合stl的标准，一般只需要指定前两个类型，即迭代器类型和迭代器指向对象的类型
@@ -478,7 +483,7 @@ namespace stl
      * */
     template <typename InputIterator>
     inline typename iterator_traits<InputIterator>::difference_type
-    distance_aux(InputIterator first, InputIterator last, std::input_iterator_tag)
+    distance_aux(InputIterator first, InputIterator last, input_iterator_tag)
     {
         typename iterator_traits<InputIterator>::difference_type n = 0;
         while (first != last)
@@ -497,7 +502,7 @@ namespace stl
      * */
     template <typename InputIterator>
     inline typename iterator_traits<InputIterator>::difference_type
-    distance_aux(InputIterator first, InputIterator last, std::random_access_iterator_tag)
+    distance_aux(InputIterator first, InputIterator last, random_access_iterator_tag)
     {
         return last - first;
     }
@@ -523,7 +528,7 @@ namespace stl
      * */
     template <typename InputIterator, typename Distance>
     inline void
-    advance_aux(InputIterator &i, Distance n, std::input_iterator_tag)
+    advance_aux(InputIterator &i, Distance n, input_iterator_tag)
     {
         while (n--)
             ++i;
@@ -536,7 +541,7 @@ namespace stl
      * */
     template <typename InputIterator, typename Distance>
     inline void
-    advance_aux(InputIterator &i, Distance n, std::bidirectional_iterator_tag)
+    advance_aux(InputIterator &i, Distance n, bidirectional_iterator_tag)
     {
         if (n >= 0)
             while (n--)
