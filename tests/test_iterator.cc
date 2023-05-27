@@ -6,7 +6,10 @@
 #include <cstring>
 #include <cassert>
 #include <deque>
+
 #include "iterator.hh"
+
+
 using namespace std;
 
 /* Internal aux-functions */
@@ -20,14 +23,16 @@ static void test_front_iterator_aux(const std::initializer_list<typename Contain
 template <typename Container>
 static void test_insert_iterator_aux(const std::initializer_list<typename Container::value_type> &lst);
 
+template <typename Container>
+static void test_distance_advance_prev_next_aux(const std::initializer_list<typename Container::value_type> &lst);
+
 /* Test Functions */
 void test_iter_traits();
 void test_reverse_iterator();
 void test_back_iterator();
 void test_front_iterator();
 void test_insert_iterator();
-void test_distance();
-void test_advance();
+void test_distance_advance_prev_next();
 
 int main()
 {
@@ -36,6 +41,9 @@ int main()
     test_back_iterator();
     test_front_iterator();
     test_insert_iterator();
+
+    test_distance_advance_prev_next();
+
     std::cout << "Pass!\n";
     
     return 0;
@@ -257,13 +265,31 @@ void test_insert_iterator()
     test_insert_iterator_aux<deque<string>>({"Cpp", "Java", "C-sharp", "Python"});
 }
 
-void test_distance()
+void test_distance_advance_prev_next()
 {
+    printf("===========%s===========\n", __FUNCTION__);
+    cout << "test vector:\n" << endl;
+    
+    test_distance_advance_prev_next_aux<vector<int>>({});
+    test_distance_advance_prev_next_aux<vector<int>>({1});
+    test_distance_advance_prev_next_aux<vector<int>>({1, 2, 3});
+    test_distance_advance_prev_next_aux<vector<int>>({1, 3, 5, 7});
+    cout << "Pass!\n" << endl;
+
+    cout << "test list:\n" << endl;
+    test_distance_advance_prev_next_aux<list<double>>({});
+    test_distance_advance_prev_next_aux<list<double>>({1.12});
+    test_distance_advance_prev_next_aux<list<double>>({1.12, 2.34, 3.76});
+    test_distance_advance_prev_next_aux<list<double>>({1.32, 3.54, 5.132, 7.901});
+    cout << "Pass!\n" << endl;
+    cout << "test dequeue:\n" << endl;
+    test_distance_advance_prev_next_aux<deque<string>>({});
+    test_distance_advance_prev_next_aux<deque<string>>({"hello"});
+    test_distance_advance_prev_next_aux<deque<string>>({"apple", "box", "cat"});
+    test_distance_advance_prev_next_aux<deque<string>>({"Cpp", "Java", "C-sharp", "Python"});
+    cout << "Pass!\n" << endl;
 }
 
-void test_advance()
-{
-}
 
 template <typename Container>
 static void test_reverse_iterator_aux(const std::initializer_list<typename Container::value_type> &lst)
@@ -420,3 +446,65 @@ static void test_insert_iterator_aux(const std::initializer_list<typename Contai
     std::copy(li.begin(), li.end(), iter2);
     assert(c1 == c2);
 }
+
+
+template <typename Container>
+static void test_distance_advance_prev_next_aux(const std::initializer_list<typename Container::value_type> &lst)
+{
+    Container c = lst;
+
+    using size_t = typename Container::size_type;
+    size_t n = lst.size();
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        for (size_t j = 0; j <= n; ++j)
+        {
+            auto iter1 = c.begin();
+            stl::advance(iter1, i);
+            auto iter2 = c.begin();
+            stl::advance(iter2, j);
+
+            if (i < j)
+            {
+                // stl
+                assert(stl::next(iter1, static_cast<typename Container::difference_type>(j - i)) == iter2);
+                assert(stl::prev(iter2, static_cast<typename Container::difference_type>(j - i)) == iter1);
+
+                assert(stl::next(iter2, static_cast<typename Container::difference_type>(i - j)) == iter1);
+                assert(stl::prev(iter1, static_cast<typename Container::difference_type>(i - j)) == iter2);
+
+                // std
+                assert(std::next(iter1, static_cast<typename Container::difference_type>(j - i)) == iter2);
+                assert(std::prev(iter2, static_cast<typename Container::difference_type>(j - i)) == iter1);
+
+                assert(std::next(iter2, static_cast<typename Container::difference_type>(i - j)) == iter1);
+                assert(std::prev(iter1, static_cast<typename Container::difference_type>(i - j)) == iter2);
+            }
+            else if (i > j)
+            {
+                // stl
+                assert(stl::next(iter2, static_cast<typename Container::difference_type>(i - j)) == iter1);
+                assert(stl::prev(iter1, static_cast<typename Container::difference_type>(i - j)) == iter2);
+
+                assert(stl::next(iter1, static_cast<typename Container::difference_type>(j - i)) == iter2);
+                assert(stl::prev(iter2, static_cast<typename Container::difference_type>(j - i)) == iter1);
+
+                // std
+                assert(std::next(iter2, static_cast<typename Container::difference_type>(i - j)) == iter1);
+                assert(std::prev(iter1, static_cast<typename Container::difference_type>(i - j)) == iter2);
+
+                assert(std::next(iter1, static_cast<typename Container::difference_type>(j - i)) == iter2);
+                assert(std::prev(iter2, static_cast<typename Container::difference_type>(j - i)) == iter1);
+            }
+            
+
+            assert(stl::prev(iter2, static_cast<typename Container::difference_type>(j - i)) == iter1);
+            
+            assert(stl::distance(iter1, iter2) == std::distance(iter1, iter2));
+            stl::advance(iter1, static_cast<typename Container::difference_type>(j - i));
+            assert(iter1 == iter2);
+        }
+    }
+}
+

@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
+#include <iterator>
 
 namespace stl
 {
@@ -53,7 +54,7 @@ namespace stl
     /*
      * @brief   迭代器类型，该类的派生类符合stl的标准，一般只需要指定前两个类型，即迭代器类型和迭代器指向对象的类型
      * */
-    template<typename Category, typename T, typename Distance = ptrdiff_t, typename Pointer = T *, typename Reference = T &>
+    template <typename Category, typename T, typename Distance = ptrdiff_t, typename Pointer = T *, typename Reference = T &>
     struct iterator
     {
         using iterator_category = Category;
@@ -66,7 +67,7 @@ namespace stl
     /*
      * @brief   迭代器的traits
      * */
-    template<typename Iterator>
+    template <typename Iterator>
     struct iterator_traits
     {
         using iterator_category = typename Iterator::iterator_category;
@@ -79,44 +80,46 @@ namespace stl
     /*
      * @brief   针对原生指针而设计的偏特化版本traits
      * */
-    template<typename T>
+    template <typename T>
     struct iterator_traits<T *>
     {
         using iterator_category = random_access_iterator_tag;
         using value_type = T;
         using difference_type = ptrdiff_t;
-        using pointer = T*;
+        using pointer = T *;
         using reference = T &;
     };
 
     /*
      * @brief   针对原生的pointer-to-const而设计的篇特化版本traits
      * */
-    template<typename T>
+    template <typename T>
     struct iterator_traits<const T *>
     {
         using iterator_category = random_access_iterator_tag;
         using value_type = T;
         using difference_type = ptrdiff_t;
-        using pointer = const T*;
+        using pointer = const T *;
         using reference = const T &;
     };
 
     /*
      * @brief   Iterator Adapters
-    * */
+     * */
 
     /*
      * @brief   bidirectional_iterator_tag and random_access_iterator都具备一个反向迭代器适配器
      * */
     template <typename Iterator>
     class reverse_iterator : public iterator<typename iterator_traits<Iterator>::iterator_category,
-            typename iterator_traits<Iterator>::value_type,
-            typename iterator_traits<Iterator>::difference_type,
-            typename iterator_traits<Iterator>::pointer,
-            typename iterator_traits<Iterator>::reference>{
-        template<class Iter>
+                                             typename iterator_traits<Iterator>::value_type,
+                                             typename iterator_traits<Iterator>::difference_type,
+                                             typename iterator_traits<Iterator>::pointer,
+                                             typename iterator_traits<Iterator>::reference>
+    {
+        template <class Iter>
         friend class reverse_iterator;
+
     protected:
         Iterator current;
         using _traits_type = iterator_traits<Iterator>;
@@ -125,21 +128,21 @@ namespace stl
         using iterator_type = Iterator;
         using reference = typename _traits_type::reference;
         using difference_type = typename _traits_type::difference_type;
-        using pointer = typename _traits_type::pointer ;
+        using pointer = typename _traits_type::pointer;
 
         /*
          * @brief   iterator constructors
          * */
         reverse_iterator() : current() {}
         reverse_iterator(Iterator it) : current(it) {}
-        reverse_iterator(const reverse_iterator& other) : current(other.current) {}
+        reverse_iterator(const reverse_iterator &other) : current(other.current) {}
         template <typename Iter>
-        reverse_iterator(const reverse_iterator<Iter>& other) :  current(other.current) {}
+        reverse_iterator(const reverse_iterator<Iter> &other) : current(other.current) {}
 
         /*
          * @brief   iterator operators
          * */
-        reverse_iterator& operator++()
+        reverse_iterator &operator++()
         {
             --current;
             return *this;
@@ -152,7 +155,7 @@ namespace stl
             return res;
         }
 
-        reverse_iterator& operator--()
+        reverse_iterator &operator--()
         {
             ++current;
             return *this;
@@ -170,7 +173,7 @@ namespace stl
             return reverse_iterator(current - n);
         }
 
-        reverse_iterator& operator+=(difference_type n)
+        reverse_iterator &operator+=(difference_type n)
         {
             current -= n;
             return *this;
@@ -181,13 +184,13 @@ namespace stl
             return reverse_iterator(current + n);
         }
 
-        reverse_iterator& operator-=(difference_type n)
+        reverse_iterator &operator-=(difference_type n)
         {
             current += n;
             return *this;
         }
 
-        difference_type operator-(const reverse_iterator& other) const
+        difference_type operator-(const reverse_iterator &other) const
         {
             return other.current - current;
         }
@@ -211,32 +214,32 @@ namespace stl
         /*
          * @brief   compare functions
          * */
-        bool operator==(const reverse_iterator& other) const
+        bool operator==(const reverse_iterator &other) const
         {
             return base() == other.base();
         }
 
-        bool operator!=(const reverse_iterator& other) const
+        bool operator!=(const reverse_iterator &other) const
         {
             return base() != other.base();
         }
 
-        bool operator<(const reverse_iterator& other) const
+        bool operator<(const reverse_iterator &other) const
         {
             return other.base() < base();
         }
 
-        bool operator<=(const reverse_iterator& other) const
+        bool operator<=(const reverse_iterator &other) const
         {
             return other.base() <= base();
         }
 
-        bool operator>(const reverse_iterator& other) const
+        bool operator>(const reverse_iterator &other) const
         {
             return other.base() > base();
         }
 
-        bool operator>=(const reverse_iterator& other) const
+        bool operator>=(const reverse_iterator &other) const
         {
             return other.base() >= base();
         }
@@ -244,14 +247,14 @@ namespace stl
         /*
          *
          * */
-        template<class Tp>
+        template <class Tp>
         pointer to_pointer(Tp t)
         {
             return t->operator->();
         }
 
-        template<class Tp>
-        pointer to_pointer(Tp *  t)
+        template <class Tp>
+        pointer to_pointer(Tp *t)
         {
             return t;
         }
@@ -268,40 +271,42 @@ namespace stl
      * 2. front inserter，其内部调用push_front，在容器头部插入元素
      * 3. general inserter，在初始化时接收的第二个参数所指向的位置前面插入元素，调用成员函数insert
      * TODO:
-     * 4. normal iterator 
+     * 4. normal iterator
      * 5. move iterator
      * */
 
     /*
      * @brief   back inserter
      * */
-    template<typename Container>
-    class back_insert_iterator : public iterator<output_iterator_tag, void ,void ,void ,void>
+    template <typename Container>
+    class back_insert_iterator : public iterator<output_iterator_tag, void, void, void, void>
     {
     private:
-        Container * pc;
-    public:
-        explicit back_insert_iterator(Container & c) : pc (std::__addressof(c))
-        {}
+        Container *pc;
 
-        back_insert_iterator & operator=(const typename Container::value_type & x)
+    public:
+        explicit back_insert_iterator(Container &c) : pc(std::__addressof(c))
+        {
+        }
+
+        back_insert_iterator &operator=(const typename Container::value_type &x)
         {
             pc->push_back(x);
             return *this;
         }
 
-        back_insert_iterator & operator=(typename Container::value_type && x)
+        back_insert_iterator &operator=(typename Container::value_type &&x)
         {
             pc->push_back(std::move(x));
             return *this;
         }
 
-        back_insert_iterator & operator*()
+        back_insert_iterator &operator*()
         {
             return *this;
         }
 
-        back_insert_iterator & operator++()
+        back_insert_iterator &operator++()
         {
             return *this;
         }
@@ -317,43 +322,44 @@ namespace stl
      * @param   非const修饰的容器类型变量
      * @return  关联该容器的一个back inserter
      * */
-    template<typename Container>
-    back_insert_iterator<Container> back_inserter(Container & c)
+    template <typename Container>
+    back_insert_iterator<Container> back_inserter(Container &c)
     {
         return back_insert_iterator<Container>(c);
     }
 
-
     /*
      * @brief   front inserter
      * */
-    template<typename Container>
-    class front_insert_iterator : public iterator<output_iterator_tag, void ,void ,void ,void>
+    template <typename Container>
+    class front_insert_iterator : public iterator<output_iterator_tag, void, void, void, void>
     {
     private:
-        Container * pc;
-    public:
-        explicit front_insert_iterator(Container & c) : pc (std::__addressof(c))
-        {}
+        Container *pc;
 
-        front_insert_iterator & operator=(const typename Container::value_type & x)
+    public:
+        explicit front_insert_iterator(Container &c) : pc(std::__addressof(c))
+        {
+        }
+
+        front_insert_iterator &operator=(const typename Container::value_type &x)
         {
             pc->push_front(x);
             return *this;
         }
 
-        front_insert_iterator & operator=(typename Container::value_type && x)
+        front_insert_iterator &operator=(typename Container::value_type &&x)
         {
             pc->push_front(std::move(x));
             return *this;
         }
 
-        front_insert_iterator & operator*()
+        front_insert_iterator &operator*()
         {
             return *this;
         }
 
-        front_insert_iterator & operator++()
+        front_insert_iterator &operator++()
         {
             return *this;
         }
@@ -369,53 +375,54 @@ namespace stl
      * @param   非const修饰的容器类型变量
      * @return  关联该容器的一个back inserter
      * */
-    template<typename Container>
-    front_insert_iterator<Container> front_inserter(Container & c)
+    template <typename Container>
+    front_insert_iterator<Container> front_inserter(Container &c)
     {
         return front_insert_iterator<Container>(c);
     }
 
-
     /*
      * @brief   insert iterator
      * */
-    template<typename Container>
+    template <typename Container>
     class insert_iterator : public iterator<output_iterator_tag, void, void, void, void>
     {
         using Iter = typename Container::iterator;
+
     protected:
-        Container * container;
+        Container *container;
         Iter iter;
 
     public:
-        insert_iterator(Container & c, Iter i) : container(std::__addressof(c)), iter(i)
-        {}
+        insert_iterator(Container &c, Iter i) : container(std::__addressof(c)), iter(i)
+        {
+        }
 
-        insert_iterator & operator=(const typename Container::value_type & val)
+        insert_iterator &operator=(const typename Container::value_type &val)
         {
             iter = container->insert(iter, val);
             ++iter;
             return *this;
         }
 
-        insert_iterator & operator=(typename Container::value_type && val)
+        insert_iterator &operator=(typename Container::value_type &&val)
         {
             iter = container->insert(iter, std::move(val));
             ++iter;
             return *this;
         }
 
-        insert_iterator & operator*()
+        insert_iterator &operator*()
         {
             return *this;
         }
 
-        insert_iterator & operator++()
+        insert_iterator &operator++()
         {
             return *this;
         }
 
-        insert_iterator& operator++(int)
+        insert_iterator &operator++(int)
         {
             return *this;
         }
@@ -427,8 +434,8 @@ namespace stl
      * @param   i   容器中的某个迭代器
      * @return  一个插入迭代器
      * */
-    template<typename Container>
-    inline insert_iterator<Container> inserter(Container & c, typename Container::iterator i)
+    template <typename Container>
+    inline insert_iterator<Container> inserter(Container &c, typename Container::iterator i)
     {
         return insert_iterator<Container>(c, i);
     }
@@ -441,7 +448,7 @@ namespace stl
      * @param   迭代器变量
      * @return  该迭代器类别类型的值
      * */
-    template<typename Iterator>
+    template <typename Iterator>
     inline typename iterator_traits<Iterator>::iterator_category
     iterator_category(const Iterator &)
     {
@@ -471,7 +478,7 @@ namespace stl
      * */
     template <typename InputIterator>
     inline typename iterator_traits<InputIterator>::difference_type
-    distance_aux(InputIterator first, InputIterator last, input_iterator_tag)
+    distance_aux(InputIterator first, InputIterator last, std::input_iterator_tag)
     {
         typename iterator_traits<InputIterator>::difference_type n = 0;
         while (first != last)
@@ -490,11 +497,10 @@ namespace stl
      * */
     template <typename InputIterator>
     inline typename iterator_traits<InputIterator>::difference_type
-    distance_aux(InputIterator first, InputIterator last, random_access_iterator_tag)
+    distance_aux(InputIterator first, InputIterator last, std::random_access_iterator_tag)
     {
         return last - first;
     }
-
 
     /*
      * @brief   获取两个迭代器之间的“距离”，根据迭代器的具体类别选择辅助方法
@@ -517,7 +523,7 @@ namespace stl
      * */
     template <typename InputIterator, typename Distance>
     inline void
-    advance_aux(InputIterator & i, Distance n, input_iterator_tag)
+    advance_aux(InputIterator &i, Distance n, std::input_iterator_tag)
     {
         while (n--)
             ++i;
@@ -530,7 +536,7 @@ namespace stl
      * */
     template <typename InputIterator, typename Distance>
     inline void
-    advance_aux(InputIterator & i, Distance n, bidirectional_iterator_tag)
+    advance_aux(InputIterator &i, Distance n, std::bidirectional_iterator_tag)
     {
         if (n >= 0)
             while (n--)
@@ -547,7 +553,7 @@ namespace stl
      * */
     template <typename InputIterator, typename Distance>
     inline void
-    advance_aux(InputIterator & i, Distance n, random_access_iterator_tag)
+    advance_aux(InputIterator &i, Distance n, random_access_iterator_tag)
     {
         i += n;
     }
@@ -559,11 +565,34 @@ namespace stl
      * */
     template <typename InputIterator, typename Distance>
     inline void
-    advance(InputIterator & i, Distance n)
+    advance(InputIterator &i, Distance n)
     {
         advance_aux(i, n, iterator_category(i));
     }
+
+    /*
+     * @brief   返回第n个前置迭代器（或者当n为负数时，第-n个后继迭代器）
+     * @param   it  一个迭代器
+     * @param   n   descended的元素数
+     * */
+    template <typename BidirIt>
+    BidirIt prev(BidirIt it, typename stl::iterator_traits<BidirIt>::difference_type n = 1)
+    {
+        stl::advance(it, -n);
+        return it;
+    }
+
+    /*
+     * @brief   返回第n个后继迭代器（或者当n为负数时，第-n个前置迭代器）
+     * @param   it  一个迭代器
+     * @param   n   advance的元素数
+     * */
+    template <typename InputIt>
+    InputIt next(InputIt it, typename stl::iterator_traits<InputIt>::difference_type n = 1)
+    {
+        stl::advance(it, n);
+        return it;
+    }
 } // namespace stl
 
-
-#endif //UNTITLED_ITERATOR_H
+#endif // UNTITLED_ITERATOR_H
