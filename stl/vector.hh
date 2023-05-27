@@ -413,10 +413,12 @@ namespace stl
         destroy(begin(), end());
 
         if (capacity() < n)
+        {
             start = data_allocator::allocate(n);
+            end_of_storage = start + n;
+        }
         finish = start;
         finish = stl::uninitialized_fill_n(finish, n, elem);
-        end_of_storage = finish;
     }
 
     template <typename T, typename Alloc>
@@ -427,10 +429,12 @@ namespace stl
         size_type n = stl::distance(first, last);
 
         if (capacity() < n)
+        {
             start = data_allocator::allocate(n);
+            end_of_storage = start + n;
+        }
         finish = start;
         finish = stl::uninitiazed_copy(first, last, finish);
-        end_of_storage = finish;
     }
 
     template <typename T, typename Alloc>
