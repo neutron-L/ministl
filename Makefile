@@ -29,7 +29,7 @@ test_vector: $(TEST)/test_vector.cc $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iter
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 
-test_numeric: $(TEST)/test_numeric.cc $(STL)/numeric.hh 
+test_numeric: $(TEST)/test_numeric.cc $(STL)/numeric.hh $(STL)/type_traits.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 clean:
