@@ -21,7 +21,7 @@ test_iterator: $(TEST)/test_iterator.cc $(STL)/iterator.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 
-test_array: $(TEST)/test_array.cc $(STL)/array.hh $(STL)/string.hh $(STL)/complex.hh $(STL)/uninitialized.hh $(STL)/iterator.hh $(STL)/type_traits.hh $(STL)/construct.hh
+test_array: $(TEST)/test_array.cc $(STL)/array.hh $(STL)/string.hh $(STL)/complex.hh $(STL)/uninitialized.hh $(STL)/iterator.hh $(STL)/type_traits.hh $(STL)/construct.hh $(TEST)/test_iter.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 	
