@@ -2,10 +2,33 @@
 // Created by rda on 2023/5/28.
 //
 
+/* Logging */
+#include <stdio.h>
+
 #include <iostream>
 #include <initializer_list>
 #include <vector>
 
+#ifdef DEBUG
+#define debug(M, ...) \
+    fprintf(stderr, "DEBUG %s:%d:%s: " M "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__)
+#else
+#define debug(M, ...)
+#endif
+
+#define info(M, ...) \
+    fprintf(stderr, "INFO  " M "\n", ##__VA_ARGS__)
+
+#define error(M, ...) \
+    fprintf(stderr, "ERROR " M "\n", ##__VA_ARGS__)
+
+
+
+/**
+ * @brief  begin end cbegin cend rbegin rend crbegin crend 
+ * use non-const built-in type and user-defined type
+ * @param   lst	initializer-list including origin content
+ **/
 template <typename Container>
 void test_iterators_by_obj(const std::initializer_list<typename Container::value_type> &lst)
 {
@@ -101,6 +124,11 @@ void test_iterators_by_obj(const std::initializer_list<typename Container::value
 }
 
 
+/**
+ * @brief  begin end cbegin cend rbegin rend crbegin crend 
+ * use const built-in type and user-defined type
+ * @param   lst	initializer-list including origin content
+ **/
 template <typename Container>
 void test_iterators_by_const_obj(const std::initializer_list<typename Container::value_type> &lst)
 {
@@ -180,4 +208,91 @@ void test_iterators_by_const_obj(const std::initializer_list<typename Container:
     while (crbg != cred)
         assert(*--cred == vc[i++]);
     assert(i == num);
+}
+
+
+/**
+ * @brief  test front back [] at
+ * use built-in type and user-defined type(const and non-const)
+ * @param   lst	initializer-list including origin content
+ **/
+template <typename Container>
+void test_access(const std::initializer_list<typename Container::value_type> &lst)
+{
+    printf("=============%s=================\n", __FUNCTION__);
+    using type_t = typename Container::value_type;
+    Container c{lst};
+    typename Container::size_type num = lst.size();
+
+    auto i = num - num;
+    for (auto & item : lst)
+        assert(c[i] == c.at(i) && c[i++] == item);
+    assert(i == num);
+    // test at throw exception
+    try
+    {
+        std::cout << c.at(i);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+
+    const type_t x = c.front();
+    const type_t y = c.back();
+    c.front() = y;
+    c.back() = x;
+    
+    assert(c[0] == y);
+    assert(c.at(c.size() - 1) == x);
+
+    const Container cc{x, x, y, y};
+    // cvi[1] = 12; error
+    assert(cc.front() == x);
+    assert(cc[0] == x);
+    assert(cc[1] == x);
+    assert(cc[2] == y);
+    assert(cc[3] == y);
+    assert(cc.back() == y);
+}
+
+
+
+/**
+ * @brief  基于两个初始化列表的值，测试指定容器类型的比较函数，
+ * 通过将每种compare函数的结果与任一stl库容器的对应compare函数的结果对比
+ * @param   lst1	initializer-list including origin content
+ * @param   lst2	initializer-list including origin content
+ **/
+template <typename Container>
+void test_compare_aux(const std::initializer_list<typename Container::value_type> &lst1, 
+                 const std::initializer_list<typename Container::value_type> &lst2)
+{
+    printf("=============%s=================\n", __FUNCTION__);
+    Container c1{lst1}, c2(lst2);
+    std::vector<typename Container::value_type> v1(lst1), v2(lst2);
+
+    assert((c1 < c2) == (v1 < v2));
+    assert((c1 <= c2) == (v1 <= v2));
+    assert((c1 >= c2) == (v1 >= v2));
+    assert((c1 > c2) == (v1 > v2));
+    assert((c1 != c2) == (v1 != v2));
+}
+
+
+
+
+/**
+ * @brief  通过指定容器类型的compare函数，测试对比几对不同的初值列的相对大小
+ **/
+template <typename Container>
+void test_compare()
+{
+    printf("=============%s=================\n", __FUNCTION__);
+    test_compare_aux<Container>({}, {});
+    test_compare_aux<Container>({}, {1, 2, 3});
+    test_compare_aux<Container>({1, 2}, {1, 2, 3});
+    test_compare_aux<Container>({1, 2, 3}, {1, 2, 3});
+    test_compare_aux<Container>({1, 2, 4}, {1, 2, 3});
+    test_compare_aux<Container>({2, 4}, {1, 2, 3});
 }
