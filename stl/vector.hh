@@ -52,6 +52,8 @@ namespace stl
 
         void fill_initialize(size_type n, const T &value);
 
+        void reallocate(size_type n);
+
     public:
         /*
          * constructor
@@ -259,22 +261,7 @@ namespace stl
             return size_type(end_of_storage - start);
         }
 
-        void shrink_to_fit()
-        {
-            if (finish != end_of_storage)
-            {
-                auto new_start = data_allocator::allocate(size());
-                auto new_finish = new_start;
-                stl::uninitiazed_copy(begin(), end(), new_finish);
-
-                // destroy and release old storage
-                stl::destroy(begin(), end());
-                deallocate();
-
-                start = new_start;
-                end_of_storage = finish = new_finish;
-            }
-        }
+        void shrink_to_fit();
 
         /*
          * Modifiers
@@ -336,6 +323,28 @@ namespace stl
         finish = start;
         stl::advance(finish, n);
         end_of_storage = finish;
+    }
+
+    template <typename T, typename Alloc>
+    void vector<T, Alloc>::reallocate(size_type n)
+    {
+        T * new_start = nullptr;
+        T * new_finish = nullptr;
+        if (n)
+        {
+            new_start = data_allocator::allocate(n);
+            new_finish = new_start;
+            new_finish = stl::uninitiazed_copy(begin(), end(), new_finish);
+        }
+
+        // destroy and release old storage
+        stl::destroy(begin(), end());
+        deallocate();
+
+        start = new_start;
+        finish = new_finish;
+        if (start)
+            end_of_storage = start + n;
     }
 
     /*
@@ -452,6 +461,24 @@ namespace stl
     }
 
     /*
+     * Capacity
+     * */
+    template <typename T, typename Alloc>
+    void vector<T, Alloc>::reserve(size_type new_cap)
+    {
+        if (capacity() >= new_cap)
+            return;
+        reallocate(new_cap);
+    }
+
+    template <typename T, typename Alloc>
+    void vector<T, Alloc>::shrink_to_fit()
+    {
+        if (finish != end_of_storage)
+            reallocate(size());
+    }
+
+    /*
      * Modifiers
      * */
     template <typename T, typename Alloc>
@@ -460,8 +487,6 @@ namespace stl
         erase(begin(), end());
         finish = start;
     }
-
-    
 
     /* Non-member functions */
     template <typename T, typename Alloc>
@@ -476,7 +501,6 @@ namespace stl
                     const stl::vector<T, Alloc> &rhs)
     {
         return false;
-
     }
 
     template <typename T, typename Alloc>
@@ -484,7 +508,6 @@ namespace stl
                    const stl::vector<T, Alloc> &rhs)
     {
         return false;
-
     }
 
     template <typename T, typename Alloc>
@@ -492,7 +515,6 @@ namespace stl
                     const stl::vector<T, Alloc> &rhs)
     {
         return false;
-
     }
 
     template <typename T, typename Alloc>
@@ -500,7 +522,6 @@ namespace stl
                    const stl::vector<T, Alloc> &rhs)
     {
         return false;
-
     }
 
     template <typename T, typename Alloc>
@@ -508,7 +529,6 @@ namespace stl
                     const stl::vector<T, Alloc> &rhs)
     {
         return false;
-
     }
 
     template <typename T, typename Alloc>

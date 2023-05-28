@@ -8,6 +8,8 @@
 #include "vector.hh"
 using namespace std;
 
+const char *str[]{"one", "two", "three", "four", "five"};
+
 void test_constructors()
 {
     printf("=============%s=================\n", __FUNCTION__);
@@ -105,7 +107,7 @@ void test_assignment()
     stl::vector<String> ay;
     ay = std::move(ax);
     for (decltype(n) i = 0; i < n; ++i)
-        assert(ax[i] == ay[i]);
+        assert(!strcmp(ay[i].get_c_str(), s1.get_c_str()));
 
     stl::vector<String> az(n, s2);
     ax = az;
@@ -124,14 +126,13 @@ void test_assignment()
     const complex c1(1, 2);
     const complex c2(3, 4);
     const complex c3;
-    stl::vector<complex> vc2{c, c1, c2, c3};
+    const stl::vector<complex> vc2{c, c1, c2, c3};
     assert(*(vc2.begin()) == c);
     assert(vc2[1] == c1);
-    assert(vc2[2] == c2);
+    assert(vc2.at(2) == c2);
     assert(*(vc2.end() - 1) == c3);
 
     // 6. range assign
-    const char *str[]{"one", "two", "three", "four", "five"};
     stl::vector<String> vs1{String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])};
     n = 4;
     stl::vector<String> vs2(n);
@@ -144,75 +145,36 @@ void test_assignment()
         assert(vs1[i] == vs2[i]);
 }
 
-void test_access()
-{
-    printf("=============%s=================\n", __FUNCTION__);
-    // stl::vector<int> vi{1,3,5};
-    // for (int i = 0; i < 5; ++i)
-    //     cout << vi[i] << ' ' << vi.at(i) << endl;
-    // cout << endl;
-    // // test at throw exception
-    // try
-    // {
-    //     cout << vi.at(5);
-    // }
-    // catch(const std::exception& e)
-    // {
-    //     std::cerr << e.what() << '\n';
-    // }
-    // vi.front() = 9;
-    // vi.back() = 12;
-    // assert(vi[0] == 9);
-    // assert(vi.at(vi.size() - 1) == 12);
 
-    // const stl::vector<int> cvi{9,8,7};
-    // // cvi[1] = 12; error
-    // assert(cvi[0] == 9);
-    // assert(cvi[1] == 8);
-    // assert(cvi[2] == 7);
-}
-
-void test_iter_method()
-{
-    printf("=============%s=================\n", __FUNCTION__);
-    // // begin end
-    // const int num = 10;
-    // stl::vector<longum> al{1};
-    // cout << "begin: " << *al.begin() << endl;
-    // cout << "end: " << *(al.end() - 1) << endl;
-    // stl::vector<longum>::iterator bg = al.begin();
-    // *bg = 11;
-    // auto ed = al.end();
-    // *(ed - 1) = 12;
-    // cout << "begin: " << *al.begin() << endl;
-    // cout << "end: " << *(al.end() - 1) << endl;
-
-    // // cbegin cend
-    // auto cbg = al.cbegin();
-    // // *cbg = 12;  // error. cannot modify const iterator
-    // auto ced = al.cend();
-    // int i = 0;
-    // while (cbg != ced)
-    //     assert(*cbg++ == al[i++]);
-    // assert(i == num);
-    // cout << endl;
-
-    // // rbegin rend
-    // auto rbg = al.rbegin();
-    // auto red = al.rend();
-    // while (rbg != red)
-    //     *rbg++ *= 2;
-    // rbg = al.rbegin();
-    // red = al.rend();
-    // i = 0;
-    // while (rbg != red)
-    //     assert(*--red == al[i++]);
-    // cout << endl;
-}
 
 void test_capacity()
 {
     printf("=============%s=================\n", __FUNCTION__);
+    stl::vector<double>::size_type n;
+    stl::vector<double> vd1{3.14, 18.90, 10};
+    stl::vector<double> vd2;
+
+    // 1. empty
+    assert(!vd1.empty() && vd2.empty());
+    vd2 = vd1;
+    assert(!vd2.empty() && vd1.size() == vd2.size());
+
+    // 2. size
+    assert(vd1.size() == 3);
+
+    // 3. capacity & reserve
+    stl::vector<String> vs1;
+    assert(!vs1.capacity());
+    n = 12;
+    vs1.reserve(n);
+    assert(vs1.capacity() == n && vs1.empty());
+    vs1 = {String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])};
+    assert(vs1.capacity() == n && !vs1.empty());
+    
+    // 4. shrink_to_fit
+    assert(vs1.capacity() != vs1.size());
+    vs1.shrink_to_fit();
+    assert(vs1.capacity() == vs1.size() && vs1.size() == 5);
 }
 
 void test_non_member_func()
@@ -242,10 +204,9 @@ void test_non_member_func()
 int main()
 {
     test_constructors();
-    // test_compvie();
-    // test_assignment();
-    // test_access();
-    // test_iter_method();
+    test_assignment();
+    test_capacity();
+    test_non_member_func();
     std::cout << "Pass!\n";
 
     return 0;
