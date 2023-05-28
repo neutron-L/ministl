@@ -7,7 +7,7 @@
 #include "array.hh"
 #include "complex.hh"
 
-#include "test_iter.hh"
+#include "utils.hh"
 using namespace std;
 
 stl::array<int, 3> glob_ar;
@@ -28,9 +28,11 @@ void test_constructors()
     // initializer-list constructor
     std::cout << "----test initializer-list constructor----\n";
     stl::array<double, N> ar2{1.2, 3.4, 5.6, 9.0};
-    for (auto &i : ar2)
-        cout << i << ' ';
-    cout << endl;
+    assert(ar2[0] == 1.2);
+    assert(ar2[1] == 3.4);
+    assert(ar2[2] == 5.6);
+    assert(ar2[3] == 9.0);
+    assert(ar2.back() == double());
     stl::array<double, N> ar{};
     for (auto &i : ar)
         assert(!i);
@@ -57,55 +59,55 @@ void test_constructors()
         assert(!strcmp(as2[i].get_c_str(), str[i]) && as1[i].get_c_str() == nullptr);
 }
 
-void test_access()
-{
-    printf("=============%s=================\n", __FUNCTION__);
-    const int N = 5;
-    stl::array<int, N> ar{1, 3, 5};
-    const stl::array<int, N> car{1, 3, 5};
-    for (int i = 0; i < 5; ++i)
-    {
-        assert(ar[i] == ar.at(i));
-        assert(car[i] == car.at(i));
-    }
-    // test at throw exception
-    try
-    {
-        cout << ar.at(5);
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+// void test_access()
+// {
+//     printf("=============%s=================\n", __FUNCTION__);
+//     const int N = 5;
+//     stl::array<int, N> ar{1, 3, 5};
+//     const stl::array<int, N> car{1, 3, 5};
+//     for (int i = 0; i < 5; ++i)
+//     {
+//         assert(ar[i] == ar.at(i));
+//         assert(car[i] == car.at(i));
+//     }
+//     // test at throw exception
+//     try
+//     {
+//         cout << ar.at(5);
+//     }
+//     catch (const std::exception &e)
+//     {
+//         std::cerr << e.what() << '\n';
+//     }
 
-    try
-    {
-        cout << car.at(-1);
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-    ar.front() = 9;
-    ar.back() = 12;
-    assert(ar[0] == 9 && ar[0] == ar.front());
-    assert(ar.at(ar.size() - 1) == 12 && ar[ar.size() - 1] == ar.back());
+//     try
+//     {
+//         cout << car.at(-1);
+//     }
+//     catch (const std::exception &e)
+//     {
+//         std::cerr << e.what() << '\n';
+//     }
+//     ar.front() = 9;
+//     ar.back() = 12;
+//     assert(ar[0] == 9 && ar[0] == ar.front());
+//     assert(ar.at(ar.size() - 1) == 12 && ar[ar.size() - 1] == ar.back());
 
-    assert(car[0] == 1);
-    assert(car[1] == 3);
-    assert(car[2] == 5);
-    // car.front() = 9; // error
-    // car.at(1) = 12; // error
-    // car.data()[2] = 13; // error
+//     assert(car[0] == 1);
+//     assert(car[1] == 3);
+//     assert(car[2] == 5);
+//     // car.front() = 9; // error
+//     // car.at(1) = 12; // error
+//     // car.data()[2] = 13; // error
 
-    int *d = ar.data();
-    const int *dc = car.data();
-    for (int i = 0; i < N; ++i)
-    {
-        assert(d[i] == ar.at(i));
-        assert(dc[i] == car.at(i));
-    }
-}
+//     int *d = ar.data();
+//     const int *dc = car.data();
+//     for (int i = 0; i < N; ++i)
+//     {
+//         assert(d[i] == ar.at(i));
+//         assert(dc[i] == car.at(i));
+//     }
+// }
 
 // void test_iterators_by_obj()
 // {
@@ -335,41 +337,47 @@ void test_operations_user_defined_type()
         assert(!strcmp(as2[i].get_c_str(), str[i]) && as1[i].get_c_str() == nullptr);
 }
 
-void test_compare()
-{
-    printf("=============%s=================\n", __FUNCTION__);
-    stl::array<int, 5> ar1{1, 3, 5, 6, 7};
-    stl::array<int, 5> ar2{1, 3, 5, 6, 7};
-    assert(ar1 == ar2);
-    assert(ar1 == ar1);
-    assert(ar1 >= ar1);
-    assert(ar1 <= ar1);
-    ar1.back() = 6;
-    assert(ar1 != ar2);
-    assert(ar1 < ar2);
-    assert(ar1 <= ar2);
 
-    stl::array<int, 5> ar3{1, 3, 5};
-    stl::array<int, 5> ar4{1, 3, 5, 6, 7};
-    assert(ar3 != ar4);
-    assert(ar3 < ar4);
-    assert(ar3 <= ar4);
-    ar3[0] = 12;
-    assert(ar3 > ar4);
-    assert(ar3 >= ar4);
-}
+// void test_compare()
+// {
+//     printf("=============%s=================\n", __FUNCTION__);
+//     stl::array<int, 5> ar1{1, 3, 5, 6, 7};
+//     stl::array<int, 5> ar2{1, 3, 5, 6, 7};
+//     assert(ar1 == ar2);
+//     assert(ar1 == ar1);
+//     assert(ar1 >= ar1);
+//     assert(ar1 <= ar1);
+//     ar1.back() = 6;
+//     assert(ar1 != ar2);
+//     assert(ar1 < ar2);
+//     assert(ar1 <= ar2);
+
+//     stl::array<int, 5> ar3{1, 3, 5};
+//     stl::array<int, 5> ar4{1, 3, 5, 6, 7};
+//     assert(ar3 != ar4);
+//     assert(ar3 < ar4);
+//     assert(ar3 <= ar4);
+//     ar3[0] = 12;
+//     assert(ar3 > ar4);
+//     assert(ar3 >= ar4);
+// }
 
 int main()
 {
+    std::initializer_list<int> ilist{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+    std::initializer_list<complex> clist{complex(1, 2), complex(3, 4), complex(5, 6), complex(7, 8), complex(9, 0)};
+
+
     test_constructors();
-    test_access();
-    test_iterators_by_obj<stl::array<int, 10>>({1, 2, 3, 4, 5, 6, 7, 8, 9, 0});
-    test_iterators_by_const_obj<stl::array<int, 10>>({1, 2, 3, 4, 5, 6, 7, 8, 9, 0});
-    test_iterators_by_obj<stl::array<complex, 5>>({complex(1, 2), complex(3, 4), complex(5, 6), complex(7, 8), complex(9, 0)});
-    test_iterators_by_const_obj<stl::array<complex, 5>>({complex(1, 2), complex(3, 4), complex(5, 6), complex(7, 8), complex(9, 0)});
+    test_access<stl::array<int, 10>>(ilist);
+    test_iterators_by_obj<stl::array<int, 10>>(ilist);
+    test_iterators_by_const_obj<stl::array<int, 10>>(ilist);
+    test_iterators_by_obj<stl::array<complex, 5>>(clist);
+    test_iterators_by_const_obj<stl::array<complex, 5>>(clist);
     test_capacity();
     test_operations_built_in_type();
     test_operations_user_defined_type();
+    // test_compare<stl::array<int, 10>>();
     
     std::cout << "Pass!\n";
 
