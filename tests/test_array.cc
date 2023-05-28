@@ -1,9 +1,13 @@
 #include <iostream>
 #include <algorithm>
 #include <cassert>
+
 #include "complex.hh"
 #include "string.hh"
 #include "array.hh"
+#include "complex.hh"
+
+#include "test_iter.hh"
 using namespace std;
 
 stl::array<int, 3> glob_ar;
@@ -84,8 +88,8 @@ void test_access()
     }
     ar.front() = 9;
     ar.back() = 12;
-    assert(ar[0] == 9);
-    assert(ar.at(ar.size() - 1) == 12);
+    assert(ar[0] == 9 && ar[0] == ar.front());
+    assert(ar.at(ar.size() - 1) == 12 && ar[ar.size() - 1] == ar.back());
 
     assert(car[0] == 1);
     assert(car[1] == 3);
@@ -103,157 +107,157 @@ void test_access()
     }
 }
 
-void test_iterators_by_obj()
-{
-    printf("=============%s=================\n", __FUNCTION__);
-    const int num = 10;
-    stl::array<long, num> al{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
-    // begin end access
-    std::cout << "----test begin/end----\n";
-    assert(*al.begin() == al[0]);
-    assert(*(al.end() - 1) == al.back());
+// void test_iterators_by_obj()
+// {
+//     printf("=============%s=================\n", __FUNCTION__);
+//     const int num = 10;
+//     stl::array<long, num> al{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+//     // begin end access
+//     std::cout << "----test begin/end----\n";
+//     assert(*al.begin() == al[0]);
+//     assert(*(al.end() - 1) == al.back());
 
-    // begin end modify
-    stl::array<long, num>::iterator bg = al.begin();
-    *bg = 11;
-    auto ed = al.end();
-    *(ed - 1) = 12;
-    assert(*al.begin() == 11 && al[0] == 11);
-    assert(*(al.end() - 1) == 12 && al.back() == 12);
+//     // begin end modify
+//     stl::array<long, num>::iterator bg = al.begin();
+//     *bg = 11;
+//     auto ed = al.end();
+//     *(ed - 1) = 12;
+//     assert(*al.begin() == 11 && al[0] == 11);
+//     assert(*(al.end() - 1) == 12 && al.back() == 12);
 
-    // cbegin cend
-    std::cout << "----test cbegin/cend----\n";
+//     // cbegin cend
+//     std::cout << "----test cbegin/cend----\n";
 
-    auto cbg = al.cbegin();
-    // *cbg = 12;  // error. cannot modify const iterator
-    auto ced = al.cend();
-    // *ced = 11; // error
-    int i = 0;
-    while (cbg != ced)
-        assert(*cbg++ == al[i++]);
-    assert(i == num);
+//     auto cbg = al.cbegin();
+//     // *cbg = 12;  // error. cannot modify const iterator
+//     auto ced = al.cend();
+//     // *ced = 11; // error
+//     int i = 0;
+//     while (cbg != ced)
+//         assert(*cbg++ == al[i++]);
+//     assert(i == num);
 
-    cbg = al.cbegin();
-    ced = al.cend();
-    i = num;
-    while (ced != cbg)
-        assert(*--ced == al[--i]);
-    assert(!i);
+//     cbg = al.cbegin();
+//     ced = al.cend();
+//     i = num;
+//     while (ced != cbg)
+//         assert(*--ced == al[--i]);
+//     assert(!i);
 
-    // rbegin rend
-    std::cout << "----test rbegin/rend----\n";
-    auto rbg = al.rbegin();
-    auto red = al.rend();
-    stl::array<long, num> mirror = al;
+//     // rbegin rend
+//     std::cout << "----test rbegin/rend----\n";
+//     auto rbg = al.rbegin();
+//     auto red = al.rend();
+//     stl::array<long, num> mirror = al;
 
-    while (rbg != red)
-        *rbg++ *= 2;
-    rbg = al.rbegin();
-    red = al.rend();
-    i = num;
-    while (rbg != red)
-        assert(*rbg++ == 2 * mirror[--i]);
-    assert(!i);
+//     while (rbg != red)
+//         *rbg++ *= 2;
+//     rbg = al.rbegin();
+//     red = al.rend();
+//     i = num;
+//     while (rbg != red)
+//         assert(*rbg++ == 2 * mirror[--i]);
+//     assert(!i);
 
-    rbg = al.rbegin();
-    red = al.rend();
-    i = 0;
-    while (rbg != red)
-        assert(*--red == al[i++]);
-    assert(i == num);
+//     rbg = al.rbegin();
+//     red = al.rend();
+//     i = 0;
+//     while (rbg != red)
+//         assert(*--red == al[i++]);
+//     assert(i == num);
 
-    // crbegin crend
-    std::cout << "----test crbegin/crend----\n";
+//     // crbegin crend
+//     std::cout << "----test crbegin/crend----\n";
 
-    auto crbg = al.crbegin();
-    // *crbg = 12;  // error. cannot modify const iterator
-    auto cred = al.crend();
-    // *cred = 11; // error
-    i = num;
-    while (crbg != cred)
-        assert(*crbg++ == al[--i]);
-    assert(!i);
+//     auto crbg = al.crbegin();
+//     // *crbg = 12;  // error. cannot modify const iterator
+//     auto cred = al.crend();
+//     // *cred = 11; // error
+//     i = num;
+//     while (crbg != cred)
+//         assert(*crbg++ == al[--i]);
+//     assert(!i);
 
-    crbg = al.crbegin();
-    cred = al.crend();
-    i = 0;
-    while (crbg != cred)
-        assert(*--cred == al[i++]);
-    assert(i == num);
-}
+//     crbg = al.crbegin();
+//     cred = al.crend();
+//     i = 0;
+//     while (crbg != cred)
+//         assert(*--cred == al[i++]);
+//     assert(i == num);
+// }
 
-void test_iterators_by_const_obj()
-{
-    printf("=============%s=================\n", __FUNCTION__);
-    const int num = 10;
-    const stl::array<long, num> al{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
-    // begin end
-    std::cout << "----test begin/end----\n";
-    assert(*al.begin() == al[0]);
-    assert(*(al.end() - 1) == al.back());
+// void test_iterators_by_const_obj()
+// {
+//     printf("=============%s=================\n", __FUNCTION__);
+//     const int num = 10;
+//     const stl::array<long, num> al{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+//     // begin end
+//     std::cout << "----test begin/end----\n";
+//     assert(*al.begin() == al[0]);
+//     assert(*(al.end() - 1) == al.back());
 
-    stl::array<long, num>::const_iterator bg = al.begin();
-    // *bg = 11; // error
-    auto ed = al.end();
-    // *(ed - 1) = 12; // error
+//     stl::array<long, num>::const_iterator bg = al.begin();
+//     // *bg = 11; // error
+//     auto ed = al.end();
+//     // *(ed - 1) = 12; // error
 
-    // cbegin cend
-    std::cout << "----test cbegin/cend----\n";
+//     // cbegin cend
+//     std::cout << "----test cbegin/cend----\n";
 
-    auto cbg = al.cbegin();
-    // *cbg = 12;  // error. cannot modify const iterator
-    auto ced = al.cend();
-    // *ced = 11; // error
-    int i = 0;
-    while (cbg != ced)
-        assert(*cbg++ == al[i++]);
-    assert(i == num);
+//     auto cbg = al.cbegin();
+//     // *cbg = 12;  // error. cannot modify const iterator
+//     auto ced = al.cend();
+//     // *ced = 11; // error
+//     int i = 0;
+//     while (cbg != ced)
+//         assert(*cbg++ == al[i++]);
+//     assert(i == num);
 
-    cbg = al.cbegin();
-    ced = al.cend();
-    i = num;
-    while (ced != cbg)
-        assert(*--ced == al[--i]);
-    assert(!i);
+//     cbg = al.cbegin();
+//     ced = al.cend();
+//     i = num;
+//     while (ced != cbg)
+//         assert(*--ced == al[--i]);
+//     assert(!i);
 
-    // rbegin rend
-    std::cout << "----test rbegin/rend----\n";
-    auto rbg = al.rbegin();
-    auto red = al.rend();
-    // *rbg += 14; // error
-    // *red += 14; // error
+//     // rbegin rend
+//     std::cout << "----test rbegin/rend----\n";
+//     auto rbg = al.rbegin();
+//     auto red = al.rend();
+//     // *rbg += 14; // error
+//     // *red += 14; // error
 
-    i = num;
-    while (rbg != red)
-        assert(*rbg++ == al[--i]);
-    assert(!i);
+//     i = num;
+//     while (rbg != red)
+//         assert(*rbg++ == al[--i]);
+//     assert(!i);
 
-    rbg = al.rbegin();
-    red = al.rend();
-    i = 0;
-    while (rbg != red)
-        assert(*--red == al[i++]);
-    assert(i == num);
+//     rbg = al.rbegin();
+//     red = al.rend();
+//     i = 0;
+//     while (rbg != red)
+//         assert(*--red == al[i++]);
+//     assert(i == num);
 
-    // crbegin crend
-    std::cout << "----test crbegin/crend----\n";
+//     // crbegin crend
+//     std::cout << "----test crbegin/crend----\n";
 
-    auto crbg = al.crbegin();
-    // *crbg = 12;  // error. cannot modify const iterator
-    auto cred = al.crend();
-    // *cred = 11; // error
-    i = num;
-    while (crbg != cred)
-        assert(*crbg++ == al[--i]);
-    assert(!i);
+//     auto crbg = al.crbegin();
+//     // *crbg = 12;  // error. cannot modify const iterator
+//     auto cred = al.crend();
+//     // *cred = 11; // error
+//     i = num;
+//     while (crbg != cred)
+//         assert(*crbg++ == al[--i]);
+//     assert(!i);
 
-    crbg = al.crbegin();
-    cred = al.crend();
-    i = 0;
-    while (crbg != cred)
-        assert(*--cred == al[i++]);
-    assert(i == num);
-}
+//     crbg = al.crbegin();
+//     cred = al.crend();
+//     i = 0;
+//     while (crbg != cred)
+//         assert(*--cred == al[i++]);
+//     assert(i == num);
+// }
 
 void test_capacity()
 {
@@ -359,8 +363,10 @@ int main()
 {
     test_constructors();
     test_access();
-    test_iterators_by_obj();
-    test_iterators_by_const_obj();
+    test_iterators_by_obj<stl::array<int, 10>>({1, 2, 3, 4, 5, 6, 7, 8, 9, 0});
+    test_iterators_by_const_obj<stl::array<int, 10>>({1, 2, 3, 4, 5, 6, 7, 8, 9, 0});
+    test_iterators_by_obj<stl::array<complex, 5>>({complex(1, 2), complex(3, 4), complex(5, 6), complex(7, 8), complex(9, 0)});
+    test_iterators_by_const_obj<stl::array<complex, 5>>({complex(1, 2), complex(3, 4), complex(5, 6), complex(7, 8), complex(9, 0)});
     test_capacity();
     test_operations_built_in_type();
     test_operations_user_defined_type();
