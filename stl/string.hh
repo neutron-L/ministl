@@ -20,7 +20,7 @@ private:
 
 #include <cstring>
 #include <iostream>
-#include "utils.hh"
+#include "log.hh"
 
 inline String::String(const char *cstr)
 {

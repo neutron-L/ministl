@@ -10,7 +10,7 @@ complex&
   __doaml (complex* ths, const complex& r);
 
 
-#include "utils.hh"
+#include "log.hh"
 
 class complex
 {
