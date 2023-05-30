@@ -2,26 +2,8 @@
 // Created by rda on 2023/5/28.
 //
 
-/* Logging */
-#include <stdio.h>
-
-#include <iostream>
-#include <initializer_list>
-#include <vector>
-
-#ifdef DEBUG
-#define debug(M, ...) \
-    fprintf(stderr, "DEBUG %s:%d:%s: " M "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__)
-#else
-#define debug(M, ...)
-#endif
-
-#define info(M, ...) \
-    fprintf(stderr, "INFO  " M "\n", ##__VA_ARGS__)
-
-#define error(M, ...) \
-    fprintf(stderr, "ERROR " M "\n", ##__VA_ARGS__)
-
+#ifndef MINISTL_UTILS_HH
+#define MINISTL_UTILS_HH
 
 
 /**
@@ -296,3 +278,6 @@ void test_compare()
     test_compare_aux<Container>({1, 2, 4}, {1, 2, 3});
     test_compare_aux<Container>({2, 4}, {1, 2, 3});
 }
+
+
+#endif
