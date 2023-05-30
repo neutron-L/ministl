@@ -75,18 +75,14 @@ namespace stl
             fill_initialize(n, elem);
         }
 
-        vector(int n, const T &elem)
+        template <typename InputIterator, typename = std::_RequireInputIter<InputIterator>>
+        vector(InputIterator first, InputIterator last)
         {
-            fill_initialize(n, elem);
+            start = finish = data_allocator::allocate(stl::distance(first, last));
+            while (first != last)
+                construct(finish++, *first++);
+            end_of_storage = finish;
         }
-
-        vector(long n, const T &elem)
-        {
-            fill_initialize(n, elem);
-        }
-
-        template <typename InputIterator>
-        vector(InputIterator first, InputIterator last);
 
         vector(std::initializer_list<T>);
 
@@ -273,8 +269,80 @@ namespace stl
         iterator insert(const_iterator pos, const T &elem);
         iterator insert(const_iterator pos, T &&elem);
         iterator insert(const_iterator pos, size_type count, const T &elem);
-        template <typename InputIt>
-        iterator insert(const_iterator pos, InputIt first, InputIt last);
+        template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
+        iterator insert(const_iterator pos, InputIt first, InputIt last)
+        {
+            auto count = stl::distance(first, last);
+
+            if (count)
+            {
+                if (stl::distance(finish, end_of_storage) >= count)
+                {
+                    const size_type elems_after = stl::distance(pos, cend());
+
+                    if (elems_after > count)
+                    {
+                        stl::uninitialized_copy(finish - count, finish, finish);
+                        stl::copy_backward(pos, finish - count, finish);
+
+                        auto iter = pos;
+                        while (first != last)
+                            *pos++ = *first++;
+                        
+                        finish += count;
+                    }
+                    else
+                    {
+                        iterator old_finish = finish;
+                        finish += count - elems_after;
+                        stl::uninitialized_copy(pos, old_finish, finish);
+                        finish += elems_after;
+                        
+                        auto iter = pos;
+                        while (iter != old_finish)
+                            *iter = *first++;
+
+                        while (first != last)
+                            stl::construct(&*iter++, *first++);
+                    }
+                }
+
+                else
+                {
+                    const size_type old_size = size();
+                    const size_type len = old_size + max(old_size, count);
+
+                    // allocate new storage
+                    iterator new_start = data_allocator::allocate(len);
+                    iterator new_finish = new_start;
+
+                    try
+                    {
+                        /* code */
+                        new_finish = stl::uninitialized_copy(start, pos, new_start);
+                        while (first != last)
+                            stl::construct(&*new_finish++, *first++);
+                        new_finish = stl::uninitiazed_copy(pos, finish, new_finish);
+                    }
+                    catch (const std::exception &e)
+                    {
+                        stl::destroy(new_start, new_finish);
+                        data_allocator::deallocate(new_start, len);
+                        throw;
+                    }
+                    // release old storage
+                    stl::destroy(begin(), end());
+                    deallocate();
+
+                    start = new_start;
+                    finish = new_finish;
+                    end_of_storage = new_start + len;
+                }
+            }
+
+            return pos;
+        }
+
         iterator insert(const_iterator pos, std::initializer_list<T> ilist);
 
         template <typename... Args>
@@ -329,8 +397,8 @@ namespace stl
     template <typename T, typename Alloc>
     void vector<T, Alloc>::reallocate(size_type n)
     {
-        T * new_start = nullptr;
-        T * new_finish = nullptr;
+        T *new_start = nullptr;
+        T *new_finish = nullptr;
         if (n)
         {
             new_start = data_allocator::allocate(n);
@@ -369,19 +437,7 @@ namespace stl
     }
 
     template <typename T, typename Alloc>
-    template <typename InputIterator>
-    vector<T, Alloc>::vector(InputIterator first, InputIterator last)
-    {
-        start = finish = data_allocator::allocate(stl::distance(first, last));
-        while (first != last)
-            construct(finish++, *first++);
-        end_of_storage = finish;
-    }
-
-    template <typename T, typename Alloc>
-    vector<T, Alloc>::vector(std::initializer_list<T> lst) : vector(lst.begin(), lst.end())
-    {
-    }
+    vector<T, Alloc>::vector(std::initializer_list<T> lst) : vector(lst.begin(), lst.end()) {}
 
     /*
      * Assignment operation
@@ -486,7 +542,91 @@ namespace stl
     void vector<T, Alloc>::clear() noexcept
     {
         erase(begin(), end());
-        finish = start;
+    }
+
+    // insert
+    template <typename T, typename Alloc>
+    typename vector<T, Alloc>::iterator
+    vector<T, Alloc>::insert(const_iterator pos, const T &elem)
+    {
+        return insert(pos, 1, elem);
+    }
+
+    template <typename T, typename Alloc>
+    typename vector<T, Alloc>::iterator
+    vector<T, Alloc>::insert(const_iterator pos, T &&elem)
+    {
+        return insert(pos, 1, elem);
+    }
+
+    template <typename T, typename Alloc>
+    typename vector<T, Alloc>::iterator
+    vector<T, Alloc>::insert(const_iterator pos, size_type count, const T &elem)
+    {
+        if (count)
+        {
+            if (stl::distance(finish, end_of_storage) >= count)
+            {
+                const size_type elems_after = stl::distance(pos, cend());
+
+                if (elems_after > count)
+                {
+                    stl::uninitialized_copy(finish - count, finish, finish);
+                    stl::copy_backward(pos, finish - count, finish);
+                    stl::fill(pos, count, elem);
+                    finish += count;
+                }
+                else
+                {
+                    iterator old_finish = finish;
+                    finish += count;
+                    stl::uninitialized_copy(pos, old_finish, finish);
+                    finish += elems_after;
+                    stl::fill(pos, old_finish, elem);
+                    stl::uninitialized_fill(old_finish, finish - elems_after, elem);
+                }
+            }
+
+            else
+            {
+                const size_type old_size = size();
+                const size_type len = old_size + max(old_size, count);
+
+                // allocate new storage
+                iterator new_start = data_allocator::allocate(len);
+                iterator new_finish = new_start;
+
+                try
+                {
+                    /* code */
+                    new_finish = stl::uninitialized_copy(start, pos, new_start);
+                    new_finish = stl::uninitialized_fill_n(new_finish, count, elem);
+                    new_finish = stl::uninitiazed_copy(pos, finish, new_finish);
+                }
+                catch (const std::exception &e)
+                {
+                    stl::destroy(new_start, new_finish);
+                    data_allocator::deallocate(new_start, len);
+                    throw;
+                }
+                // release old storage
+                stl::destroy(begin(), end());
+                deallocate();
+
+                start = new_start;
+                finish = new_finish;
+                end_of_storage = new_start + len;
+            }
+        }
+
+        return pos;
+    }
+
+    template <typename T, typename Alloc>
+    typename vector<T, Alloc>::iterator
+    vector<T, Alloc>::insert(const_iterator pos, std::initializer_list<T> ilist)
+    {
+        return insert(pos, ilist.begin(), ilist.end());
     }
 
     /* Non-member functions */
