@@ -55,6 +55,8 @@ namespace stl
 
         void reallocate(size_type n);
 
+        iterator insert_aux(const_iterator pos, T &&elem);
+
     public:
         /*
          * constructor
@@ -266,7 +268,6 @@ namespace stl
         void clear() noexcept;
 
         // insert
-        iterator insert(const_iterator pos, const T &elem);
         iterator insert(const_iterator pos, T &&elem);
         iterator insert(const_iterator pos, size_type count, const T &elem);
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
@@ -288,7 +289,7 @@ namespace stl
                         auto iter = pos;
                         while (first != last)
                             *pos++ = *first++;
-                        
+
                         finish += count;
                     }
                     else
@@ -297,7 +298,7 @@ namespace stl
                         finish += count - elems_after;
                         stl::uninitialized_copy(pos, old_finish, finish);
                         finish += elems_after;
-                        
+
                         auto iter = pos;
                         while (iter != old_finish)
                             *iter = *first++;
@@ -351,8 +352,6 @@ namespace stl
         iterator erase(const_iterator pos);
 
         iterator erase(const_iterator first, const_iterator last);
-
-        void push_back(const T &elem);
 
         void push_back(T &&elem);
 
@@ -414,6 +413,50 @@ namespace stl
         finish = new_finish;
         if (start)
             end_of_storage = start + n;
+    }
+
+    template <typename T, typename Alloc>
+    typename vector<T, Alloc>::iterator
+    vector<T, Alloc>::insert_aux(const_iterator pos, T &&elem)
+    {
+        iterator ipos = const_cast<iterator>(pos);
+
+        if (finish != end_of_storage)
+        {
+            stl::construct(finish, *(finish - 1));
+            ++finish;
+            stl::copy_backward(ipos, finish - 2, finish - 1);
+            *ipos = std::forward<T>(elem);
+        }
+        else
+        {
+            const size_type old_size = size();
+            const size_type len = old_size ? 2 * old_size : 1;
+            auto new_start = data_allocator::allocate(len);
+            auto new_finish = new_start;
+            try
+            {
+                new_finish = stl::uninitiazed_copy(begin(), ipos, new_finish);
+                stl::construct(new_finish++, std::forward<T>(elem));
+                new_finish = stl::uninitiazed_copy(ipos, end(), new_finish);
+            }
+            catch (std::exception e)
+            {
+                stl::destroy(new_start, new_finish);
+                data_allocator::deallocate(new_start, len);
+                throw;
+            }
+
+            // release old storage
+            stl::destroy(begin(), end());
+            deallocate();
+
+            start = new_start;
+            finish = new_finish;
+            end_of_storage = finish + len;
+        }
+
+        return ipos;
     }
 
     /*
@@ -547,16 +590,9 @@ namespace stl
     // insert
     template <typename T, typename Alloc>
     typename vector<T, Alloc>::iterator
-    vector<T, Alloc>::insert(const_iterator pos, const T &elem)
-    {
-        return insert(pos, 1, elem);
-    }
-
-    template <typename T, typename Alloc>
-    typename vector<T, Alloc>::iterator
     vector<T, Alloc>::insert(const_iterator pos, T &&elem)
     {
-        return insert(pos, 1, elem);
+        return insert_aux(pos, std::forward<T>(elem));
     }
 
     template <typename T, typename Alloc>
@@ -627,6 +663,44 @@ namespace stl
     vector<T, Alloc>::insert(const_iterator pos, std::initializer_list<T> ilist)
     {
         return insert(pos, ilist.begin(), ilist.end());
+    }
+
+    template <typename T, typename Alloc>
+    template <typename... Args>
+    typename vector<T, Alloc>::iterator
+    vector<T, Alloc>::emplace(const_iterator pos, Args &&...args)
+    {
+        if (pos == end())
+            return emplace_back(std::forward<Args>(args)...);
+        else
+            return insert_aux(pos, std::forward<Args>(args)...);
+    }
+
+    template <typename T, typename Alloc>
+    typename vector<T, Alloc>::iterator
+    vector<T, Alloc>::erase(const_iterator pos)
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    typename vector<T, Alloc>::iterator
+    vector<T, Alloc>::erase(const_iterator first, const_iterator last)
+    {
+        stl::destroy(begin(), end());
+        finish = start;
+    }
+
+    template <typename T, typename Alloc>
+    void push_back(T &&elem)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    template <typename... Args>
+    typename vector<T, Alloc>::reference
+    vector<T, Alloc>::emplace_back(Args &&...args)
+    {
     }
 
     /* Non-member functions */

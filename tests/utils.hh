@@ -5,6 +5,9 @@
 #ifndef MINISTL_UTILS_HH
 #define MINISTL_UTILS_HH
 
+#include <initializer_list>
+#include <vector>
+#include <iostream>
 
 /**
  * @brief  begin end cbegin cend rbegin rend crbegin crend 
@@ -22,7 +25,6 @@ void test_iterators_by_obj(const std::initializer_list<typename Container::value
     // begin end access
     std::cout << "----test begin/end----\n";
     typename std::initializer_list<typename Container::value_type>::size_type i = 0;
-
 
     for (auto & item : c)
         assert(item == vc[i++]);
@@ -124,7 +126,6 @@ void test_iterators_by_const_obj(const std::initializer_list<typename Container:
     std::cout << "----test begin/end----\n";
 
     typename std::initializer_list<typename Container::value_type>::size_type i = 0;
-
     for (auto & item : c)
         assert(item == vc[i++]);
     assert(i == num);

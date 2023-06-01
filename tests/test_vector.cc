@@ -29,7 +29,7 @@ void test_constructors()
     n = vi2.size();
     assert(vi3.size() == n);
     for (decltype(n) i = 0; i < n; ++i)
-        assert(vi2[i] == vi3[i]);
+        assert(vi2.at(i) == vi3.at(i) && vi2[i] == vi3[i]);
 
     for_each(vi2.begin(), vi2.end(), [](int &i)
              { i <<= 1; });
@@ -136,16 +136,14 @@ void test_assignment()
     stl::vector<String> vs1{String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])};
     n = 4;
     stl::vector<String> vs2(n);
-    for (auto & s : vs2)
+    for (auto &s : vs2)
         assert(s == String());
-    
+
     vs2.assign(vs1.begin(), vs1.end());
     n = vs1.size();
     for (decltype(n) i = 0; i < n; ++i)
         assert(vs1[i] == vs2[i]);
 }
-
-
 
 void test_capacity()
 {
@@ -170,11 +168,31 @@ void test_capacity()
     assert(vs1.capacity() == n && vs1.empty());
     vs1 = {String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])};
     assert(vs1.capacity() == n && !vs1.empty());
-    
+
     // 4. shrink_to_fit
     assert(vs1.capacity() != vs1.size());
     vs1.shrink_to_fit();
     assert(vs1.capacity() == vs1.size() && vs1.size() == 5);
+}
+
+void test_modifiers()
+{
+    /* Insert */
+    stl::vector<int> vi;
+    stl::vector<complex> vc;
+    stl::vector<String> vs;
+
+    vi.insert(vi.begin(), 11);
+    vi.insert(vi.begin(), 21);
+    assert(vi.at(0) == 21);
+    assert(vi.back() == 11);
+
+
+    // clear
+    vi.clear();
+    vc.clear();
+    vs.clear();
+    assert(vi.empty() && vc.empty() && vs.empty());
 }
 
 void test_non_member_func()
@@ -200,14 +218,25 @@ void test_non_member_func()
     // assert(vi3 > vi4);
     // assert(vi3 >= vi4);
 }
+// Item glob;
+// Item * pi = &glob;
+
+// template <typename T>
+// void emplace(T &&args)
+// {
+//     *pi = std::forward<T>(args);
+// }
 
 int main()
 {
     test_constructors();
     test_assignment();
     test_capacity();
+    test_modifiers();
     test_non_member_func();
     std::cout << "Pass!\n";
+    // Item item;
+    // emplace(item);
 
     return 0;
 }
