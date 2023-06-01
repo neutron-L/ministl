@@ -30,7 +30,6 @@ int main()
     return 0;
 }
 
-
 //
 // From https://en.cppreference.com/w/cpp/algorithm/accumulate example
 //
@@ -82,18 +81,18 @@ void test_inner_product()
     vector<int> b{5, 4, 2, 3, 1};
 
     int r1 = stl::inner_product(a.begin(), a.end(), b.begin(), 0);
-std::cout << "Inner product of a and b: " << r1 << '\n';
+    std::cout << "Inner product of a and b: " << r1 << '\n';
     int r2 = stl::inner_product(a.begin(), a.end(), b.begin(), 0,
                                 std::plus<>(), std::equal_to<>());
-std::cout << "Number of pairwise matches between a and b: " <<  r2 << '\n';
+    std::cout << "Number of pairwise matches between a and b: " << r2 << '\n';
 }
 
 //
 // From https://en.cppreference.com/w/cpp/algorithm/adjacent_difference example
 //
 /* output
-Initially, v = 4 6 9 13 18 19 19 15 10 
-Modified v = 4 2 3 4 5 1 0 -4 -5 
+Initially, v = 4 6 9 13 18 19 19 15 10
+Modified v = 4 2 3 4 5 1 0 -4 -5
 Fibonacci, a = 1 1 2 3 5 8 13 21 34 55
 */
 void test_adjacent_difference()
@@ -124,23 +123,23 @@ void test_adjacent_difference()
 // From https://en.cppreference.com/w/cpp/algorithm/partial_sum example
 //
 /* output
-The first 10 even numbers are: 2 4 6 8 10 12 14 16 18 20 
+The first 10 even numbers are: 2 4 6 8 10 12 14 16 18 20
 The first 10 powers of 2 are: 2 4 8 16 32 64 128 256 512 1024
 */
 void test_partial_sum()
 {
-     std::vector<int> v(10, 2); // v = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
- 
+    std::vector<int> v(10, 2); // v = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
+
     std::cout << "The first " << v.size() << " even numbers are: ";
     // write the result to the cout stream
-    stl::partial_sum(v.cbegin(), v.cend(), 
+    stl::partial_sum(v.cbegin(), v.cend(),
                      std::ostream_iterator<int>(std::cout, " "));
     std::cout << '\n';
- 
+
     // write the result back to the vector v
     stl::partial_sum(v.cbegin(), v.cend(),
                      v.begin(), std::multiplies<int>());
- 
+
     std::cout << "The first " << v.size() << " powers of 2 are: ";
     for (int n : v)
         std::cout << n << ' ';
@@ -167,12 +166,12 @@ void test()
     // test partial_sum
     ostream_iterator<int> oite(cout, " ");
     stl::partial_sum(iv.begin(), iv.end(), oite); // 1 3 6 10 15
-    cout << endl;              
+    cout << endl;
     stl::partial_sum(iv.begin(), iv.end(), oite, minus<int>()); // 1 -1 -4 -8 -13
     cout << endl;
 
     // test adjacent_difference
-    stl::adjacent_difference(iv.begin(), iv.end(), oite);              // 1 1 1 1 1
+    stl::adjacent_difference(iv.begin(), iv.end(), oite); // 1 1 1 1 1
     cout << endl;
     stl::adjacent_difference(iv.begin(), iv.end(), oite, plus<int>()); // 1 3 5 7 9
 
