@@ -9,6 +9,8 @@
 using namespace std;
 
 const char *str[]{"one", "two", "three", "four", "five"};
+const complex cs[] {complex(1.2, 3.14), complex(0, 0), complex(9.14, 4.5), complex(4.2, 6.18)};
+
 
 void test_constructors()
 {
@@ -194,7 +196,7 @@ void test_modifiers_built_in_types()
     stl::vector<int> vi;
     static stl::vector<int>::size_type len = 5;
 
-    // 1.1 insert rvalue
+    // 1.1 insert lvalue
     stl::vector<int>::iterator iter;
     for (auto &i : arr)
     {
@@ -206,10 +208,10 @@ void test_modifiers_built_in_types()
     for (decltype(len) i = 0; i < len; ++i)
         assert(arr[i] == vi[len - 1 - i]);
 
-    // 1.2 insert lvalue
+    // 1.2 insert rvalue
 
     iter = vi.begin() + 2;
-    vi.insert(iter, 9); // 15 14 9 13 12 11
+    iter = vi.insert(iter, 9); // 15 14 9 13 12 11
     assert(vi[iter - vi.begin()] == 9);
     assert(vi[2] == 9);
     assert(to_string(vi) == "15 14 9 13 12 11 ");
@@ -232,6 +234,64 @@ void test_modifiers_built_in_types()
 
 void test_modifiers_user_defined_types()
 {
+    auto check = [](const auto & c1, const auto & c2)
+    {
+        auto len = c1.size();
+
+        for (decltype(len) i = 0; i < len; ++i)
+            assert(c1[i] == c2[i]);
+    };
+
+    stl::vector<complex> vc;
+    stl::vector<String> vs;
+
+    // 为了更方便逐步测试，使用标准库的实现作为参考
+    // 但是也意味着很多操作都要分别做两次……，属实难绷
+    std::vector<complex> rvc;
+    std::vector<String> rvs;
+
+    /* Insert */
+
+    // 1.1 insert lvalue
+    stl::vector<complex>::iterator ic;
+    std::vector<complex>::iterator ric;
+    
+    for (auto &i : cs)
+    {
+        ic = vc.insert(vc.begin(), i);
+        ric = rvc.insert(rvc.begin(), i);
+        assert(*ic == i);
+        assert(*ric == i);
+    }
+    check(vc, rvc);
+    
+
+    // 1.2 insert rvalue
+    ic = vc.begin() + 2;
+    ric = rvc.begin() + 2;
+    ic = vc.insert(ic, complex(12, 13)); 
+    ric = rvc.insert(ric, complex(12, 13)); 
+    assert(vc[ic - vc.begin()] == complex(12, 13));
+    assert(vc[2] == complex(12, 13));
+    check(vc, rvc);
+
+     // 1.3 insert n items
+    vc.insert(vc.begin() + 1, 3, complex(11, 43)); 
+    rvc.insert(rvc.begin() + 1, 3, complex(11, 43)); 
+    assert(vc[1] == complex(11, 43) && vc.at(2) == complex(11, 43) && *(vc.begin() + 3) == complex(11, 43));
+    check(vc, rvc);
+    
+
+    // 1.4 insert initializer-list
+    std::initializer_list<complex> ilst{complex(3, 2), complex(1, 0), complex(45, 9)};
+    vc.insert(vc.end() - 2, ilst); 
+    rvc.insert(rvc.end() - 2, ilst); 
+    check(vc, rvc);
+
+
+    // clear
+    vc.clear();
+    assert(vc.empty());
 }
 
 void test_non_member_func()
