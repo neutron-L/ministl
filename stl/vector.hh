@@ -55,7 +55,7 @@ namespace stl
 
         void reallocate(size_type n);
 
-        iterator insert_aux(const_iterator pos, T &&elem);
+        iterator insert_aux(const_iterator pos, T && elem);
 
     public:
         /*
@@ -127,7 +127,7 @@ namespace stl
         {
             if (pos >= size())
             {
-                error("%d is larger than size %d", pos, size());
+                error("%ld is larger than size %ld", pos, size());
                 throw new std::out_of_range("");
             }
             return *(begin() + pos);
@@ -268,27 +268,29 @@ namespace stl
         void clear() noexcept;
 
         // insert
-        iterator insert(const_iterator pos, T &&elem);
+        iterator insert(const_iterator pos,T &&elem);
+        iterator insert(const_iterator pos,const T &elem);
         iterator insert(const_iterator pos, size_type count, const T &elem);
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         iterator insert(const_iterator pos, InputIt first, InputIt last)
         {
+            iterator ipos = const_cast<iterator>(pos);
             auto count = stl::distance(first, last);
 
             if (count)
             {
                 if (stl::distance(finish, end_of_storage) >= count)
                 {
-                    const size_type elems_after = stl::distance(pos, cend());
+                    const size_type elems_after = stl::distance(ipos, end());
 
                     if (elems_after > count)
                     {
                         stl::uninitialized_copy(finish - count, finish, finish);
-                        stl::copy_backward(pos, finish - count, finish);
+                        stl::copy_backward(ipos, finish - count, finish);
 
-                        auto iter = pos;
+                        auto iter = ipos;
                         while (first != last)
-                            *pos++ = *first++;
+                            *iter++ = *first++;
 
                         finish += count;
                     }
@@ -296,12 +298,12 @@ namespace stl
                     {
                         iterator old_finish = finish;
                         finish += count - elems_after;
-                        stl::uninitialized_copy(pos, old_finish, finish);
+                        stl::uninitialized_copy(ipos, old_finish, finish);
                         finish += elems_after;
 
-                        auto iter = pos;
+                        auto iter = ipos;
                         while (iter != old_finish)
-                            *iter = *first++;
+                            *iter++ = *first++;
 
                         while (first != last)
                             stl::construct(&*iter++, *first++);
@@ -311,7 +313,7 @@ namespace stl
                 else
                 {
                     const size_type old_size = size();
-                    const size_type len = old_size + max(old_size, count);
+                    const size_type len = old_size + stl::max(old_size, (size_type)count);
 
                     // allocate new storage
                     iterator new_start = data_allocator::allocate(len);
@@ -320,10 +322,12 @@ namespace stl
                     try
                     {
                         /* code */
-                        new_finish = stl::uninitialized_copy(start, pos, new_start);
+                        new_finish = stl::uninitialized_copy(start, ipos, new_start);
+                        auto old_ipos = ipos; // save old ipos
+                        ipos = new_finish;    // update ipos
                         while (first != last)
                             stl::construct(&*new_finish++, *first++);
-                        new_finish = stl::uninitiazed_copy(pos, finish, new_finish);
+                        new_finish = stl::uninitialized_copy(old_ipos, finish, new_finish);
                     }
                     catch (const std::exception &e)
                     {
@@ -341,7 +345,7 @@ namespace stl
                 }
             }
 
-            return pos;
+            return ipos;
         }
 
         iterator insert(const_iterator pos, std::initializer_list<T> ilist);
@@ -353,6 +357,7 @@ namespace stl
 
         iterator erase(const_iterator first, const_iterator last);
 
+        void push_back(const T &elem);
         void push_back(T &&elem);
 
         template <typename... Args>
@@ -402,7 +407,7 @@ namespace stl
         {
             new_start = data_allocator::allocate(n);
             new_finish = new_start;
-            new_finish = stl::uninitiazed_copy(begin(), end(), new_finish);
+            new_finish = stl::uninitialized_copy(begin(), end(), new_finish);
         }
 
         // destroy and release old storage
@@ -421,7 +426,7 @@ namespace stl
     {
         iterator ipos = const_cast<iterator>(pos);
 
-        if (finish != end_of_storage)
+        if (finish != end_of_storage && start != nullptr)
         {
             stl::construct(finish, *(finish - 1));
             ++finish;
@@ -436,9 +441,15 @@ namespace stl
             auto new_finish = new_start;
             try
             {
-                new_finish = stl::uninitiazed_copy(begin(), ipos, new_finish);
+                if (start != nullptr)
+                    new_finish = stl::uninitialized_copy(begin(), ipos, new_finish);
+                // update ipos
+                auto old_ipos = ipos;
+                ipos = new_finish;
+
                 stl::construct(new_finish++, std::forward<T>(elem));
-                new_finish = stl::uninitiazed_copy(ipos, end(), new_finish);
+                if (start != nullptr)
+                    new_finish = stl::uninitialized_copy(old_ipos, end(), new_finish);
             }
             catch (std::exception e)
             {
@@ -453,7 +464,7 @@ namespace stl
 
             start = new_start;
             finish = new_finish;
-            end_of_storage = finish + len;
+            end_of_storage = start + len;
         }
 
         return ipos;
@@ -543,7 +554,7 @@ namespace stl
             end_of_storage = start + n;
         }
         finish = start;
-        finish = stl::uninitiazed_copy(first, last, finish);
+        finish = stl::uninitialized_copy(first, last, finish);
     }
 
     template <typename T, typename Alloc>
@@ -590,35 +601,45 @@ namespace stl
     // insert
     template <typename T, typename Alloc>
     typename vector<T, Alloc>::iterator
+    vector<T, Alloc>::insert(const_iterator pos, const T &elem)
+    {
+        T elem_copy = elem;
+        return insert_aux(pos, std::move(elem_copy));
+    }
+
+    template <typename T, typename Alloc>
+    typename vector<T, Alloc>::iterator
     vector<T, Alloc>::insert(const_iterator pos, T &&elem)
     {
-        return insert_aux(pos, std::forward<T>(elem));
+        return insert_aux(pos, std::move(elem));
     }
 
     template <typename T, typename Alloc>
     typename vector<T, Alloc>::iterator
     vector<T, Alloc>::insert(const_iterator pos, size_type count, const T &elem)
     {
+        iterator ipos = const_cast<iterator>(pos);
+
         if (count)
         {
-            if (stl::distance(finish, end_of_storage) >= count)
+            if (finish && stl::distance(finish, end_of_storage) >= count)
             {
-                const size_type elems_after = stl::distance(pos, cend());
+                const size_type elems_after = stl::distance(ipos, end());
 
                 if (elems_after > count)
                 {
                     stl::uninitialized_copy(finish - count, finish, finish);
-                    stl::copy_backward(pos, finish - count, finish);
-                    stl::fill(pos, count, elem);
+                    stl::copy_backward(ipos, finish - count, finish);
+                    stl::fill_n(ipos, count, elem);
                     finish += count;
                 }
                 else
                 {
                     iterator old_finish = finish;
                     finish += count;
-                    stl::uninitialized_copy(pos, old_finish, finish);
+                    stl::uninitialized_copy(ipos, old_finish, finish);
                     finish += elems_after;
-                    stl::fill(pos, old_finish, elem);
+                    stl::fill(ipos, old_finish, elem);
                     stl::uninitialized_fill(old_finish, finish - elems_after, elem);
                 }
             }
@@ -635,9 +656,13 @@ namespace stl
                 try
                 {
                     /* code */
-                    new_finish = stl::uninitialized_copy(start, pos, new_start);
+                    if (finish)
+                        new_finish = stl::uninitialized_copy(start, ipos, new_start);
+                    auto old_ipos = ipos;
+                    ipos = new_finish;
                     new_finish = stl::uninitialized_fill_n(new_finish, count, elem);
-                    new_finish = stl::uninitiazed_copy(pos, finish, new_finish);
+                    if (finish)
+                        new_finish = stl::uninitialized_copy(old_ipos, finish, new_finish);
                 }
                 catch (const std::exception &e)
                 {
@@ -655,7 +680,7 @@ namespace stl
             }
         }
 
-        return pos;
+        return ipos;
     }
 
     template <typename T, typename Alloc>
@@ -689,6 +714,8 @@ namespace stl
     {
         stl::destroy(begin(), end());
         finish = start;
+
+        return const_cast<iterator>(first);
     }
 
     template <typename T, typename Alloc>

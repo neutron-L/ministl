@@ -175,24 +175,63 @@ void test_capacity()
     assert(vs1.capacity() == vs1.size() && vs1.size() == 5);
 }
 
-void test_modifiers()
+void test_modifiers_built_in_types()
 {
+    auto to_string = [](const auto & container)
+    {
+        std::string res;
+        for (auto & v : container)
+        {
+            res += std::to_string(v);
+            res += ' ';
+        }
+
+        return res;
+    };
+
+    static int arr[] = {11, 12, 13, 14, 15};
     /* Insert */
     stl::vector<int> vi;
-    stl::vector<complex> vc;
-    stl::vector<String> vs;
+    static stl::vector<int>::size_type len = 5;
 
-    vi.insert(vi.begin(), 11);
-    vi.insert(vi.begin(), 21);
-    assert(vi.at(0) == 21);
-    assert(vi.back() == 11);
+    // 1.1 insert rvalue
+    stl::vector<int>::iterator iter;
+    for (auto &i : arr)
+    {
+        iter = vi.insert(vi.begin(), i);
+        assert(*iter == i);
+    }
+    // 15 14 13 12 11
 
+    for (decltype(len) i = 0; i < len; ++i)
+        assert(arr[i] == vi[len - 1 - i]);
+
+    // 1.2 insert lvalue
+
+    iter = vi.begin() + 2;
+    vi.insert(iter, 9); // 15 14 9 13 12 11
+    assert(vi[iter - vi.begin()] == 9);
+    assert(vi[2] == 9);
+    assert(to_string(vi) == "15 14 9 13 12 11 ");
+
+    // 1.3 insert n items
+    vi.insert(vi.begin() + 1, 3, 88); // 15 88 88 88 14 9 13 12 11
+    assert(vi[1] == 88 && vi.at(2) == 88 && *(vi.begin() + 3) == 88);
+    
+
+    assert(to_string(vi) == "15 88 88 88 14 9 13 12 11 ");
+    
+    // 1.4 insert initializer-list
+    vi.insert(vi.end() - 2, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
+    assert(to_string(vi) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
 
     // clear
     vi.clear();
-    vc.clear();
-    vs.clear();
-    assert(vi.empty() && vc.empty() && vs.empty());
+    assert(vi.empty());
+}
+
+void test_modifiers_user_defined_types()
+{
 }
 
 void test_non_member_func()
@@ -232,7 +271,8 @@ int main()
     test_constructors();
     test_assignment();
     test_capacity();
-    test_modifiers();
+    test_modifiers_built_in_types();
+    test_modifiers_user_defined_types();
     test_non_member_func();
     std::cout << "Pass!\n";
     // Item item;
