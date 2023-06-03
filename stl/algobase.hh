@@ -61,6 +61,7 @@ namespace stl
     template <typename BidirIt1, typename BidirIt2>
     BidirIt2 copy_backward(BidirIt1 first, BidirIt1 last, BidirIt2 d_last)
     {
+        return std::copy_backward(first, last, d_last);
     }
 
     template <typename InputIt, typename Size, typename OutputIt>
