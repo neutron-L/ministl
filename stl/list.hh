@@ -26,12 +26,71 @@ namespace stl
 
         using difference_type = std::ptrdiff_t;
         using iterator_category = stl::bidirectional_iterator_tag;
-        
+
         using value_type = T;
         using pointer = value_type *;
         using reference = value_type &;
 
-        Node * node;
+        list_iterator()=default;
+
+        explicit 
+        list_iterator(list_node * n) : node(n) {}
+
+        reference
+        operator*() const
+        {
+            return node->data;
+        }
+
+        pointer
+        operator->() const
+        {
+            return &(operator*());
+        }
+
+        Self &
+        operator++()
+        {
+            node = node->next;
+            return *this;
+        }
+
+        Self 
+        operator++(int)
+        {
+            Self temp = *this;
+            node = node->next;
+            return temp;
+        }
+
+        Self &
+        operator--()
+        {
+            node = node->prev;
+            return *this;
+        }
+
+        Self 
+        operator--(int)
+        {
+            Self temp = *this;
+            node = node->prev;
+            return temp;
+        }
+
+        friend bool
+        operator==(const Self & lhs, const Self & rhs)
+        {
+            return lhs.node == rhs.node;
+        }
+
+        friend bool
+        operator!=(const Self & lhs, const Self & rhs)
+        {
+            return lhs.node != rhs.node;
+        }
+
+        Node * node{};
     };
 
     template <typename T, typename Alloc = alloc>
