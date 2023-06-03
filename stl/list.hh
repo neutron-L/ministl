@@ -221,6 +221,10 @@ namespace stl
 
     public:
         /* Member functions */
+
+        /*
+         *  constructor
+         * */
         list() = default;
 
         explicit list(size_type count, const T &value = T());
@@ -232,16 +236,16 @@ namespace stl
         list(std::initializer_list<T> init);
 
         /*
-         *  constructor
-         * */
-
-        /*
          *  destructor
          * */
+        ~list();
 
         /*
          * assignment operation
          * */
+        list & operator=(const list & other);
+        list & operator=(list && other) noexcept;
+        list & operator=(std::initializer_list<T> ilist);
     };
 
 } // namespace stl
