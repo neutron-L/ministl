@@ -55,7 +55,7 @@ namespace stl
 
         void reallocate(size_type n);
 
-        iterator insert_aux(const_iterator pos, T && elem);
+        iterator insert_aux(const_iterator pos, T &&elem);
 
     public:
         /*
@@ -268,8 +268,8 @@ namespace stl
         void clear() noexcept;
 
         // insert
-        iterator insert(const_iterator pos,T &&elem);
-        iterator insert(const_iterator pos,const T &elem);
+        iterator insert(const_iterator pos, T &&elem);
+        iterator insert(const_iterator pos, const T &elem);
         iterator insert(const_iterator pos, size_type count, const T &elem);
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         iterator insert(const_iterator pos, InputIt first, InputIt last)
@@ -428,10 +428,18 @@ namespace stl
 
         if (finish != end_of_storage && start != nullptr)
         {
-            stl::construct(finish, *(finish - 1));
-            ++finish;
-            stl::copy_backward(ipos, finish - 2, finish - 1);
-            *ipos = std::forward<T>(elem);
+            if (ipos == finish)
+            {
+                stl::construct(finish, std::move(elem));
+                ++finish;
+            }
+            else
+            {
+                stl::construct(finish, *(finish - 1));
+                ++finish;
+                stl::copy_backward(ipos, finish - 2, finish - 1);
+                *ipos = std::forward<T>(elem);
+            }
         }
         else
         {
@@ -563,14 +571,6 @@ namespace stl
         assign(lst.begin(), lst.end());
     }
 
-    template <typename T, typename Alloc>
-    void vector<T, Alloc>::swap(vector<T, Alloc> &other) noexcept
-    {
-        stl::swap(start, other.start);
-        stl::swap(finish, other.finish);
-        stl::swap(end_of_storage, other.end_of_storage);
-    }
-
     /*
      * Capacity
      * */
@@ -695,32 +695,60 @@ namespace stl
     typename vector<T, Alloc>::iterator
     vector<T, Alloc>::emplace(const_iterator pos, Args &&...args)
     {
-        if (pos == end())
-            return emplace_back(std::forward<Args>(args)...);
-        else
-            return insert_aux(pos, std::forward<Args>(args)...);
+        T elem(std::forward<Args>(args)...);
+        return insert_aux(pos, std::move(elem));
     }
 
     template <typename T, typename Alloc>
     typename vector<T, Alloc>::iterator
     vector<T, Alloc>::erase(const_iterator pos)
     {
+        iterator ipos = const_cast<iterator>(pos);
 
+        stl::copy(ipos + 1, finish, ipos);
+        --finish;
+        stl::destroy(finish);
+
+        return ipos;
     }
 
     template <typename T, typename Alloc>
     typename vector<T, Alloc>::iterator
     vector<T, Alloc>::erase(const_iterator first, const_iterator last)
     {
-        stl::destroy(begin(), end());
-        finish = start;
+        iterator f = const_cast<iterator>(first);
+        iterator l = const_cast<iterator>(last);
+        auto i = stl::copy(l, finish, f);
+        stl::destroy(i, finish);
+        finish = finish - stl::distance(first, last);
 
-        return const_cast<iterator>(first);
+        return f;
     }
 
     template <typename T, typename Alloc>
-    void push_back(T &&elem)
+    void
+    vector<T, Alloc>::push_back(const T &elem)
     {
+        if (finish != end_of_storage)
+        {
+            stl::construct(finish, elem);
+            ++finish;
+        }
+        else
+            (void)insert_aux(end(), elem);
+    }
+
+    template <typename T, typename Alloc>
+    void
+    vector<T, Alloc>::push_back(T &&elem)
+    {
+        if (finish != end_of_storage)
+        {
+            stl::construct(finish, std::move(elem));
+            ++finish;
+        }
+        else
+            (void)insert_aux(end(), std::move(elem));
     }
 
     template <typename T, typename Alloc>
@@ -728,6 +756,83 @@ namespace stl
     typename vector<T, Alloc>::reference
     vector<T, Alloc>::emplace_back(Args &&...args)
     {
+        if (finish != end_of_storage)
+        {
+            stl::construct(finish, std::forward<Args>(args)...);
+            ++finish;
+        }
+        else
+        {
+            T elem(std::forward<Args>(args)...);
+            (void)insert_aux(end(), std::move(elem));
+        }
+        return *end();
+    }
+
+    template <typename T, typename Alloc>
+    void
+    vector<T, Alloc>::pop_back()
+    {
+        --finish;
+        stl::destroy(finish);
+    }
+
+    template <typename T, typename Alloc>
+    void
+    vector<T, Alloc>::resize(size_type size)
+    {
+        resize(size, T());
+    }
+
+    template <typename T, typename Alloc>
+    void
+    vector<T, Alloc>::resize(size_type size, const value_type &elem)
+    {
+        const size_type s = this->size();
+
+        if (size > s)
+        {
+            // whether or not need to allocate more storage space
+            if (size > capacity())
+            {
+                auto new_start = data_allocator::allocate(size);
+                auto new_finish = new_start;
+
+                try
+                {
+                    if (start)
+                        new_finish = stl::uninitialized_copy(start, finish, new_start);
+                }
+                catch (const std::exception &e)
+                {
+                    stl::destroy(new_start, new_finish);
+                    data_allocator::deallocate(new_start, size);
+
+                    throw;
+                }
+                start = new_start;
+                finish = new_finish;
+                end_of_storage = start + size;
+            }
+
+            stl::uninitialized_fill(finish, start + size, elem);
+            finish = start + size;
+        }
+        else if (size < s)
+        {
+            auto old_finish = finish;
+            finish = start + size;
+            stl::destroy(finish, old_finish);
+        }
+    }
+
+    template <typename T, typename Alloc>
+    void
+    vector<T, Alloc>::swap(vector &other) noexcept
+    {
+        stl::swap(start, other.start);
+        stl::swap(finish, other.finish);
+        stl::swap(end_of_storage, other.end_of_storage);
     }
 
     /* Non-member functions */

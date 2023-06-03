@@ -9,8 +9,7 @@
 using namespace std;
 
 const char *str[]{"one", "two", "three", "four", "five"};
-const complex cs[] {complex(1.2, 3.14), complex(0, 0), complex(9.14, 4.5), complex(4.2, 6.18)};
-
+const complex cs[]{complex(1.2, 3.14), complex(0, 0), complex(9.14, 4.5), complex(4.2, 6.18)};
 
 void test_constructors()
 {
@@ -179,10 +178,12 @@ void test_capacity()
 
 void test_modifiers_built_in_types()
 {
-    auto to_string = [](const auto & container)
+    printf("=============%s=================\n", __FUNCTION__);
+
+    auto to_string = [](const auto &container)
     {
         std::string res;
-        for (auto & v : container)
+        for (auto &v : container)
         {
             res += std::to_string(v);
             res += ' ';
@@ -219,10 +220,9 @@ void test_modifiers_built_in_types()
     // 1.3 insert n items
     vi.insert(vi.begin() + 1, 3, 88); // 15 88 88 88 14 9 13 12 11
     assert(vi[1] == 88 && vi.at(2) == 88 && *(vi.begin() + 3) == 88);
-    
 
     assert(to_string(vi) == "15 88 88 88 14 9 13 12 11 ");
-    
+
     // 1.4 insert initializer-list
     vi.insert(vi.end() - 2, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
     assert(to_string(vi) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
@@ -232,10 +232,13 @@ void test_modifiers_built_in_types()
     assert(vi.empty());
 }
 
-void test_modifiers_user_defined_types()
+void test_modifiers_complex()
 {
-    auto check = [](const auto & c1, const auto & c2)
+    printf("=============%s=================\n", __FUNCTION__);
+    std::cout << "-----------complex------------\n";
+    auto check = [](const auto &c1, const auto &c2)
     {
+        assert(c1.size() == c2.size());
         auto len = c1.size();
 
         for (decltype(len) i = 0; i < len; ++i)
@@ -243,19 +246,17 @@ void test_modifiers_user_defined_types()
     };
 
     stl::vector<complex> vc;
-    stl::vector<String> vs;
 
     // 为了更方便逐步测试，使用标准库的实现作为参考
     // 但是也意味着很多操作都要分别做两次……，属实难绷
     std::vector<complex> rvc;
-    std::vector<String> rvs;
 
     /* Insert */
 
     // 1.1 insert lvalue
     stl::vector<complex>::iterator ic;
     std::vector<complex>::iterator ric;
-    
+
     for (auto &i : cs)
     {
         ic = vc.insert(vc.begin(), i);
@@ -264,67 +265,138 @@ void test_modifiers_user_defined_types()
         assert(*ric == i);
     }
     check(vc, rvc);
-    
 
     // 1.2 insert rvalue
     ic = vc.begin() + 2;
     ric = rvc.begin() + 2;
-    ic = vc.insert(ic, complex(12, 13)); 
-    ric = rvc.insert(ric, complex(12, 13)); 
+    ic = vc.insert(ic, complex(12, 13));
+    ric = rvc.insert(ric, complex(12, 13));
     assert(vc[ic - vc.begin()] == complex(12, 13));
     assert(vc[2] == complex(12, 13));
     check(vc, rvc);
 
-     // 1.3 insert n items
-    vc.insert(vc.begin() + 1, 3, complex(11, 43)); 
-    rvc.insert(rvc.begin() + 1, 3, complex(11, 43)); 
+    // 1.3 insert n items
+    vc.insert(vc.begin() + 1, 3, complex(11, 43));
+    rvc.insert(rvc.begin() + 1, 3, complex(11, 43));
     assert(vc[1] == complex(11, 43) && vc.at(2) == complex(11, 43) && *(vc.begin() + 3) == complex(11, 43));
     check(vc, rvc);
-    
 
     // 1.4 insert initializer-list
     std::initializer_list<complex> ilst{complex(3, 2), complex(1, 0), complex(45, 9)};
-    vc.insert(vc.end() - 2, ilst); 
-    rvc.insert(rvc.end() - 2, ilst); 
+    vc.insert(vc.end() - 2, ilst);
+    rvc.insert(rvc.end() - 2, ilst);
+    check(vc, rvc);
+
+    // 1.5 clear
+    vc.clear();
+    rvc.clear();
+    assert(vc.empty());
+
+    // 1.6 emplace
+    ic = vc.emplace(vc.begin(), 12, 3.14);
+    ric = rvc.emplace(rvc.begin(), 12, 3.14);
+    check(vc, rvc);
+
+    ic = vc.emplace(vc.end(), 1.2, 3.14);
+    ric = rvc.emplace(rvc.end(), 1.2, 3.14);
+    ic = vc.emplace(ic, complex(0, 1));
+    ric = rvc.emplace(ric, complex(0, 1));
+    check(vc, rvc);
+    assert(*ic == *ric);
+
+    // 1.7 push/emplace back
+    for (int i = 0; i < 15; ++i)
+    {
+        vc.push_back(complex(i, i+1));
+        rvc.push_back(complex(i, i+1));
+    }
+    check(vc, rvc);
+
+    for (int i = 0; i < 15; ++i)
+    {
+        vc.emplace_back(i, i+1);
+        rvc.emplace_back(i, i+1);
+    }
+    check(vc, rvc);
+
+    // 1.8 pop back
+    for (int i = 0; i < 10; ++i)
+    {
+        vc.pop_back();
+        rvc.pop_back();
+    }
     check(vc, rvc);
 
 
-    // clear
-    vc.clear();
-    assert(vc.empty());
+    // 1.9 erase
+    for (int i = 0; i < 5; ++i)
+    {
+        vc.erase(vc.end() - 1);
+        rvc.erase(rvc.end() - 1);
+    }
+    check(vc, rvc);
+    ic = vc.end() - 5;
+    ric = rvc.end() - 5;
+    vc.erase(ic, vc.end());
+    rvc.erase(ric, rvc.end());
+    check(vc, rvc);
+
+    // 1.10 resize
+    auto size= rvc.size();
+    vc.resize(size + 10);
+    rvc.resize(size + 10);
+    check(vc, rvc);
+    vc.resize(size - 10);
+    rvc.resize(size - 10);
+    check(vc, rvc);
+
+    vc.resize(0);
+    rvc.resize(0);
+    check(vc, rvc);
+    vc.resize(10, complex(1, 9));
+    rvc.resize(10, complex(1, 9));
+    check(vc, rvc);
+
+    std::cout << "-----------end---------------\n";
+}
+
+void test_modifiers_string()
+{
+    printf("=============%s=================\n", __FUNCTION__);
+
+    stl::vector<String> vs;
+
+    vs.emplace(vs.end(), "Hello");
+    vs.emplace_back(String("world"));
+    vs.resize(4, String("and new"));
+
+    assert(vs.size() == 4);
+    vs.emplace(vs.begin() + 2, "exit");
+    for (auto & i : vs)
+        std::cout << i.get_c_str() << '*';
+    std::cout << endl;
+    std::cout << "after 2 pop back\n";
+    vs.pop_back();
+    vs.pop_back();
+    for (auto & i : vs)
+        std::cout << i.get_c_str() << '*';
+    assert(vs.size() == 3);
+    std::cout << endl;
+    
+    vs.erase(vs.begin(), vs.end() - 1);
+    cout << "after erase [0, -1)\n";
+    for (auto & i : vs)
+        std::cout << i.get_c_str() << '*';
+    std::cout << endl;
+    assert(vs.size() == 1);
+    
+    std::cout << "-----------end---------------\n";
 }
 
 void test_non_member_func()
 {
     printf("=============%s=================\n", __FUNCTION__);
-    // stl::vector<int> vi1{1,3,5,6,7};
-    // stl::vector<int> vi2{1,3,5,6,7};
-    // assert(vi1 == vi2);
-    // assert(vi1 == vi1);
-    // assert(vi1 >= vi1);
-    // assert(vi1 <= vi1);
-    // vi1.back() = 6;
-    // assert(vi1 != vi2);
-    // assert(vi1 < vi2);
-    // assert(vi1 <= vi2);
-
-    // stl::vector<int> vi3{1,3,5};
-    // stl::vector<int> vi4{1,3,5,6,7};
-    // assert(vi3 != vi4);
-    // assert(vi3 < vi4);
-    // assert(vi3 <= vi4);
-    // vi3[0] = 12;
-    // assert(vi3 > vi4);
-    // assert(vi3 >= vi4);
 }
-// Item glob;
-// Item * pi = &glob;
-
-// template <typename T>
-// void emplace(T &&args)
-// {
-//     *pi = std::forward<T>(args);
-// }
 
 int main()
 {
@@ -332,11 +404,10 @@ int main()
     test_assignment();
     test_capacity();
     test_modifiers_built_in_types();
-    test_modifiers_user_defined_types();
+    test_modifiers_complex();
+    test_modifiers_string();
     test_non_member_func();
     std::cout << "Pass!\n";
-    // Item item;
-    // emplace(item);
 
     return 0;
 }
