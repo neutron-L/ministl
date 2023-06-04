@@ -420,42 +420,42 @@ namespace stl
     list<T, Alloc>::reverse_iterator 
     list<T, Alloc>::rbegin() noexcept
     {
-
+        return reverse_iterator(end());
     }
 
     template <typename T, typename Alloc>
     list<T, Alloc>::const_reverse_iterator 
     list<T, Alloc>::rbegin() const noexcept
     {
-
+        return const_reverse_iterator(end());
     }
 
     template <typename T, typename Alloc>
     list<T, Alloc>::const_reverse_iterator 
     list<T, Alloc>::crbegin() const noexcept
     {
-
+        return const_reverse_iterator(end());
     }
 
     template <typename T, typename Alloc>
     list<T, Alloc>::reverse_iterator 
     list<T, Alloc>::rend() noexcept
     {
-
+        return reverse_iterator(begin());
     }
 
     template <typename T, typename Alloc>
     list<T, Alloc>::const_reverse_iterator 
     list<T, Alloc>::rend() const noexcept
     {
-
+        return const_reverse_iterator(begin());
     }
 
     template <typename T, typename Alloc>
     list<T, Alloc>::const_reverse_iterator 
     list<T, Alloc>::crend() const noexcept
     {
-        
+        return const_reverse_iterator(begin());
     }
 
 } // namespace stl
