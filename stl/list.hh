@@ -246,7 +246,217 @@ namespace stl
         list & operator=(const list & other);
         list & operator=(list && other) noexcept;
         list & operator=(std::initializer_list<T> ilist);
+    
+        void assign(size_type count, const value_type & value);
+        template<typename InputIt>
+        void assign(InputIt first, InputIt last);
+
+        void assign(std::initializer_list<T> ilist);
+
+        allocator_type get_allocator() const noexcept
+        {
+            return list_node_allocator;
+        }
+
+        /* 
+         * Element access 
+         * */
+        reference front();
+        const_reference front() const;
+
+        reference back();
+        const_reference back() const;
+
+        /* 
+         * Iterator 
+         * */
+        iterator begin() noexcept;
+        const_iterator begin() const noexcept;
+        const_iterator cbegin() const noexcept;
+
+        iterator end() noexcept;
+        const_iterator end() const noexcept;
+        const_iterator cend() const noexcept;
+
+        reverse_iterator rbegin() noexcept;
+        const_reverse_iterator rbegin() const noexcept;
+        const_reverse_iterator crbegin() const noexcept;
+
+        reverse_iterator rend() noexcept;
+        const_reverse_iterator rend() const noexcept;
+        const_reverse_iterator crend() const noexcept;
+
+        /* 
+         * Capacity 
+         * */
+        bool empty() const noexcept;
+        size_type size() const noexcept;
+        size_type max_size() const noexcept;
+
+        /*
+         * Modifiers
+         * */
+        void clear() noexcept;
+
+        iterator insert(const_iterator pos, const value_type & value);
+
     };
+
+     /*
+      *  constructor
+      * */
+    template <typename T, typename Alloc>
+    list<T, Alloc>::list(size_type count, const T &value = T())
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    template <typename InputIt>
+    list<T, Alloc>::list(InputIt first, InputIt last)
+    {
+
+    }
+
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::list(const list &other)
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::list(list &&other)
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::list(std::initializer_list<T> init)
+    {
+
+    }
+
+    /* 
+     * Element access 
+     * */
+    template <typename T, typename Alloc>
+    list<T, Alloc>::reference 
+    list<T, Alloc>::front()
+    {
+        return const_cast<reference>(const_cast<const list&>(*this).front());
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_reference 
+    list<T, Alloc>::front() const
+    {
+        return *begin();
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::reference 
+    list<T, Alloc>::back()
+    {
+        return const_cast<reference>(const_cast<const list&>(*this).back());
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_reference 
+    list<T, Alloc>::back() const
+    {
+        return *(--end());
+    }
+
+    /* 
+     * Iterator 
+     * */
+    template <typename T, typename Alloc>
+    list<T, Alloc>::iterator 
+    list<T, Alloc>::begin() noexcept
+    {
+        return const_cast<iterator>(const_cast<const list &>(*this).begin());
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_iterator 
+    list<T, Alloc>::begin() const noexcept
+    {
+        return const_iterator(head->next);
+    }
+    
+    
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_iterator 
+    list<T, Alloc>::cbegin() const noexcept
+    {
+        return const_iterator(head->next);
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::iterator 
+    list<T, Alloc>::end() noexcept
+    {
+        return const_cast<iterator>(const_cast<const list &>(*this).begin());
+    }
+
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_iterator 
+    list<T, Alloc>::end() const noexcept
+    {
+        return const_iterator(head);
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_iterator 
+    list<T, Alloc>::cend() const noexcept
+    {
+        return const_iterator(head);
+    }
+
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::reverse_iterator 
+    list<T, Alloc>::rbegin() noexcept
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_reverse_iterator 
+    list<T, Alloc>::rbegin() const noexcept
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_reverse_iterator 
+    list<T, Alloc>::crbegin() const noexcept
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::reverse_iterator 
+    list<T, Alloc>::rend() noexcept
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_reverse_iterator 
+    list<T, Alloc>::rend() const noexcept
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::const_reverse_iterator 
+    list<T, Alloc>::crend() const noexcept
+    {
+        
+    }
 
 } // namespace stl
 
