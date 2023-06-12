@@ -235,7 +235,7 @@ namespace stl
         explicit list(size_type count, const T &value = T());
 
         template <typename InputIterator, typename = std::_RequireInputIter<InputIterator>>
-        list(InputIt first, InputIt last)
+        list(InputIt first, InputIt last) : head(new Node())
         {
             while (first != last)
                 insert(end(), *first++);
@@ -324,7 +324,7 @@ namespace stl
       *  constructor
       * */
     template <typename T, typename Alloc>
-    list<T, Alloc>::list(size_type count, const T &value = T())
+    list<T, Alloc>::list(size_type count, const T &value = T()) : head(new Node())
     {
         while (count--)
         {
@@ -336,21 +336,20 @@ namespace stl
 
 
     template <typename T, typename Alloc>
-    list<T, Alloc>::list(const list &other)
+    list<T, Alloc>::list(const list &other) : head(other.head)
     {
-
+        other.head = nullptr;
     }
 
     template <typename T, typename Alloc>
-    list<T, Alloc>::list(list &&other)
+    list<T, Alloc>::list(list &&other) : head(other.head)
     {
-
+        other.head = nullptr;
     }
 
     template <typename T, typename Alloc>
-    list<T, Alloc>::list(std::initializer_list<T> init)
+    list<T, Alloc>::list(std::initializer_list<T> init) : list(init.begin(), init.end())
     {
-
     }
 
     /*
