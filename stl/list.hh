@@ -380,14 +380,17 @@ namespace stl
     list<T, Alloc> & 
     list<T, Alloc>::operator=(std::initializer_list<T> ilist)
     {
-
+        this->assign(ilist.begin(), ilist.end());
+        return *this;
     }
 
     template <typename T, typename Alloc>
     void 
     list<T, Alloc>::assign(size_type count, const value_type & value)
     {
-
+        erase(bein(), end());
+        while (count--)
+            insert(end(), value);
     }
 
     
@@ -395,7 +398,8 @@ namespace stl
     void 
     list<T, Alloc>::assign(std::initializer_list<T> ilist)
     {
-        
+        this->assign(other.begin(), other.end());
+        return *this;
     }
 
     /* 
