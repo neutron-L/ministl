@@ -14,9 +14,14 @@ namespace stl
     template <typename T>
     struct list_node
     {
-        list_node *prev;
-        list_node *next;
-        T data;
+        list_node *prev{};
+        list_node *next{};
+        T data{};
+
+        list_node() 
+        {
+            prev = next = this;
+        }
     };
 
     /* list iterator, contain a pointer to node */
@@ -193,7 +198,7 @@ namespace stl
     protected:
         using Node = list_node<T>;
         using link_type = Node *;
-        link_type head;
+        link_type head{};
 
         using list_node_allocator = simple_alloc<Node, Alloc>;
 
@@ -225,12 +230,17 @@ namespace stl
         /*
          *  constructor
          * */
-        list() = default;
+        list() : head(new Node());
 
         explicit list(size_type count, const T &value = T());
 
-        template <typename InputIt>
-        list(InputIt first, InputIt last);
+        template <typename InputIterator, typename = std::_RequireInputIter<InputIterator>>
+        list(InputIt first, InputIt last)
+        {
+            while (first != last)
+                insert(end(), *first++);
+        }
+
         list(const list &other);
         list(list &&other);
         list(std::initializer_list<T> init);
@@ -248,8 +258,16 @@ namespace stl
         list & operator=(std::initializer_list<T> ilist);
     
         void assign(size_type count, const value_type & value);
-        template<typename InputIt>
-        void assign(InputIt first, InputIt last);
+
+        template <typename T, typename Alloc>
+        template<typename InputIt, typename = std::_RequireInputIter<InputIt>>
+        void 
+        list<T, Alloc>::assign(InputIt first, InputIt last)
+        {
+            erase(bein(), end());
+            while (first != last)
+                insert(end(), *first++);
+        }
 
         void assign(std::initializer_list<T> ilist);
 
@@ -308,15 +326,13 @@ namespace stl
     template <typename T, typename Alloc>
     list<T, Alloc>::list(size_type count, const T &value = T())
     {
-
+        while (count--)
+        {
+            /* code */
+            insert(end(), value);
+        }
     }
 
-    template <typename T, typename Alloc>
-    template <typename InputIt>
-    list<T, Alloc>::list(InputIt first, InputIt last)
-    {
-
-    }
 
 
     template <typename T, typename Alloc>
@@ -335,6 +351,52 @@ namespace stl
     list<T, Alloc>::list(std::initializer_list<T> init)
     {
 
+    }
+
+    /*
+     * assignment operation
+     * */
+    template <typename T, typename Alloc>
+    list<T, Alloc> & 
+    list<T, Alloc>::operator=(const list & other)
+    {
+        this->assign(other.begin(), other.end());
+        return *this;
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc> & 
+    list<T, Alloc>::operator=(list && other) noexcept
+    {
+        // release old storage
+        erase(begin(), end());
+
+        head = other.head;
+        other.head = nullptr;
+
+        return *this;
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc> & 
+    list<T, Alloc>::operator=(std::initializer_list<T> ilist)
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    void 
+    list<T, Alloc>::assign(size_type count, const value_type & value)
+    {
+
+    }
+
+    
+    template <typename T, typename Alloc>
+    void 
+    list<T, Alloc>::assign(std::initializer_list<T> ilist)
+    {
+        
     }
 
     /* 
