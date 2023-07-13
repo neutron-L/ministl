@@ -5,7 +5,7 @@ BIN = bin
 CXX = g++
 CFLAGS = -I$(IDIR) -DDEBUG -O0 -g -Wall -std=c++17
 STL = stl
-PROGRAM = test_traits test_construct test_iterator test_array test_vector test_numeric
+PROGRAM = test_traits test_construct test_iterator test_array test_vector test_numeric test_list
 BIN = bin
 
 all: $(PROGRAM)
@@ -26,6 +26,10 @@ test_array: $(TEST)/test_array.cc $(STL)/array.hh $(STL)/string.hh $(STL)/comple
 
 	
 test_vector: $(TEST)/test_vector.cc $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
+	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
+
+	
+test_list: $(TEST)/test_list.cc $(STL)/list.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 
