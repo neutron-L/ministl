@@ -41,8 +41,8 @@ namespace stl
 
         list_iterator() = default;
 
-        explicit list_iterator(const list_node<T> *n) 
-        : node(const_cast<Node *>(n)) {}
+        explicit list_iterator(const list_node<T> *n)
+            : node(const_cast<Node *>(n)) {}
 
         reference
         operator*() const
@@ -222,7 +222,6 @@ namespace stl
 
         void put_node(link_type p) { list_node_allocator::deallocate(p); }
 
-
         void destroy_node(link_type p)
         {
             stl::destroy(&p->data);
@@ -380,9 +379,22 @@ namespace stl
         iterator insert(const_iterator pos, value_type &&value);
         iterator insert(const_iterator pos, size_type count, const value_type &value);
 
-        template <class InputIt>
-        iterator insert(const_iterator pos, InputIt first, InputIt last);
-        template <class InputIt>
+        template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
+        iterator insert(const_iterator pos, InputIt first, InputIt last)
+        {
+            iterator it = iterator(pos.node);
+
+            while (first != last)
+            {
+                it = insert(pos, *first).node;
+                pos = const_iterator(it);
+
+                ++first;
+            }
+
+            return it;
+        }
+
         iterator insert(const_iterator pos, std::initializer_list<value_type> ilist);
 
         template <class... Args>
@@ -413,8 +425,6 @@ namespace stl
         void swap(list &other) noexcept;
     };
 
-
-
     /*
      *  constructor
      * */
@@ -431,7 +441,6 @@ namespace stl
     list<T, Alloc>::list(const list &other)
     {
         empty_initialize();
-
 
         // 1.首先逐个节点赋值
         auto bg = begin();
@@ -456,7 +465,7 @@ namespace stl
         }
         else if (bg != ed) // 如果有多余节点则释放掉
             erase(const_iterator(bg), const_iterator(ed));
-        
+
         // update number of nodes
         num_of_nodes = other.num_of_nodes;
     }
@@ -467,7 +476,7 @@ namespace stl
         empty_initialize();
 
         transfer(end(), other.begin(), other.end());
-        
+
         num_of_nodes = other.num_of_nodes;
         other.num_of_nodes = 0;
     }
@@ -478,8 +487,8 @@ namespace stl
     }
 
     /*
-         *  destructor
-         * */
+     *  destructor
+     * */
     template <typename T, typename Alloc>
     list<T, Alloc>::~list()
     {
@@ -487,7 +496,6 @@ namespace stl
         put_node(head);
         num_of_nodes = 0;
     }
-
 
     /*
      * assignment operation
@@ -506,11 +514,11 @@ namespace stl
     {
         // Free old storage
         clear();
-        
+
         transfer(end(), other.begin(), other.end());
 
         num_of_nodes = other.num_of_nodes;
-        other.num_of_nodes = 0;       
+        other.num_of_nodes = 0;
 
         return *this;
     }
@@ -728,40 +736,17 @@ namespace stl
     {
         iterator it = iterator(pos.node);
         while (count--)
-        {
-            it = insert(pos, value).node;
-            pos = const_iterator(it);
-        }
+            pos = const_iterator(insert(pos, value).node);
 
-        return it;
+        return iterator(pos.node);
     }
 
     template <typename T, typename Alloc>
-    template <class InputIt>
-    typename list<T, Alloc>::iterator
-    list<T, Alloc>::insert(const_iterator pos, InputIt first, InputIt last)
-    {
-        iterator it = iterator(pos.node);
-
-        while (first != last)
-        {
-            it = insert(pos, *first).node;
-            pos = const_iterator(it);
-
-            ++first;
-        }
-
-        return it;
-    }
-
-    template <typename T, typename Alloc>
-    template <class InputIt>
     typename list<T, Alloc>::iterator
     list<T, Alloc>::insert(const_iterator pos, std::initializer_list<value_type> ilist)
     {
         return insert(pos, ilist.begin(), ilist.end());
     }
-
 
     template <typename T, typename Alloc>
     template <class... Args>
@@ -770,7 +755,6 @@ namespace stl
     {
         return insert(pos, std::move(value_type(std::forward<Args>(args)...)));
     }
-
 
     template <typename T, typename Alloc>
     typename list<T, Alloc>::iterator
@@ -790,7 +774,6 @@ namespace stl
         return iterator(next_node);
     }
 
-
     template <typename T, typename Alloc>
     typename list<T, Alloc>::iterator
     list<T, Alloc>::erase(const_iterator first, const_iterator last)
@@ -800,17 +783,15 @@ namespace stl
         return iterator(first.node);
     }
 
-
     template <typename T, typename Alloc>
-    void 
+    void
     list<T, Alloc>::push_back(const value_type &value)
     {
         insert(cend(), value);
     }
 
-
     template <typename T, typename Alloc>
-    void 
+    void
     list<T, Alloc>::push_back(value_type &&value)
     {
         insert(end(), std::move(value));
@@ -818,70 +799,65 @@ namespace stl
 
     template <typename T, typename Alloc>
     template <typename... Args>
-    typename list<T, Alloc>::reference 
+    typename list<T, Alloc>::reference
     list<T, Alloc>::emplace_back(Args &&...args)
     {
         return emplace(end(), std::forward<Args>(args)...);
     }
 
     template <typename T, typename Alloc>
-    void 
+    void
     list<T, Alloc>::pop_back()
     {
         erase(end());
     }
 
-
     template <typename T, typename Alloc>
-    void 
+    void
     list<T, Alloc>::push_front(const T &value)
     {
         insert(begin(), value);
     }
 
     template <typename T, typename Alloc>
-    void 
+    void
     list<T, Alloc>::push_front(T &&value)
     {
         insert(begin(), std::move(value));
     }
 
-
     template <typename T, typename Alloc>
     template <class... Args>
-    typename list<T, Alloc>::reference 
+    typename list<T, Alloc>::reference
     list<T, Alloc>::emplace_front(Args &&...args)
     {
         insert(begin(), std::move(value_type(std::forward<Args>(args)...)));
     }
 
     template <typename T, typename Alloc>
-    void 
+    void
     list<T, Alloc>::pop_front()
     {
         erase(begin());
     }
 
     template <typename T, typename Alloc>
-    void 
+    void
     list<T, Alloc>::resize(size_type count)
     {
         resize(count, value_type());
     }
 
-
     template <typename T, typename Alloc>
-    void 
+    void
     list<T, Alloc>::resize(size_type count, const value_type &value)
     {
-
     }
 
     template <typename T, typename Alloc>
-    void 
+    void
     list<T, Alloc>::swap(list &other) noexcept
     {
-
     }
 
 } // namespace stl

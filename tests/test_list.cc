@@ -162,84 +162,90 @@ void test_assignment()
 
 void test_capacity()
 {
-        printf("=============%s=================\n", __FUNCTION__);
-        stl::list<double>::size_type n;
-        stl::list<double> vd1{3.14, 18.90, 10};
-        stl::list<double> vd2;
+    printf("=============%s=================\n", __FUNCTION__);
+    stl::list<double>::size_type n;
+    stl::list<double> vd1{3.14, 18.90, 10};
+    stl::list<double> vd2;
 
-        // 1. empty
-        assert(!vd1.empty() && vd2.empty());
-        vd2 = vd1;
-        assert(!vd2.empty() && vd1.size() == vd2.size());
+    // 1. empty
+    assert(!vd1.empty() && vd2.empty());
+    vd2 = vd1;
+    assert(!vd2.empty() && vd1.size() == vd2.size());
 
-        // 2. size
-        assert(vd1.size() == 3);
-        vd1.pop_back();
-        assert(vd1.size() == 2);
-        vd1.push_front(4);
-        assert(vd1.size() == 3);
-        
-        vd2.assign({1.2, 3.4, 5.6, 1.0});
-        assert(vd2.size() == 4);
+    // 2. size
+    assert(vd1.size() == 3);
+    vd1.pop_back();
+    assert(vd1.size() == 2);
+    vd1.push_front(4);
+    assert(vd1.size() == 3);
 
-        vd2.erase(vd2.begin());
-        assert(vd2.size() == 3);
+    vd2.assign({1.2, 3.4, 5.6, 1.0});
+    assert(vd2.size() == 4);
+
+    vd2.erase(vd2.begin());
+    assert(vd2.size() == 3);
 }
 
 void test_modifiers_built_in_types()
 {
     printf("=============%s=================\n", __FUNCTION__);
 
-        // auto to_string = [](const auto &container)
-        // {
-        //     std::string res;
-        //     for (auto &v : container)
-        //     {
-        //         res += std::to_string(v);
-        //         res += ' ';
-        //     }
+    auto to_string = [](const auto &container)
+    {
+        std::string res;
+        for (auto &v : container)
+        {
+            res += std::to_string(v);
+            res += ' ';
+        }
 
-        //     return res;
-        // };
+        return res;
+    };
 
-        // static int arr[] = {11, 12, 13, 14, 15};
-        // /* Insert */
-        // stl::list<int> vi;
-        // static stl::list<int>::size_type len = 5;
+    static int arr[] = {11, 12, 13, 14, 15};
+    /* Insert */
+    stl::list<int> vi;
+    static stl::list<int>::size_type len = 5;
 
-        // // 1.1 insert lvalue
-        // stl::list<int>::iterator iter;
-        // for (auto &i : arr)
-        // {
-        //     iter = vi.insert(vi.begin(), i);
-        //     assert(*iter == i);
-        // }
-        // // 15 14 13 12 11
+    // 1.1 insert lvalue
+    stl::list<int>::iterator iter;
+    for (auto &i : arr)
+    {
+        iter = vi.insert(vi.begin(), i);
+        assert(*iter == i);
+    }
+    // 15 14 13 12 11
+    int i = 0;
+    for_each(vi.rbegin(), vi.rend(), [&i](auto &item)
+                { assert(item == arr[i++]); });
 
-        // for (decltype(len) i = 0; i < len; ++i)
-        //     assert(arr[i] == vi[len - 1 - i]);
+    // 1.2 insert rvalue
 
-        // // 1.2 insert rvalue
+    iter = vi.begin();
+    ++iter;
+    ++iter;
 
-        // iter = vi.begin() + 2;
-        // iter = vi.insert(iter, 9); // 15 14 9 13 12 11
-        // assert(vi[iter - vi.begin()] == 9);
-        // assert(vi[2] == 9);
-        // assert(to_string(vi) == "15 14 9 13 12 11 ");
+    iter = vi.insert(iter, 9); // 15 14 9 13 12 11
+    assert(*iter == 9);
+    assert(to_string(vi) == "15 14 9 13 12 11 ");
 
-        // // 1.3 insert n items
-        // vi.insert(vi.begin() + 1, 3, 88); // 15 88 88 88 14 9 13 12 11
-        // assert(vi[1] == 88 && vi.at(2) == 88 && *(vi.begin() + 3) == 88);
+    // 1.3 insert n items
+    vi.insert(++vi.begin(), 3, 88); // 15 88 88 88 14 9 13 12 11
+    iter = vi.begin();
+    assert(*++iter == 88 && *++iter == 88 && *++iter == 88);
 
-        // assert(to_string(vi) == "15 88 88 88 14 9 13 12 11 ");
+    assert(to_string(vi) == "15 88 88 88 14 9 13 12 11 ");
 
-        // // 1.4 insert initializer-list
-        // vi.insert(vi.end() - 2, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
-        // assert(to_string(vi) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
+    // 1.4 insert initializer-list
+    iter = vi.end();
+    --iter;
+    --iter;
+    // vi.insert(iter, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
+    // assert(to_string(vi) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
 
-        // // clear
-        // vi.clear();
-        // assert(vi.empty());
+    // clear
+    vi.clear();
+    assert(vi.empty());
 }
 
 void test_modifiers_complex()
