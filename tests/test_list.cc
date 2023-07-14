@@ -4,6 +4,7 @@
 #include <list>
 #include <cassert>
 #include "type.hh"
+#include "iterator.hh"
 #include "complex.hh"
 #include "string.hh"
 #include "list.hh"
@@ -252,128 +253,143 @@ void test_modifiers_built_in_types()
 void test_modifiers_complex()
 {
     printf("=============%s=================\n", __FUNCTION__);
-    // std::cout << "-----------complex------------\n";
-    // auto check = [](const auto &c1, const auto &c2)
-    // {
-    //     assert(c1.size() == c2.size());
-    //     auto len = c1.size();
+    std::cout << "-----------complex------------\n";
 
-    //     for (decltype(len) i = 0; i < len; ++i)
-    //         assert(c1[i] == c2[i]);
-    // };
+    stl::list<complex> vc;
 
-    // stl::list<complex> vc;
+    // 为了更方便逐步测试，使用标准库的实现作为参考
+    // 但是也意味着很多操作都要分别做两次……，属实难绷
+    std::list<complex> rvc;
 
-    // // 为了更方便逐步测试，使用标准库的实现作为参考
-    // // 但是也意味着很多操作都要分别做两次……，属实难绷
-    // std::list<complex> rvc;
+    /* Insert */
 
-    // /* Insert */
+    // 1.1 insert lvalue
+    stl::list<complex>::iterator ic;
+    std::list<complex>::iterator ric;
 
-    // // 1.1 insert lvalue
-    // stl::list<complex>::iterator ic;
-    // std::list<complex>::iterator ric;
+    for (auto &i : cs)
+    {
+        ic = vc.insert(vc.begin(), i);
+        ric = rvc.insert(rvc.begin(), i);
+        assert(*ic == i);
+        assert(*ric == i);
+    }
+    check_equal(vc, rvc, 1);
 
-    // for (auto &i : cs)
-    // {
-    //     ic = vc.insert(vc.begin(), i);
-    //     ric = rvc.insert(rvc.begin(), i);
-    //     assert(*ic == i);
-    //     assert(*ric == i);
-    // }
-    // check(vc, rvc);
+    // 1.2 insert rvalue
+    ic = vc.begin();
+    stl::advance(ic, 2);
+    ric = rvc.begin();
+    stl::advance(ric, 2);
 
-    // // 1.2 insert rvalue
-    // ic = vc.begin() + 2;
-    // ric = rvc.begin() + 2;
-    // ic = vc.insert(ic, complex(12, 13));
-    // ric = rvc.insert(ric, complex(12, 13));
-    // assert(vc[ic - vc.begin()] == complex(12, 13));
-    // assert(vc[2] == complex(12, 13));
-    // check(vc, rvc);
+    ic = vc.insert(ic, complex(12, 13));
+    ric = rvc.insert(ric, complex(12, 13));
 
-    // // 1.3 insert n items
-    // vc.insert(vc.begin() + 1, 3, complex(11, 43));
-    // rvc.insert(rvc.begin() + 1, 3, complex(11, 43));
-    // assert(vc[1] == complex(11, 43) && vc.at(2) == complex(11, 43) && *(vc.begin() + 3) == complex(11, 43));
-    // check(vc, rvc);
+    assert(*ic == complex(12, 13));
+    ic = vc.begin();
+    stl::advance(ic, 2);
+    assert(*ic == complex(12, 13));
+    check_equal(vc, rvc, 1);
 
-    // // 1.4 insert initializer-list
-    // std::initializer_list<complex> ilst{complex(3, 2), complex(1, 0), complex(45, 9)};
-    // vc.insert(vc.end() - 2, ilst);
-    // rvc.insert(rvc.end() - 2, ilst);
-    // check(vc, rvc);
+    // 1.3 insert n items
+    vc.insert(++vc.begin(), 3, complex(11, 43));
+    rvc.insert(++rvc.begin(), 3, complex(11, 43));
+    ic = vc.begin();
+    assert(*++ic == complex(11, 43) && *++ic == complex(11, 43) && *++ic == complex(11, 43));
+    check_equal(vc, rvc, 1);
 
-    // // 1.5 clear
-    // vc.clear();
-    // rvc.clear();
-    // assert(vc.empty());
+    // 1.4 insert initializer-list
+    std::initializer_list<complex> ilst{complex(3, 2), complex(1, 0), complex(45, 9)};
+    ic = vc.end();
+    stl::advance(ic, -2);
+    vc.insert(ic, ilst);
+    ric = rvc.end();
+    stl::advance(ric, -2);
+    rvc.insert(ric, ilst);
+    check_equal(vc, rvc, 1);
 
-    // // 1.6 emplace
-    // ic = vc.emplace(vc.begin(), 12, 3.14);
-    // ric = rvc.emplace(rvc.begin(), 12, 3.14);
-    // check(vc, rvc);
+    // 1.5 clear
+    vc.clear();
+    rvc.clear();
+    assert(vc.empty());
 
-    // ic = vc.emplace(vc.end(), 1.2, 3.14);
-    // ric = rvc.emplace(rvc.end(), 1.2, 3.14);
-    // ic = vc.emplace(ic, complex(0, 1));
-    // ric = rvc.emplace(ric, complex(0, 1));
-    // check(vc, rvc);
-    // assert(*ic == *ric);
+    // 1.6 emplace
+    ic = vc.emplace(vc.begin(), 12, 3.14);
+    ric = rvc.emplace(rvc.begin(), 12, 3.14);
+    check_equal(vc, rvc, 1);
 
-    // // 1.7 push/emplace back
-    // for (int i = 0; i < 15; ++i)
-    // {
-    //     vc.push_back(complex(i, i+1));
-    //     rvc.push_back(complex(i, i+1));
-    // }
-    // check(vc, rvc);
+    ic = vc.emplace(vc.end(), 1.2, 3.14);
+    ric = rvc.emplace(rvc.end(), 1.2, 3.14);
+    ic = vc.emplace(ic, complex(0, 1));
+    ric = rvc.emplace(ric, complex(0, 1));
+    check_equal(vc, rvc, 1);
 
-    // for (int i = 0; i < 15; ++i)
-    // {
-    //     vc.emplace_back(i, i+1);
-    //     rvc.emplace_back(i, i+1);
-    // }
-    // check(vc, rvc);
+    assert(*ic == *ric);
 
-    // // 1.8 pop back
-    // for (int i = 0; i < 10; ++i)
-    // {
-    //     vc.pop_back();
-    //     rvc.pop_back();
-    // }
-    // check(vc, rvc);
+    // 1.7 push/emplace back
+    for (int i = 0; i < 15; ++i)
+    {
+        vc.push_back(complex(i, i + 1));
+        rvc.push_back(complex(i, i + 1));
+    }
+    check_equal(vc, rvc, 1);
 
-    // // 1.9 erase
-    // for (int i = 0; i < 5; ++i)
-    // {
-    //     vc.erase(vc.end() - 1);
-    //     rvc.erase(rvc.end() - 1);
-    // }
-    // check(vc, rvc);
-    // ic = vc.end() - 5;
-    // ric = rvc.end() - 5;
-    // vc.erase(ic, vc.end());
-    // rvc.erase(ric, rvc.end());
-    // check(vc, rvc);
+    for (int i = 0; i < 15; ++i)
+    {
+        vc.emplace_back(i, i + 1);
+        rvc.emplace_back(i, i + 1);
+    }
+    check_equal(vc, rvc, 1);
 
-    // // 1.10 resize
-    // auto size= rvc.size();
-    // vc.resize(size + 10);
-    // rvc.resize(size + 10);
-    // check(vc, rvc);
-    // vc.resize(size - 10);
-    // rvc.resize(size - 10);
-    // check(vc, rvc);
+    // 1.8 pop back
+    for (int i = 0; i < 10; ++i)
+    {
+        vc.pop_back();
+        rvc.pop_back();
+    }
+    check_equal(vc, rvc, 1);
 
-    // vc.resize(0);
-    // rvc.resize(0);
-    // check(vc, rvc);
-    // vc.resize(10, complex(1, 9));
-    // rvc.resize(10, complex(1, 9));
-    // check(vc, rvc);
+    // 1.9 erase
+    for (int i = 0; i < 5; ++i)
+    {
+        vc.erase(--vc.end());
+        rvc.erase(--rvc.end());
+    }
+    check_equal(vc, rvc, 1);
 
-    // std::cout << "-----------end---------------\n";
+    ic = vc.end();
+    stl::advance(ic, -5);
+
+    ric = rvc.end();
+    stl::advance(ric, -5);
+
+    vc.erase(ic, vc.end());
+    rvc.erase(ric, rvc.end());
+    check_equal(vc, rvc, 1);
+
+    // 1.10 resize
+    auto size = rvc.size();
+    vc.insert(vc.end(), 10, complex());
+    rvc.insert(rvc.end(), 10, complex());
+    check_equal(vc, rvc, 1);
+
+    ic = vc.end();
+    stl::advance(ic, -10);
+    ric = rvc.end();
+    stl::advance(ric, -10);
+    vc.erase(ic, vc.end());
+    rvc.erase(ric, rvc.end());
+    check_equal(vc, rvc, 1);
+
+    vc.clear();
+    rvc.clear();
+    check_equal(vc, rvc, 1);
+
+    vc.assign(10, complex(1, 9));
+    rvc.assign(10, complex(1, 9));
+    check_equal(vc, rvc, 1);
+
+    std::cout << "-----------end---------------\n";
 }
 
 void test_modifiers_string()
@@ -399,8 +415,8 @@ void test_modifiers_string()
 
     assert(vs.size() == 2);
     assert(connect_strs(vs) == "Hello world ");
-   
-    vs.emplace(++(++vs.begin()), "exit"); // Hello world exit 
+
+    vs.emplace(++(++vs.begin()), "exit"); // Hello world exit
 
     assert(vs.size() == 3);
     assert(connect_strs(vs) == "Hello world exit ");
@@ -417,7 +433,7 @@ void test_modifiers_string()
     assert(connect_strs(vs) == "Hello how what ");
 
     vs.erase(vs.begin(), --vs.end()); // what
-    assert(connect_strs(vs) == "what ");    
+    assert(connect_strs(vs) == "what ");
     assert(vs.size() == 1);
 
     std::cout << "-----------end---------------\n";
