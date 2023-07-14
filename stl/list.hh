@@ -119,7 +119,7 @@ namespace stl
         list_const_iterator() = default;
 
         explicit list_const_iterator(const list_node<T> *n) : node(n) {}
-        explicit list_const_iterator(const iterator &iter) : node(iter.node) {}
+        list_const_iterator(const iterator &iter) : node(iter.node) {}
 
         reference
         operator*() const
