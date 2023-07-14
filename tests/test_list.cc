@@ -28,6 +28,18 @@ auto check_equal = [](auto &l, auto &r, size_t times)
     }
 };
 
+auto to_str = [](const auto &container)
+{
+    std::string res;
+    for (auto &v : container)
+    {
+        res += std::to_string(v);
+        res += ' ';
+    }
+
+    return res;
+};
+
 void test_constructors()
 {
     printf("=============%s=================\n", __FUNCTION__);
@@ -190,18 +202,6 @@ void test_modifiers_built_in_types()
 {
     printf("=============%s=================\n", __FUNCTION__);
 
-    auto to_string = [](const auto &container)
-    {
-        std::string res;
-        for (auto &v : container)
-        {
-            res += std::to_string(v);
-            res += ' ';
-        }
-
-        return res;
-    };
-
     static int arr[] = {11, 12, 13, 14, 15};
     /* Insert */
     stl::list<int> vi;
@@ -217,7 +217,7 @@ void test_modifiers_built_in_types()
     // 15 14 13 12 11
     int i = 0;
     for_each(vi.rbegin(), vi.rend(), [&i](auto &item)
-                { assert(item == arr[i++]); });
+             { assert(item == arr[i++]); });
 
     // 1.2 insert rvalue
 
@@ -227,21 +227,22 @@ void test_modifiers_built_in_types()
 
     iter = vi.insert(iter, 9); // 15 14 9 13 12 11
     assert(*iter == 9);
-    assert(to_string(vi) == "15 14 9 13 12 11 ");
+    assert(to_str(vi) == "15 14 9 13 12 11 ");
 
     // 1.3 insert n items
     vi.insert(++vi.begin(), 3, 88); // 15 88 88 88 14 9 13 12 11
     iter = vi.begin();
     assert(*++iter == 88 && *++iter == 88 && *++iter == 88);
 
-    assert(to_string(vi) == "15 88 88 88 14 9 13 12 11 ");
+    assert(to_str(vi) == "15 88 88 88 14 9 13 12 11 ");
 
     // 1.4 insert initializer-list
     iter = vi.end();
     --iter;
     --iter;
-    // vi.insert(iter, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
-    // assert(to_string(vi) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
+    vi.insert(iter, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
+    cout << to_str(vi) << endl;
+    assert(to_str(vi) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
 
     // clear
     vi.clear();
@@ -379,33 +380,47 @@ void test_modifiers_string()
 {
     printf("=============%s=================\n", __FUNCTION__);
 
-    // stl::list<String> vs;
+    auto connect_strs = [](const stl::list<String> &container)
+    {
+        std::string res;
+        for (const String &v : container)
+        {
+            res += string(v.get_c_str());
+            res += ' ';
+        }
 
-    // vs.emplace(vs.end(), "Hello");
-    // vs.emplace_back(String("world"));
-    // vs.resize(4, String("and new"));
+        return res;
+    };
 
-    // assert(vs.size() == 4);
-    // vs.emplace(vs.begin() + 2, "exit");
-    // for (auto & i : vs)
-    //     std::cout << i.get_c_str() << '*';
-    // std::cout << endl;
-    // std::cout << "after 2 pop back\n";
-    // vs.pop_back();
-    // vs.pop_back();
-    // for (auto & i : vs)
-    //     std::cout << i.get_c_str() << '*';
-    // assert(vs.size() == 3);
-    // std::cout << endl;
+    stl::list<String> vs;
 
-    // vs.erase(vs.begin(), vs.end() - 1);
-    // cout << "after erase [0, -1)\n";
-    // for (auto & i : vs)
-    //     std::cout << i.get_c_str() << '*';
-    // std::cout << endl;
-    // assert(vs.size() == 1);
+    vs.emplace(vs.end(), "Hello");
+    vs.emplace_back(String("world"));
 
-    // std::cout << "-----------end---------------\n";
+    assert(vs.size() == 2);
+    assert(connect_strs(vs) == "Hello world ");
+   
+    vs.emplace(++(++vs.begin()), "exit"); // Hello world exit 
+
+    assert(vs.size() == 3);
+    assert(connect_strs(vs) == "Hello world exit ");
+
+    std::cout << "after 2 pop back\n";
+    vs.pop_back();
+    vs.pop_back();
+    assert(connect_strs(vs) == "Hello ");
+    assert(vs.size() == 1);
+
+    vs.push_back("what");
+    vs.insert(--vs.end(), "how"); // Hello how what
+    assert(vs.size() == 3);
+    assert(connect_strs(vs) == "Hello how what ");
+
+    vs.erase(vs.begin(), --vs.end()); // what
+    assert(connect_strs(vs) == "what ");    
+    assert(vs.size() == 1);
+
+    std::cout << "-----------end---------------\n";
 }
 
 void test_non_member_func()

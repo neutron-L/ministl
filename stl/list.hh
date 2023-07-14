@@ -382,17 +382,22 @@ namespace stl
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         iterator insert(const_iterator pos, InputIt first, InputIt last)
         {
-            iterator it = iterator(pos.node);
-
-            while (first != last)
+            if (first != last)
             {
-                it = insert(pos, *first).node;
-                pos = const_iterator(it);
+                iterator rt = insert(pos, *first++);
+                pos = const_iterator(rt.node);
+                ++pos;
 
-                ++first;
+                while (first != last)
+                {
+                    pos = const_iterator(insert(pos, *first++));
+                    ++pos;
+                }
+
+                return rt;
             }
-
-            return it;
+            else
+                return iterator(pos.node);
         }
 
         iterator insert(const_iterator pos, std::initializer_list<value_type> ilist);
@@ -802,14 +807,14 @@ namespace stl
     typename list<T, Alloc>::reference
     list<T, Alloc>::emplace_back(Args &&...args)
     {
-        return emplace(end(), std::forward<Args>(args)...);
+        return *emplace(end(), std::forward<Args>(args)...);
     }
 
     template <typename T, typename Alloc>
     void
     list<T, Alloc>::pop_back()
     {
-        erase(end());
+        erase(--end());
     }
 
     template <typename T, typename Alloc>
