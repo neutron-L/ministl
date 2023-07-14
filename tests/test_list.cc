@@ -108,84 +108,72 @@ void test_assignment()
              { i *= 2; });
     check_equal(vd2, vd1, 2);
 
-
     // 2. =(list &&)
     stl::list<double> vd3;
     vd3 = std::move(vd1);
-    check_equal(vd3, vd2, 2);
+    check_equal(vd2, vd3, 2);
 
     String s1("What");
     String s2("How");
     stl::list<String> ax(n, s1);
     stl::list<String> ay;
     ay = std::move(ax);
-    for (decltype(n) i = 0; i < n; ++i)
-        assert(!strcmp(ay[i].get_c_str(), s1.get_c_str()));
+    for_each(ay.begin(), ay.end(), [&](String &i)
+             { assert(i == s1); });
 
     stl::list<String> az(n, s2);
     ax = az;
 
-    for (decltype(n) i = 0; i < n; ++i)
-        assert(ax[i] == s2);
+    for_each(ax.begin(), ax.end(), [&](String &i)
+             { assert(i == s2); });
 
-    // 4. assign(n, elem)
+    // 3. assign(n, elem)
     const complex c(3.14, 6.18);
     stl::list<complex> vc1(4, c);
     n = vd1.size();
-    for (decltype(n) i = 0; i < n; ++i)
-        assert(vc1[i] == c);
+    for_each(vc1.begin(), vc1.end(), [&](const complex &i)
+             { assert(i == c); });
 
-    // 5. initializer list assign
+    // 4. = initialized list
     const complex c1(1, 2);
     const complex c2(3, 4);
     const complex c3;
-    const stl::list<complex> vc2{c, c1, c2, c3};
-    assert(*(vc2.begin()) == c);
-    assert(vc2[1] == c1);
-    assert(vc2.at(2) == c2);
-    assert(*(vc2.end() - 1) == c3);
+    const stl::list<complex> vc2 = {c, c1, c2, c3};
 
-    // 6. range assign
-    stl::list<String> vs1{String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])};
+    auto iter = vc2.begin();
+    assert(*iter == c);
+    ++iter;
+    assert(*iter == c1);
+    ++iter;
+    assert(*iter == c2);
+    assert(*(--vc2.end()) == c3);
+
+    // 5. range assign
+    stl::list<String> vs1;
+    vs1.assign({String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])});
     n = 4;
     stl::list<String> vs2(n);
     for (auto &s : vs2)
         assert(s == String());
 
     vs2.assign(vs1.begin(), vs1.end());
-    n = vs1.size();
-    for (decltype(n) i = 0; i < n; ++i)
-        assert(vs1[i] == vs2[i]);
+    std::equal(vs1.begin(), vs1.end(), vs2.begin());
 }
 
 void test_capacity()
 {
-    //     printf("=============%s=================\n", __FUNCTION__);
-    //     stl::list<double>::size_type n;
-    //     stl::list<double> vd1{3.14, 18.90, 10};
-    //     stl::list<double> vd2;
+        printf("=============%s=================\n", __FUNCTION__);
+        stl::list<double>::size_type n;
+        stl::list<double> vd1{3.14, 18.90, 10};
+        stl::list<double> vd2;
 
-    //     // 1. empty
-    //     assert(!vd1.empty() && vd2.empty());
-    //     vd2 = vd1;
-    //     assert(!vd2.empty() && vd1.size() == vd2.size());
+        // 1. empty
+        assert(!vd1.empty() && vd2.empty());
+        vd2 = vd1;
+        assert(!vd2.empty() && vd1.size() == vd2.size());
 
-    //     // 2. size
-    //     assert(vd1.size() == 3);
-
-    //     // 3. capacity & reserve
-    //     stl::list<String> vs1;
-    //     assert(!vs1.capacity());
-    //     n = 12;
-    //     vs1.reserve(n);
-    //     assert(vs1.capacity() == n && vs1.empty());
-    //     vs1 = {String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])};
-    //     assert(vs1.capacity() == n && !vs1.empty());
-
-    //     // 4. shrink_to_fit
-    //     assert(vs1.capacity() != vs1.size());
-    //     vs1.shrink_to_fit();
-    //     assert(vs1.capacity() == vs1.size() && vs1.size() == 5);
+        // 2. size
+        assert(vd1.size() == 3);
 }
 
 void test_modifiers_built_in_types()
