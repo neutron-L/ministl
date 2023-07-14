@@ -387,12 +387,10 @@ namespace stl
                 iterator rt = insert(pos, *first++);
                 pos = const_iterator(rt.node);
                 ++pos;
+                auto inserter = stl::insert_iterator(*this, iterator(pos.node));
 
                 while (first != last)
-                {
-                    pos = const_iterator(insert(pos, *first++));
-                    ++pos;
-                }
+                    *inserter = *first++;
 
                 return rt;
             }
@@ -446,12 +444,11 @@ namespace stl
         void splice(const_iterator pos, list &other, const_iterator it);
         void splice(const_iterator pos, list &&other, const_iterator it);
 
-        void splice(const_iterator pos, list &&other,
+        void splice(const_iterator pos, list &other,
                     const_iterator first, const_iterator last);
         void splice(const_iterator pos, list &&other,
                     const_iterator first, const_iterator last);
 
-        void remove(const T &value);
         size_type remove(const T &value);
         template <class UnaryPredicate>
         void remove_if(UnaryPredicate p);
