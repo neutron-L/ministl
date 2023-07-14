@@ -428,6 +428,46 @@ namespace stl
         void resize(size_type count, const value_type &value);
 
         void swap(list &other) noexcept;
+
+        /*
+         * Operations
+         * */
+        void merge(list &other);
+        void merge(list &&other);
+
+        template <typename Compare>
+        void merge(list &other, Compare comp);
+        template <typename Compare>
+        void merge(list &&other, Compare comp);
+
+        void splice(const_iterator pos, list &other);
+        void splice(const_iterator pos, list &&other);
+
+        void splice(const_iterator pos, list &other, const_iterator it);
+        void splice(const_iterator pos, list &&other, const_iterator it);
+
+        void splice(const_iterator pos, list &&other,
+                    const_iterator first, const_iterator last);
+        void splice(const_iterator pos, list &&other,
+                    const_iterator first, const_iterator last);
+
+        void remove(const T &value);
+        size_type remove(const T &value);
+        template <class UnaryPredicate>
+        void remove_if(UnaryPredicate p);
+        template <class UnaryPredicate>
+        size_type remove_if(UnaryPredicate p);
+
+        void reverse() noexcept;
+
+        size_type unique();
+
+        template <typename BinaryPredicate>
+        size_type unique(BinaryPredicate p);
+
+        void sort();
+        template <class Compare>
+        void sort(Compare comp);
     };
 
     /*
