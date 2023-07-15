@@ -8,6 +8,7 @@
 #include "alloc.hh"
 #include "iterator.hh"
 #include "construct.hh"
+#include "algobase.hh"
 
 namespace stl
 {
@@ -430,7 +431,7 @@ namespace stl
         /*
          * Operations
          * */
-        void merge(list &other);
+        void merge(list &other) { merge(std::move(other)); }
         void merge(list &&other);
 
         template <typename Compare>
@@ -450,8 +451,7 @@ namespace stl
                     const_iterator first, const_iterator last);
 
         size_type remove(const T &value);
-        template <class UnaryPredicate>
-        void remove_if(UnaryPredicate p);
+    
         template <class UnaryPredicate>
         size_type remove_if(UnaryPredicate p);
 
@@ -894,12 +894,201 @@ namespace stl
     void
     list<T, Alloc>::resize(size_type count, const value_type &value)
     {
+        num_of_nodes = count;
+        auto iter = this->begin();
+
+        while (count)
+        {
+            if (iter != end() && *iter != value)
+            {
+                stl::destroy(&*iter);
+                stl::construct(&*iter, value);
+            }
+            else
+                iter = insert(iter, value);
+            ++iter;
+            --count;
+        }
+
+        erase(iter, end());
     }
 
     template <typename T, typename Alloc>
     void
     list<T, Alloc>::swap(list &other) noexcept
     {
+        stl::swap(other.head, head);
+        stl::swap(other.num_of_nodes, num_of_nodes);
+    }
+
+    /*
+     * Operations
+     * */
+
+    template <typename T, typename Alloc>
+    void
+    list<T, Alloc>::merge(list &&other)
+    {
+        merge(std::move(other), std::less<T>());
+    }
+
+    template <typename T, typename Alloc>
+    template <typename Compare>
+    void
+    list<T, Alloc>::merge(list &other, Compare comp)
+    {
+        iterator first1 = begin();
+        iterator last1 = end();
+        iterator first2 = other.begin();
+        iterator last2 = other.end();
+
+        while (first1 != last1 && first2 != last2)
+        {
+            if (comp(*first2, *first1))
+            {
+                iterator next = first2;
+                transfer(first1, first2, ++next);
+                first2 = next;
+            }
+            else
+                ++first1;
+        }
+
+        transfer(last1, first2, last2);
+    }
+
+    template <typename T, typename Alloc>
+    template <typename Compare>
+    void
+    list<T, Alloc>::merge(list &&other, Compare comp)
+    {
+        merge(std::move(other), comp);
+    }
+
+    template <typename T, typename Alloc>
+    void
+    list<T, Alloc>::splice(const_iterator pos, list &other)
+    {
+        splice(pos, std::move(other));
+    }
+
+    template <typename T, typename Alloc>
+    void
+    list<T, Alloc>::splice(const_iterator pos, list &&other)
+    {
+        // this is a undefined behavior if other is itself, but we prevent this behavior
+        if (&other == this)
+            return;
+
+        transfer(pos, other.begin(), other.end());
+    }
+
+    template <typename T, typename Alloc>
+    void
+    list<T, Alloc>::splice(const_iterator pos, list &other, const_iterator it)
+    {
+        splice(pos, std::move(other), it);
+    }
+
+    template <typename T, typename Alloc>
+    void
+    list<T, Alloc>::splice(const_iterator pos, list &&other, const_iterator it)
+    {
+        // this is a undefined behavior if other is itself, but we prevent this behavior
+        if (&other == this)
+            return;
+        iterator nit = it;
+        ++nit;
+
+        if (pos == it || pos == nit)
+            return;
+        transfer(pos, it, ++it);
+    }
+
+    template <typename T, typename Alloc>
+    void
+    list<T, Alloc>::splice(const_iterator pos, list &other,
+                           const_iterator first, const_iterator last)
+    {
+        splice(pos, std::move(other), first, last);
+    }
+    template <typename T, typename Alloc>
+    void
+    list<T, Alloc>::splice(const_iterator pos, list &&other,
+                           const_iterator first, const_iterator last)
+    {
+        // this is a undefined behavior if other is itself, but we prevent this behavior
+        if (&other == this)
+            return;
+        transfer(pos, first, last);
+    }
+
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::size_type 
+    list<T, Alloc>::remove(const T &value)
+    {
+        iterator first = begin();
+        iterator last = end();
+        size_type rt = 0;
+
+        while (first != last)
+        {
+            if (*first == value)
+            {
+                first = erase(first);
+                ++rt;
+            }
+            else
+                ++first;
+        }
+        
+        return rt;
+    }
+
+    
+    template <typename T, typename Alloc>
+    template <class UnaryPredicate>
+    list<T, Alloc>::size_type 
+    list<T, Alloc>::remove_if(UnaryPredicate p)
+    {
+
+    }
+
+    template <typename T, typename Alloc>
+    void
+    list<T, Alloc>::reverse() noexcept
+    {
+        iterator first = begin();
+        iterator last = end();
+        auto old = first;
+
+        while (++first != last)
+        {
+            transfer(begin(), old, first);
+            old = first;
+        }
+    }
+
+    template <typename T, typename Alloc>
+    list<T, Alloc>::size_type
+    list<T, Alloc>::unique()
+    {
+        iterator first = begin();
+        iterator last = end();
+        size_type old_nun = num_of_nodes;
+
+        auto next = first;
+        while (++next != last)
+        {
+            if (*first == *next)
+                erase(next);
+            else
+                first = next;
+            next = first;
+        }
+
+        return old_num - num_of_nodes;
     }
 
 } // namespace stl

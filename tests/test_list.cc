@@ -439,6 +439,13 @@ void test_modifiers_string()
     std::cout << "-----------end---------------\n";
 }
 
+
+void test_list_operations()
+{
+    printf("=============%s=================\n", __FUNCTION__);
+}
+
+
 void test_non_member_func()
 {
     printf("=============%s=================\n", __FUNCTION__);
