@@ -937,6 +937,14 @@ namespace stl
     void
     list<T, Alloc>::merge(list &other, Compare comp)
     {
+        merge(std::move(other), comp);
+    }
+
+    template <typename T, typename Alloc>
+    template <typename Compare>
+    void
+    list<T, Alloc>::merge(list &&other, Compare comp)
+    {
         iterator first1 = begin();
         iterator last1 = end();
         iterator first2 = other.begin();
@@ -955,14 +963,6 @@ namespace stl
         }
 
         transfer(last1, first2, last2);
-    }
-
-    template <typename T, typename Alloc>
-    template <typename Compare>
-    void
-    list<T, Alloc>::merge(list &&other, Compare comp)
-    {
-        merge(std::move(other), comp);
     }
 
     template <typename T, typename Alloc>
@@ -1025,7 +1025,7 @@ namespace stl
 
 
     template <typename T, typename Alloc>
-    list<T, Alloc>::size_type 
+    typename list<T, Alloc>::size_type 
     list<T, Alloc>::remove(const T &value)
     {
         iterator first = begin();
@@ -1049,7 +1049,7 @@ namespace stl
     
     template <typename T, typename Alloc>
     template <class UnaryPredicate>
-    list<T, Alloc>::size_type 
+    typename list<T, Alloc>::size_type 
     list<T, Alloc>::remove_if(UnaryPredicate p)
     {
 
@@ -1071,12 +1071,12 @@ namespace stl
     }
 
     template <typename T, typename Alloc>
-    list<T, Alloc>::size_type
+    typename list<T, Alloc>::size_type
     list<T, Alloc>::unique()
     {
         iterator first = begin();
         iterator last = end();
-        size_type old_nun = num_of_nodes;
+        size_type old_num = num_of_nodes;
 
         auto next = first;
         while (++next != last)
