@@ -135,7 +135,7 @@ namespace stl
 
         reference operator[](size_type pos)
         {
-            return const_cast<reference>(static_cast<const vector &>(*this)[pos]);
+            return const_cast<reference>(const_cast<const vector &>(*this)[pos]);
         }
 
         const_reference operator[](size_type pos) const
@@ -145,7 +145,7 @@ namespace stl
 
         reference front()
         {
-            return const_cast<reference>(static_cast<const vector &>(*this).front());
+            return const_cast<reference>(const_cast<const vector &>(*this).front());
         }
 
         const_reference front() const
@@ -155,7 +155,7 @@ namespace stl
 
         reference back()
         {
-            return const_cast<reference>(static_cast<const vector &>(*this).back());
+            return const_cast<reference>(const_cast<const vector &>(*this).back());
         }
 
         const_reference back() const
@@ -165,7 +165,7 @@ namespace stl
 
         T *data() noexcept
         {
-            return const_cast<T *>(static_cast<const vector &>(*this).data());
+            return const_cast<T *>(const_cast<const vector &>(*this).data());
         }
         const T *data() const noexcept
         {
@@ -177,7 +177,7 @@ namespace stl
          * */
         iterator begin() noexcept
         {
-            return const_cast<iterator>(static_cast<const vector &>(*this).begin());
+            return const_cast<iterator>(const_cast<const vector &>(*this).begin());
         }
 
         const_iterator begin() const noexcept
@@ -192,7 +192,7 @@ namespace stl
 
         iterator end() noexcept
         {
-            return const_cast<iterator>(static_cast<const vector &>(*this).end());
+            return const_cast<iterator>(const_cast<const vector &>(*this).end());
         }
 
         const_iterator end() const noexcept
@@ -207,7 +207,7 @@ namespace stl
 
         reverse_iterator rbegin() noexcept
         {
-            return const_cast<reverse_iterator>(static_cast<const vector &>(*this).rbegin());
+            return const_cast<reverse_iterator>(const_cast<const vector &>(*this).rbegin());
         }
 
         const_reverse_iterator rbegin() const noexcept
@@ -222,7 +222,7 @@ namespace stl
 
         reverse_iterator rend() noexcept
         {
-            return const_cast<reverse_iterator>(static_cast<const vector &>(*this).rend());
+            return const_cast<reverse_iterator>(const_cast<const vector &>(*this).rend());
         }
 
         const_reverse_iterator rend() const noexcept
