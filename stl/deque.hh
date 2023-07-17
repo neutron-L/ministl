@@ -29,7 +29,7 @@ namespace stl
         using iterator = deque_iterator<Tp, Tp &, Tp *>;
         using const_iterator = deque_iterator<Tp, const Tp &, const Tp *>;
 
-        using iterator_category = random_access_iterator_tag;
+        using iterator_category = bidirectional_iterator_tag;
         using value_type = Tp;
         using pointer = Ptr;
         using reference = Ref;
@@ -140,9 +140,9 @@ namespace stl
             return *(*this + n);
         }
 
-        bool operator==(const Self &rhs) const { return node == rhs.node && first == rhs.first && last == rhs.last && cur == rhs.cur; }
+        bool operator==(const Self &rhs) const { return node == rhs.node && cur == rhs.cur; }
 
-        bool operator!=(const Self &rhs) const { !this->operator==(rhs); }
+        bool operator!=(const Self &rhs) const { return !this->operator==(rhs); }
 
         bool operator<(const Self &rhs) const
         {
@@ -162,6 +162,7 @@ namespace stl
         void set_null()
         {
             first = last = cur = nullptr;
+            node = nullptr;
         }
     };
 
@@ -282,6 +283,9 @@ namespace stl
         // 根据参数指示是否销毁控制结构，即中控器和所有node
         void release_storage(bool release_all)
         {
+            // 如果map为空，比如该对象被std::move过，则直接返回
+            if (!map)
+                return;
             map_pointer mp;
 
             for (mp = start.node; mp <= finish.node; ++mp)
@@ -298,7 +302,13 @@ namespace stl
                 map_allocator::deallocate(map);
                 map_size = 0;
                 map = nullptr;
+
+                // 置空迭代器
+                start.set_null();
+                finish.set_null();
             }
+            else
+                finish = start; // finish和start指向同一个位置
         }
 
     public:
@@ -313,10 +323,12 @@ namespace stl
         deque(InputIt first, InputIt last)
         {
             // 分配中控器和默认大小的相应的缓冲区
-            create_map_and_nodes(0);
-
+            create_map_and_nodes(stl::distance(first, last));
+            
+            size_type index = 0;
+            
             while (first != last)
-                push_back(*first++);
+                stl::construct(&start[index++], *first++);
         }
 
         deque(const deque &other);
@@ -450,9 +462,6 @@ namespace stl
     template <typename T, typename Alloc>
     deque<T, Alloc>::deque(deque &&other)
     {
-        // 释放已有空间和元素
-        release_storage();
-
         // 接管other的元素
         map = other.map;
         start = other.start;
@@ -476,7 +485,7 @@ namespace stl
     template <typename T, typename Alloc>
     deque<T, Alloc>::~deque()
     {
-        clear();
+        release_storage(true);
     }
 
     /*
@@ -662,6 +671,15 @@ namespace stl
     {
     }
 
+    /*
+     * Modifiers
+     * */
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::clear() noexcept
+    {
+        release_storage(false);
+    }
 } // namespace stl
 
 #endif
