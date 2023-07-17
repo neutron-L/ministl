@@ -111,70 +111,70 @@ void test_constructors()
 void test_assignment()
 {
     printf("=============%s=================\n", __FUNCTION__);
-    // stl::deque<double>::size_type n;
-    // stl::deque<double> vd1{3.14, 18.90, 10};
-    // stl::deque<double> vd2;
+    stl::deque<double>::size_type n;
+    stl::deque<double> vd1{3.14, 18.90, 10};
+    stl::deque<double> vd2;
 
-    // // 1. =(const deque &)
-    // vd2 = vd1;
+    // 1. =(const deque &)
+    vd2 = vd1;
 
-    // n = vd1.size();
+    n = vd1.size();
 
-    // check_equal(vd1, vd2, 1);
-    // for_each(vd2.begin(), vd2.end(), [](double &i)
-    //          { i *= 2; });
-    // check_equal(vd2, vd1, 2);
+    check_equal(vd1, vd2, 1);
+    for_each(vd2.begin(), vd2.end(), [](double &i)
+             { i *= 2; });
+    check_equal(vd2, vd1, 2);
 
-    // // 2. =(deque &&)
-    // stl::deque<double> vd3;
-    // vd3 = std::move(vd1);
-    // check_equal(vd2, vd3, 2);
+    // 2. =(deque &&)
+    stl::deque<double> vd3;
+    vd3 = std::move(vd1);
+    check_equal(vd2, vd3, 2);
 
-    // String s1("What");
-    // String s2("How");
-    // stl::deque<String> ax(n, s1);
-    // stl::deque<String> ay;
-    // ay = std::move(ax);
-    // for_each(ay.begin(), ay.end(), [&](String &i)
-    //          { assert(i == s1); });
+    String s1("What");
+    String s2("How");
+    stl::deque<String> ax(n, s1);
+    stl::deque<String> ay;
+    ay = std::move(ax);
+    for_each(ay.begin(), ay.end(), [&](String &i)
+             { assert(i == s1); });
 
-    // stl::deque<String> az(n, s2);
-    // ax = az;
+    stl::deque<String> az(n, s2);
+    ax = az;
 
-    // for_each(ax.begin(), ax.end(), [&](String &i)
-    //          { assert(i == s2); });
+    for_each(ax.begin(), ax.end(), [&](String &i)
+             { assert(i == s2); });
 
-    // // 3. assign(n, elem)
-    // const complex c(3.14, 6.18);
-    // stl::deque<complex> vc1(4, c);
-    // n = vd1.size();
-    // for_each(vc1.begin(), vc1.end(), [&](const complex &i)
-    //          { assert(i == c); });
+    // 3. assign(n, elem)
+    const complex c(3.14, 6.18);
+    stl::deque<complex> vc1(4, c);
+    n = vd1.size();
+    for_each(vc1.begin(), vc1.end(), [&](const complex &i)
+             { assert(i == c); });
 
-    // // 4. = initialized deque
-    // const complex c1(1, 2);
-    // const complex c2(3, 4);
-    // const complex c3;
-    // const stl::deque<complex> vc2 = {c, c1, c2, c3};
+    // 4. = initialized deque
+    const complex c1(1, 2);
+    const complex c2(3, 4);
+    const complex c3;
+    const stl::deque<complex> vc2 = {c, c1, c2, c3};
 
-    // auto iter = vc2.begin();
-    // assert(*iter == c);
-    // ++iter;
-    // assert(*iter == c1);
-    // ++iter;
-    // assert(*iter == c2);
-    // assert(*(--vc2.end()) == c3);
+    auto iter = vc2.begin();
+    assert(*iter == c);
+    ++iter;
+    assert(*iter == c1);
+    ++iter;
+    assert(*iter == c2);
+    assert(*(--vc2.end()) == c3);
 
-    // // 5. range assign
-    // stl::deque<String> vs1;
-    // vs1.assign({String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])});
-    // n = 4;
-    // stl::deque<String> vs2(n);
-    // for (auto &s : vs2)
-    //     assert(s == String());
+    // 5. range assign
+    stl::deque<String> vs1;
+    vs1.assign({String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])});
+    n = 4;
+    stl::deque<String> vs2(n);
+    for (auto &s : vs2)
+        assert(s == String());
 
-    // vs2.assign(vs1.begin(), vs1.end());
-    // std::equal(vs1.begin(), vs1.end(), vs2.begin());
+    vs2.assign(vs1.begin(), vs1.end());
+    std::equal(vs1.begin(), vs1.end(), vs2.begin());
 }
 
 void test_capacity()

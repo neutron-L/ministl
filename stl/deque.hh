@@ -324,9 +324,9 @@ namespace stl
         {
             // 分配中控器和默认大小的相应的缓冲区
             create_map_and_nodes(stl::distance(first, last));
-            
+
             size_type index = 0;
-            
+
             while (first != last)
                 stl::construct(&start[index++], *first++);
         }
@@ -350,7 +350,17 @@ namespace stl
         void assign(size_type count, const T &value);
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
-        void assign(InputIt first, InputIt last);
+        void assign(InputIt first, InputIt last)
+        {
+            auto size = stl::distance(first, last);
+
+            resize(size);
+
+            for (size_type i = 0; i < size; ++i)
+                stl::construct(&start[i], *first++);
+        }
+
+
         void assign(std::initializer_list<T> ilist);
 
         /*
@@ -486,6 +496,80 @@ namespace stl
     deque<T, Alloc>::~deque()
     {
         release_storage(true);
+    }
+
+    /*
+     * assignment operation
+     * */
+    template <typename T, typename Alloc>
+    deque<T, Alloc> &
+    deque<T, Alloc>::operator=(const deque &other)
+    {
+        size_type old_length = length;
+
+        // 释放原有的元素
+        release_storage(false);
+
+        // 在原有元素的位置构造新的元素
+        size_type count = std::min(old_length, other.size());
+
+        for (size_type i = 0; i < count; ++i)
+            stl::construct(&start[i]);
+        
+        // 如果other拥有更多的元素，则调用push_back
+        if (old_length < other.size())
+        {
+            count = other.size() - old_length;
+
+            for (size_type i = 0; i < count; ++i)
+                push_back(other[old_length + i]);
+        }
+        return *this;
+    }
+
+    template <typename T, typename Alloc>
+    deque<T, Alloc> &
+    deque<T, Alloc>::operator=(deque &&other) noexcept
+    {
+        // 释放原有的控制数据结构和元素
+        release_storage(true);
+
+        // 接管other的元素
+        map = other.map;
+        start = other.start;
+        finish = other.finish;
+        map_size = other.map_size;
+        length = other.length;
+
+        other.map = nullptr;
+        other.start.set_null();
+        other.finish.set_null();
+        other.length = other.map_size = 0;
+
+        return *this;
+    }
+
+
+    template <typename T, typename Alloc>
+    deque<T, Alloc> &
+    deque<T, Alloc>::operator=(std::initializer_list<T> ilist)
+    {
+        assign(ilist.begin(), ilist.end());
+    }
+
+
+    template <typename T, typename Alloc>
+    void 
+    deque<T, Alloc>::assign(size_type count, const T &value)
+    {
+        resize(count, value);
+    }
+
+    template <typename T, typename Alloc>
+    void 
+    deque<T, Alloc>::assign(std::initializer_list<T> ilist)
+    {
+        assign(ilist.begin(), ilist.end());
     }
 
     /*
