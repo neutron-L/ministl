@@ -323,9 +323,8 @@ namespace stl
         }
 
         // 确保当前deque有cap个元素空间，并且调整finish的位置使得length为cap
-        // 多余的元素需要销毁，但是多余的缓冲区保留
         // 缓冲区不够则需要重新申请，甚至重新分配更大的中继器空间
-        void reserve_and_destroy(size_type cap)
+        void reserve(size_type cap)
         {
             // map为空可能是因为该deque被move过
             // 创建map并预留cap个元素即可
@@ -334,12 +333,11 @@ namespace stl
                 create_map_and_nodes(cap);
                 return;
             }
-            /* 销毁元素 */
-            stl::destroy(begin(), end());
-            size_type node_num = finish.node - start.node + 1;
 
             if (length < cap)
             {
+
+                size_type node_num = finish.node - start.node + 1;
 
                 size_type reserve_node_num = (cap + BUFFER_SIZE - 1) / BUFFER_SIZE;
                 auto diff_nums = reserve_node_num - node_num;
@@ -398,7 +396,7 @@ namespace stl
                 size_type new_map_size = map_size + std::max(map_size, nodes_to_add) + 2;
 
                 map_pointer new_map = map_allocator::allocate(new_map_size);
-                memset(new_map, 0, new_map_size * sizeof(*new_map));
+                memset(new_map, 0, new_map_size * sizeof(*new_map)); // 清空！！！
 
                 new_start = new_map + (new_map_size - new_num_nodes) / 2 +
                             (at_front ? nodes_to_add : 0);
@@ -463,8 +461,10 @@ namespace stl
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void assign(InputIt first, InputIt last)
         {
+            clear();
             // 预留足够大的缓冲区空间
-            reserve_and_destroy(stl::distance(first, last));
+            reserve(stl::distance(first, last));
+
             stl::uninitialized_copy(first, last, begin());
         }
 
@@ -524,7 +524,11 @@ namespace stl
         iterator insert(const_iterator pos, InputIt first, InputIt last)
         {
         }
-        iterator insert(const_iterator pos, std::initializer_list<T> ilist);
+
+        iterator insert(const_iterator pos, std::initializer_list<T> ilist)
+        {
+            insert(pos, ilist.begin(), ilist.end());
+        }
 
         template <class... Args>
         iterator emplace(const_iterator pos, Args &&...args);
@@ -654,8 +658,10 @@ namespace stl
     void
     deque<T, Alloc>::assign(size_type count, const T &value)
     {
+        clear();
         // 预留足够大的缓冲区空间
-        reserve_and_destroy(count);
+        reserve(count);
+
         stl::uninitialized_fill_n(begin(), count, value);
     }
 
@@ -866,6 +872,8 @@ namespace stl
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::insert(const_iterator pos, const T &value)
     {
+        value_type val = value;
+        insert(pos, std::move(val));
     }
 
     template <typename T, typename Alloc>
@@ -877,6 +885,25 @@ namespace stl
     template <typename T, typename Alloc>
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::insert(const_iterator pos, size_type count, const T &value)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    template <class... Args>
+    typename deque<T, Alloc>::iterator
+    deque<T, Alloc>::emplace(const_iterator pos, Args &&...args)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    typename deque<T, Alloc>::iterator
+    deque<T, Alloc>::erase(const_iterator pos)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    typename deque<T, Alloc>::iterator
+    deque<T, Alloc>::erase(const_iterator first, const_iterator last)
     {
     }
 
@@ -996,10 +1023,15 @@ namespace stl
     void
     deque<T, Alloc>::resize(size_type count, const value_type &value)
     {
-        reserve_and_destroy(count);
+        auto old_finish = finish;
+        auto old_length = length;
 
-        // 不够的元素按照value构造
-        stl::uninitialized_fill_n(begin(), count, value);
+        reserve(count);
+
+        if (count < old_length)
+            stl::destroy(begin() + count, old_finish);
+        else if (count > old_length) // 不够的元素按照value构造
+            stl::uninitialized_fill_n(old_finish, count - old_length, value);
     }
 
     template <typename T, typename Alloc>

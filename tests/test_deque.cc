@@ -209,8 +209,24 @@ void test_capacity()
     assert(vd2.empty());
 
     vd2.assign(1233, 1.25);
-    for (auto & it : vd2)
+    for (auto &it : vd2)
         assert(it == 1.25);
+
+    n = 512;
+    vd2.resize(n);
+    for (auto &it : vd2)
+        assert(it == 1.25);
+    assert(vd2.size() == n);
+
+    vd2.resize(2 * n, 123);
+    assert(vd2.size() == 2 * n);
+    for (int i = 0; i < 2 * n; ++i)
+    {
+        if (i < n)
+            assert(vd2[i] == 1.25);
+        else
+            assert(vd2[i] == 123);
+    }
 
     // vd2.erase(vd2.begin());
     // assert(vd2.size() == 3);
@@ -456,12 +472,10 @@ void test_modifiers_string()
     std::cout << "-----------end---------------\n";
 }
 
-
 void test_deque_operations()
 {
     printf("=============%s=================\n", __FUNCTION__);
 }
-
 
 void test_non_member_func()
 {
