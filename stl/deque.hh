@@ -204,6 +204,11 @@ namespace stl
         size_type map_size{}; // map内指针数
         size_type length{};   // 元素数
 
+        iterator iter_trip_const(const_iterator &ci)
+        {
+            return iterator(ci.node, ci.first, ci.last, ci.cur);
+        }
+
         // 创建map结构，并分配相应的节点
         void create_map_and_nodes(size_type count) noexcept
         {
@@ -376,6 +381,12 @@ namespace stl
 
         void reallocate_map(size_type nodes_to_add, bool at_front)
         {
+             if (!map)
+            {
+                create_map_and_nodes(cap);
+                return;
+            }
+
             size_type old_num_nodes = finish.node - start.node + 1;
             size_type new_num_nodes = old_num_nodes + nodes_to_add;
 
@@ -880,12 +891,36 @@ namespace stl
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::insert(const_iterator pos, T &&value)
     {
+        if (pos == cbegin())
+        {
+            push_front(std::move(value));
+            return start;
+        }
+        else if (pos == cend())
+        {
+            push_back(std::move(value));
+            auto tmp = finish;
+            return --tmp;
+        }
+        else
+        {
+            // 腾出空间
+            make_room(pos, 1);
+
+            // 插入新值
+            start[pos - cbegin()] = std::move(value);
+        }
     }
 
     template <typename T, typename Alloc>
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::insert(const_iterator pos, size_type count, const T &value)
     {
+        if ()
+        // 腾出空间
+        make_room(pos, 1);
+
+        // 插入新值
     }
 
     template <typename T, typename Alloc>
@@ -893,12 +928,30 @@ namespace stl
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::emplace(const_iterator pos, Args &&...args)
     {
+        value_type val(std::forward<Args>(args)...);
+        return insert(pos, std::move(val));
     }
 
     template <typename T, typename Alloc>
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::erase(const_iterator pos)
     {
+        const_iterator next = pos;
+        ++next;
+
+        difference_type index = pos - start;
+        if (index < (length >> 1))
+        {
+            stl::copy_backward(cbegin(), pos, next);
+            pop_front();
+        }
+        else
+        {
+            stl::copy(cbegin(), cend(), pos);
+            pop_back();
+        }
+
+        return start + index;
     }
 
     template <typename T, typename Alloc>
