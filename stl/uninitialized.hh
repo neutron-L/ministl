@@ -16,7 +16,9 @@ namespace stl
     ForwardIterator uninitialized_copy_aux(InputIterator first, InputIterator last,
                                          ForwardIterator result, __true_type)
     {
-        return std::copy(first, last, result); // TODO: replace by our own copy function, as stl:copy
+        // 暂时不能调用
+        // return std::copy(first, last, result); // TODO: replace by our own copy function, as stl:copy
+        return uninitialized_copy_aux(first, last, result, __false_type());
     }
 
     template <typename InputIterator, typename ForwardIterator>
@@ -25,7 +27,7 @@ namespace stl
     {
         while (first != last)
         {
-            construct(&*result, *first);
+            stl::construct(&*result, *first);
             ++first;
             ++result;
         }
@@ -58,7 +60,13 @@ namespace stl
     inline ForwardIterator
     uninitialized_fill_n_aux(ForwardIterator first, Size n, const T &x, __true_type)
     {
-        return std::fill_n(first, n, x); // TODO: replace by our own copy function, as stl:fill_n
+        // return std::fill_n(first, n, x); // TODO: replace by our own copy function, as stl:fill_n
+         while (n--)
+        {
+            stl::construct(&*first, x);
+            ++first;
+        }
+        return first;
     }
 
     template <typename ForwardIterator, typename Size, typename T>
@@ -67,7 +75,7 @@ namespace stl
     {
         while (n--)
         {
-            construct(&*first, x);
+            stl::construct(&*first, x);
             ++first;
         }
         return first;

@@ -12,7 +12,7 @@
 namespace stl
 {
     template<typename T1, typename... Args>
-    inline void construct(T1 * p, Args&&... val)
+    inline void construct(T1 * p, Args&&... val) noexcept
     {
         new (p) T1(std::forward<Args>(val)...);
     }

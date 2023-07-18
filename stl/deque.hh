@@ -207,11 +207,18 @@ namespace stl
         // 创建map结构，并分配相应的节点
         void create_map_and_nodes(size_type count) noexcept
         {
+            /* 如果刚好整除，会多分配一个节点，此时finish指向最后一个
+               空缓冲区的起始处
+               如果count是0，也会分配一个空的缓冲区
+              这意味着需要添加缓冲区时直接从finish.node+1开始
+              而不用考虑finish.node == nullptr的清空
+              */
             size_type num_of_nodes = count / BUFFER_SIZE + 1;
 
             map_size = std::max(BUFFER_SIZE, num_of_nodes + 2);
 
             map = map_allocator::allocate(map_size);
+            memset(map, 0, map_size * sizeof(*map)); // 初始时清空map
 
             map_pointer nstart = map + (map_size - num_of_nodes) / 2;
             map_pointer nfinish = nstart + num_of_nodes - 1;
@@ -222,13 +229,13 @@ namespace stl
             {
                 /* code */
                 for (cur = nstart; cur <= nfinish; ++cur)
-                    *cur = allocate_node();
+                    allocate_node(cur);
             }
             catch (const std::exception &e)
             {
                 // 释放已经分配的节点
                 while (--cur >= nstart)
-                    deallocate_node(*cur);
+                    deallocate_node(cur);
 
                 // 释放中继器
                 map_allocator::deallocate(map);
@@ -240,22 +247,24 @@ namespace stl
             start.set_node(nstart);
             finish.set_node(nfinish);
             start.cur = start.first;
-
-            length = count;
-
             finish.cur = finish.first + count % BUFFER_SIZE;
+            length = count;
         }
 
-        // 分配一块新的缓冲区
-        pointer allocate_node()
+        // 分配一块新的缓冲区，将其位置保存在map中的指定位置
+        // 除非shrink fit，否则一般弹出元素也不会释放其占有的内存，而是以备添加元素的需求
+        // 因此有可能mp处本来就有一块缓冲区，此时不会分配新的缓冲区
+        void allocate_node(map_pointer mp)
         {
-            return data_allocator::allocate(BUFFER_SIZE);
+            if (!*mp)
+                *mp = data_allocator::allocate(BUFFER_SIZE);
         }
 
         // 归还一个node
-        void deallocate_node(pointer node)
+        void deallocate_node(map_pointer mp)
         {
-            data_allocator::deallocate(node);
+            data_allocator::deallocate(*mp);
+            *mp = nullptr; // 标注该指针为空
         }
 
         // 负责初始化一个deque并且填充count个value元素
@@ -267,6 +276,8 @@ namespace stl
 
             try
             {
+                // 应该可以uninitialized_fill(start, finish + 1, value)
+                // 但是可能效率低一些
                 for (cur = start.node; cur < finish.node; ++cur)
                     stl::uninitialized_fill(*cur, *cur + BUFFER_SIZE, value);
                 stl::uninitialized_fill(finish.first, finish.cur, value);
@@ -311,6 +322,109 @@ namespace stl
                 finish = start; // finish和start指向同一个位置
         }
 
+        // 确保当前deque有cap个元素空间，并且调整finish的位置使得length为cap
+        // 多余的元素需要销毁，但是多余的缓冲区保留
+        // 缓冲区不够则需要重新申请，甚至重新分配更大的中继器空间
+        void reserve_and_destroy(size_type cap)
+        {
+            // map为空可能是因为该deque被move过
+            // 创建map并预留cap个元素即可
+            if (!map)
+            {
+                create_map_and_nodes(cap);
+                return;
+            }
+            /* 销毁元素 */
+            stl::destroy(begin(), end());
+            size_type node_num = finish.node - start.node + 1;
+
+            if (length < cap)
+            {
+
+                size_type reserve_node_num = (cap + BUFFER_SIZE - 1) / BUFFER_SIZE;
+                auto diff_nums = reserve_node_num - node_num;
+
+                // 1. map size够用
+                if (reserve_node_num <= map_size)
+                {
+                    // 如果map尾部不足以存放新的缓冲区指针
+                    // 则前移map中的缓冲区指针
+                    if (map_size - (finish.node - map + 1) <
+                        diff_nums)
+                    {
+                        map_pointer nstart = map + (map_size - reserve_node_num) / 2;
+                        map_pointer nfinish = stl::copy(start.node, finish.node + 1, nstart) - 1;
+
+                        start.set_node(nstart);
+                        finish.set_node(nfinish);
+                    }
+                }
+                else // 重新分配一个更大的map
+                    reallocate_map(diff_nums, false);
+
+                map_pointer mp = finish.node + 1;
+
+                while (diff_nums--)
+                {
+                    allocate_node(mp);
+                    ++mp;
+                }
+            }
+
+            // reset finish
+            finish = start + cap;
+            length = cap;
+        }
+
+        void reallocate_map(size_type nodes_to_add, bool at_front)
+        {
+            size_type old_num_nodes = finish.node - start.node + 1;
+            size_type new_num_nodes = old_num_nodes + nodes_to_add;
+
+            map_pointer new_start;
+
+            if (map_size > 2 * new_num_nodes)
+            {
+                new_start = map + (map_size - new_num_nodes) / 2 +
+                            (at_front ? nodes_to_add : 0);
+
+                if (new_start < start.node)
+                    stl::copy(start.node, finish.node + 1, new_start);
+                else if (new_start > start.node)
+                    stl::copy_backward(start.node, finish.node + 1, new_start);
+            }
+            else
+            {
+                size_type new_map_size = map_size + std::max(map_size, nodes_to_add) + 2;
+
+                map_pointer new_map = map_allocator::allocate(new_map_size);
+                memset(new_map, 0, new_map_size * sizeof(*new_map));
+
+                new_start = new_map + (new_map_size - new_num_nodes) / 2 +
+                            (at_front ? nodes_to_add : 0);
+
+                stl::copy(start.node, finish.node + 1, new_start);
+
+                map = new_map;
+                map_size = new_map_size;
+            }
+
+            start.set_node(new_start);
+            finish.set_node(new_start + old_num_nodes - 1);
+        }
+
+        void reserve_map_at_back(size_type nodes_to_add = 1)
+        {
+            if (map_size - (finish.node - map + 1) < nodes_to_add)
+                reallocate_map(nodes_to_add, false);
+        }
+
+        void reserve_map_at_front(size_type nodes_to_add = 1)
+        {
+            if (start.node - map < nodes_to_add)
+                reallocate_map(nodes_to_add, true);
+        }
+
     public:
         /*
          * Constructors
@@ -325,10 +439,7 @@ namespace stl
             // 分配中控器和默认大小的相应的缓冲区
             create_map_and_nodes(stl::distance(first, last));
 
-            size_type index = 0;
-
-            while (first != last)
-                stl::construct(&start[index++], *first++);
+            stl::uninitialized_copy(first, last, begin());
         }
 
         deque(const deque &other);
@@ -352,14 +463,10 @@ namespace stl
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void assign(InputIt first, InputIt last)
         {
-            auto size = stl::distance(first, last);
-
-            resize(size);
-
-            for (size_type i = 0; i < size; ++i)
-                stl::construct(&start[i], *first++);
+            // 预留足够大的缓冲区空间
+            reserve_and_destroy(stl::distance(first, last));
+            stl::uninitialized_copy(first, last, begin());
         }
-
 
         void assign(std::initializer_list<T> ilist);
 
@@ -412,8 +519,11 @@ namespace stl
         iterator insert(const_iterator pos, const T &value);
         iterator insert(const_iterator pos, T &&value);
         iterator insert(const_iterator pos, size_type count, const T &value);
-        template <class InputIt>
-        iterator insert(const_iterator pos, InputIt first, InputIt last);
+
+        template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
+        iterator insert(const_iterator pos, InputIt first, InputIt last)
+        {
+        }
         iterator insert(const_iterator pos, std::initializer_list<T> ilist);
 
         template <class... Args>
@@ -465,8 +575,7 @@ namespace stl
         // 创建足够的map结构和缓冲区
         create_map_and_nodes(other.size());
 
-        for (size_type i = 0; i < length; ++i)
-            stl::construct(&(*this)[i], other[i]);
+        stl::uninitialized_copy(other.begin(), other.end(), begin());
     }
 
     template <typename T, typename Alloc>
@@ -505,25 +614,8 @@ namespace stl
     deque<T, Alloc> &
     deque<T, Alloc>::operator=(const deque &other)
     {
-        size_type old_length = length;
+        assign(other.begin(), other.end());
 
-        // 释放原有的元素
-        release_storage(false);
-
-        // 在原有元素的位置构造新的元素
-        size_type count = std::min(old_length, other.size());
-
-        for (size_type i = 0; i < count; ++i)
-            stl::construct(&start[i]);
-        
-        // 如果other拥有更多的元素，则调用push_back
-        if (old_length < other.size())
-        {
-            count = other.size() - old_length;
-
-            for (size_type i = 0; i < count; ++i)
-                push_back(other[old_length + i]);
-        }
         return *this;
     }
 
@@ -549,24 +641,26 @@ namespace stl
         return *this;
     }
 
-
     template <typename T, typename Alloc>
     deque<T, Alloc> &
     deque<T, Alloc>::operator=(std::initializer_list<T> ilist)
     {
         assign(ilist.begin(), ilist.end());
+
+        return *this;
     }
 
-
     template <typename T, typename Alloc>
-    void 
+    void
     deque<T, Alloc>::assign(size_type count, const T &value)
     {
-        resize(count, value);
+        // 预留足够大的缓冲区空间
+        reserve_and_destroy(count);
+        stl::uninitialized_fill_n(begin(), count, value);
     }
 
     template <typename T, typename Alloc>
-    void 
+    void
     deque<T, Alloc>::assign(std::initializer_list<T> ilist)
     {
         assign(ilist.begin(), ilist.end());
@@ -764,6 +858,161 @@ namespace stl
     {
         release_storage(false);
     }
+
+    /*
+     * Modifiers
+     * */
+    template <typename T, typename Alloc>
+    typename deque<T, Alloc>::iterator
+    deque<T, Alloc>::insert(const_iterator pos, const T &value)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    typename deque<T, Alloc>::iterator
+    deque<T, Alloc>::insert(const_iterator pos, T &&value)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    typename deque<T, Alloc>::iterator
+    deque<T, Alloc>::insert(const_iterator pos, size_type count, const T &value)
+    {
+    }
+
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::push_back(const T &value)
+    {
+        T v = value;
+        push_back(std::move(v));
+    }
+
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::push_back(T &&value)
+    {
+        stl::construct(finish.cur++, std::move(value));
+
+        if (finish.cur == finish.last)
+        {
+            reserve_map_at_back();
+            allocate_node(finish.node + 1);
+            finish.set_node(finish.node + 1);
+            finish.cur = finish.first;
+        }
+
+        ++length;
+    }
+
+    template <typename T, typename Alloc>
+    template <class... Args>
+    typename deque<T, Alloc>::reference
+    deque<T, Alloc>::emplace_back(Args &&...args)
+    {
+        value_type val(std::forward<Args>(args)...);
+        push_back(std::move(val));
+
+        return *(end() - 1);
+    }
+
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::pop_back()
+    {
+        if (!length)
+            return;
+        if (finish.cur == finish.first)
+        {
+            finish.set_node(finish.node - 1);
+            finish.cur = finish.last;
+        }
+        stl::destroy(--finish.cur);
+
+        --length;
+    }
+
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::push_front(const T &value)
+    {
+        T v = value;
+        push_back(std::move(v));
+    }
+
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::push_front(T &&value)
+    {
+        if (start.cur == start.first)
+        {
+            reserve_map_at_front();
+            allocate_node(start.node - 1);
+
+            start.set_node(start.node - 1);
+            start.cur = start.last;
+        }
+        stl::construct(--start.cur, std::move(value));
+
+        ++length;
+    }
+
+    template <typename T, typename Alloc>
+    template <class... Args>
+    typename deque<T, Alloc>::reference
+    deque<T, Alloc>::emplace_front(Args &&...args)
+    {
+        value_type val(std::forward<Args>(args)...);
+        push_front(std::move(val));
+
+        return front();
+    }
+
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::pop_front()
+    {
+        if (!length)
+            return;
+
+        stl::destroy(start.cur++);
+
+        if (start.cur == start.last)
+        {
+            start.set_node(start.node + 1);
+            start.cur = start.first;
+        }
+        --length;
+    }
+
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::resize(size_type count)
+    {
+        resize(count, value_type());
+    }
+
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::resize(size_type count, const value_type &value)
+    {
+        reserve_and_destroy(count);
+
+        // 不够的元素按照value构造
+        stl::uninitialized_fill_n(begin(), count, value);
+    }
+
+    template <typename T, typename Alloc>
+    void
+    deque<T, Alloc>::swap(deque &other) noexcept
+    {
+        stl::swap(map, other.map);
+        stl::swap(start, other.start);
+        stl::swap(finish, other.finish);
+        stl::swap(map_size, other.map_size);
+        stl::swap(length, other.length);
+    }
+
 } // namespace stl
 
 #endif

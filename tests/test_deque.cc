@@ -132,8 +132,11 @@ void test_assignment()
 
     String s1("What");
     String s2("How");
+    n = 256;
     stl::deque<String> ax(n, s1);
+    assert(ax.size() == n && ax.front() == s1);
     stl::deque<String> ay;
+    assert(ay.empty());
     ay = std::move(ax);
     for_each(ay.begin(), ay.end(), [&](String &i)
              { assert(i == s1); });
@@ -147,11 +150,10 @@ void test_assignment()
     // 3. assign(n, elem)
     const complex c(3.14, 6.18);
     stl::deque<complex> vc1(4, c);
-    n = vd1.size();
     for_each(vc1.begin(), vc1.end(), [&](const complex &i)
              { assert(i == c); });
 
-    // 4. = initialized deque
+    // 4&5. = initialized deque & assign(init list)
     const complex c1(1, 2);
     const complex c2(3, 4);
     const complex c3;
@@ -165,7 +167,11 @@ void test_assignment()
     assert(*iter == c2);
     assert(*(--vc2.end()) == c3);
 
-    // 5. range assign
+    stl::deque<complex> cv;
+    cv.assign({c, c1, c2, c3});
+    check_equal(vc2, cv, 1);
+
+    // 6. range assign
     stl::deque<String> vs1;
     vs1.assign({String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])});
     n = 4;
@@ -180,24 +186,31 @@ void test_assignment()
 void test_capacity()
 {
     printf("=============%s=================\n", __FUNCTION__);
-    // stl::deque<double>::size_type n;
-    // stl::deque<double> vd1{3.14, 18.90, 10};
-    // stl::deque<double> vd2;
+    stl::deque<double>::size_type n;
+    stl::deque<double> vd1{3.14, 18.90, 10};
+    stl::deque<double> vd2;
 
-    // // 1. empty
-    // assert(!vd1.empty() && vd2.empty());
-    // vd2 = vd1;
-    // assert(!vd2.empty() && vd1.size() == vd2.size());
+    // 1. empty
+    assert(!vd1.empty() && vd2.empty());
+    vd2 = vd1;
+    assert(!vd2.empty() && vd1.size() == vd2.size());
 
-    // // 2. size
-    // assert(vd1.size() == 3);
-    // vd1.pop_back();
-    // assert(vd1.size() == 2);
-    // vd1.push_front(4);
-    // assert(vd1.size() == 3);
+    // 2. size
+    assert(vd1.size() == 3);
+    vd1.pop_back();
+    assert(vd1.size() == 2);
+    vd1.push_front(4);
+    assert(vd1.size() == 3);
 
-    // vd2.assign({1.2, 3.4, 5.6, 1.0});
-    // assert(vd2.size() == 4);
+    vd2.assign({1.2, 3.4, 5.6, 1.0});
+    assert(vd2.size() == 4);
+
+    vd2.clear();
+    assert(vd2.empty());
+
+    vd2.assign(1233, 1.25);
+    for (auto & it : vd2)
+        assert(it == 1.25);
 
     // vd2.erase(vd2.begin());
     // assert(vd2.size() == 3);
