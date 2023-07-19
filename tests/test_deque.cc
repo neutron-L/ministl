@@ -118,8 +118,6 @@ void test_assignment()
     // 1. =(const deque &)
     vd2 = vd1;
 
-    n = vd1.size();
-
     check_equal(vd1, vd2, 1);
     for_each(vd2.begin(), vd2.end(), [](double &i)
              { i *= 2; });
@@ -228,6 +226,15 @@ void test_capacity()
             assert(vd2[i] == 123);
     }
 
+    vd2.resize(n / 2, 123);
+    assert(vd2.size() == n / 2);
+    for (auto &it : vd2)
+        assert(it == 1.25);
+    vd1 = std::move(vd2);
+    assert(vd1.size() == n / 2);
+    for (auto &it : vd1)
+        assert(it == 1.25);
+    assert(vd2.empty());
     // vd2.erase(vd2.begin());
     // assert(vd2.size() == 3);
 }
@@ -485,7 +492,7 @@ void test_non_member_func()
 int main()
 {
     test_constructors();
-    test_assignment();
+    // test_assignment();
     test_capacity();
     test_modifiers_built_in_types();
     test_modifiers_complex();

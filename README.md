@@ -12,8 +12,8 @@ STL库中的常见容器和算法的实现，主要包括四部分：
 - array
 - vector            
 - forward list      (TODO)
-- list              (TODO)
-- deque             (TODO)  
+- list              
+- deque             
 
 ### Associative 
 - unordered_set
