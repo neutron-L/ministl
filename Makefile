@@ -13,7 +13,7 @@ all: $(PROGRAM)
 test_traits: $(TEST)/test_traits.cc $(STL)/type_traits.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^ 
 
-test_construct: $(TEST)/test_construct.cc $(STL)/complex.hh $(STL)/string.hh $(STL)/array.hh $(STL)/construct.hh $(STL)/type_traits.hh 
+test_construct: $(TEST)/test_construct.cc $(STL)/complex.hh $(STL)/string.hh $(STL)/array.hh $(STL)/construct.hh $(STL)/type_traits.hh $(STL)/algobase.hh 
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 	

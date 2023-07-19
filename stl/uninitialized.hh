@@ -5,7 +5,7 @@
 #ifndef MINISTL_UNINITIALIZED_HH
 #define MINISTL_UNINITIALIZED_HH
 
-#include <algorithm>
+#include "algobase.hh"
 
 #include "type_traits.hh"
 #include "construct.hh"
@@ -60,13 +60,7 @@ namespace stl
     inline ForwardIterator
     uninitialized_fill_n_aux(ForwardIterator first, Size n, const T &x, __true_type)
     {
-        // return std::fill_n(first, n, x); // TODO: replace by our own copy function, as stl:fill_n
-         while (n--)
-        {
-            stl::construct(&*first, x);
-            ++first;
-        }
-        return first;
+        return stl::fill_n(first, n, x); 
     }
 
     template <typename ForwardIterator, typename Size, typename T>

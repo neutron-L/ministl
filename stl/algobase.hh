@@ -5,6 +5,11 @@
 #ifndef MINISTL_ALGOBASE_HH
 #define MINISTL_ALGOBASE_HH
 
+#include <utility>
+#include <cstring>
+
+#include "construct.hh"
+
 namespace stl
 {
     /* Minimum/maximum operations */
@@ -61,7 +66,13 @@ namespace stl
     template <typename BidirIt1, typename BidirIt2>
     BidirIt2 copy_backward(BidirIt1 first, BidirIt1 last, BidirIt2 d_last)
     {
-        return std::copy_backward(first, last, d_last);
+        while (--last >= first)
+        {
+            --d_last;
+            stl::construct(&*d_last, *last);
+        }
+
+        return d_last;
     }
 
     template <typename InputIt, typename Size, typename OutputIt>
@@ -80,11 +91,13 @@ namespace stl
     }
 
     template <typename OutputIt, typename Size, typename T>
-    void fill_n(OutputIt first, Size count, const T &value)
+    OutputIt fill_n(OutputIt first, Size count, const T &value)
     {
         while (count--)
             *first++ = value;
+        return first;
     }
+
 
     template <class T>
     void swap(T &a, T &b) noexcept
