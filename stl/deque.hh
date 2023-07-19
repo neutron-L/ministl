@@ -50,6 +50,16 @@ namespace stl
 
         deque_iterator() = default;
 
+        operator iterator() const
+        {
+            return iterator(const_cast<Tp **>(node), const_cast<Tp *>(first), const_cast<Tp *>(last), const_cast<Tp *>(cur));
+        }
+
+        operator const_iterator() const
+        {
+            return const_iterator(node, first, last, cur);
+        }
+
         deque_iterator(map_pointer n, pointer f, pointer l, pointer c)
             : node(n), first(f), last(l), cur(c)
         {
@@ -152,6 +162,21 @@ namespace stl
             return (node == rhs.node)
                        ? cur < rhs.cur
                        : node < rhs.node;
+        }
+
+        bool operator<=(const Self &rhs) const
+        {
+            return *this < rhs || *this == rhs;
+        }
+
+        bool operator>(const Self &rhs) const
+        {
+            return !this->operator<=(rhs);
+        }
+
+        bool operator>=(const Self &rhs) const
+        {
+            return !this->operator<(rhs);
         }
 
         void set_node(map_pointer new_node)
@@ -395,7 +420,7 @@ namespace stl
         }
 
         // 这段程序用来在程序的开头或者结尾预留cap个元素所需要的空间
-        // 调用该方法时，需要事先保存start、finish和length，这些状态都会改写
+        // 不改变start,finish和length
         void make_room(bool at_front, size_type cap)
         {
             size_type nodes_to_add;
@@ -416,7 +441,7 @@ namespace stl
                     --mp;
                 }
 
-                start -= t;
+                // start -= t;
             }
             else
             {
@@ -431,10 +456,10 @@ namespace stl
                     allocate_node(mp);
                     ++mp;
                 }
-                finish += t;
+                // finish += t;
             }
 
-            length += cap;
+            // length += cap;
         }
 
     public:
@@ -540,6 +565,52 @@ namespace stl
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         iterator insert(const_iterator pos, InputIt first, InputIt last)
         {
+            size_type index = stl::distance(cbegin(), pos);
+            size_type old_len = length;
+            size_type count = stl::distance(first, last);
+            iterator iter;
+
+            if (!count)
+                return begin() + index;
+
+            make_room(index == 0, count);
+            length += count;
+
+            if (index == 0)
+            {
+                start -= count;
+                stl::uninitialized_copy(first, last, begin());
+
+                iter = begin();
+            }
+            else
+            {
+                iter = begin() + index;
+
+                if (index == old_len - 1)
+                    stl::uninitialized_copy(first, last, iter);
+                else
+                {
+                    auto nums_after_pos = old_len - index;
+                    auto old_finish = begin() + old_len;
+
+                    if (nums_after_pos > count)
+                    {
+                        stl::uninitialized_copy(old_finish - count, old_finish, old_finish);
+                        stl::copy_backward(iter, old_finish - count, old_finish);
+                        stl::copy(first, last, iter);
+                    }
+                    else
+                    {
+                        stl::uninitialized_copy(iter, old_finish, iter + count);
+                        stl::copy(first, first + nums_after_pos, iter);
+                        stl::uninitialized_copy(first + nums_after_pos, last, iter + nums_after_pos);
+                    }
+                }
+                finish = start + length;
+
+                return iter;
+            }
         }
 
         iterator insert(const_iterator pos, std::initializer_list<T> ilist)
@@ -743,7 +814,7 @@ namespace stl
     typename deque<T, Alloc>::reference
     deque<T, Alloc>::back()
     {
-        return const_cast<reference>(const_cast<const deque &>(*this).front());
+        return const_cast<reference>(const_cast<const deque &>(*this).back());
     }
 
     template <typename T, typename Alloc>
@@ -767,14 +838,14 @@ namespace stl
     typename deque<T, Alloc>::const_iterator
     deque<T, Alloc>::begin() const noexcept
     {
-        return const_iterator(start.node, start.first, start.last, start.cur);
+        return start;
     }
 
     template <typename T, typename Alloc>
     typename deque<T, Alloc>::const_iterator
     deque<T, Alloc>::cbegin() const noexcept
     {
-        return const_iterator(start.node, start.first, start.last, start.cur);
+        return start;
     }
 
     template <typename T, typename Alloc>
@@ -788,14 +859,14 @@ namespace stl
     typename deque<T, Alloc>::const_iterator
     deque<T, Alloc>::end() const noexcept
     {
-        return const_iterator(finish.node, finish.first, finish.last, finish.cur);
+        return finish;
     }
 
     template <typename T, typename Alloc>
     typename deque<T, Alloc>::const_iterator
     deque<T, Alloc>::cend() const noexcept
     {
-        return const_iterator(finish.node, finish.first, finish.last, finish.cur);
+        return finish;
     }
 
     template <typename T, typename Alloc>
@@ -888,7 +959,7 @@ namespace stl
     deque<T, Alloc>::insert(const_iterator pos, const T &value)
     {
         value_type val = value;
-        insert(pos, std::move(val));
+        return insert(pos, std::move(val));
     }
 
     template <typename T, typename Alloc>
@@ -898,7 +969,7 @@ namespace stl
         if (pos == cbegin())
         {
             push_front(std::move(value));
-            return start;
+            return begin();
         }
         else if (pos == cend())
         {
@@ -908,11 +979,18 @@ namespace stl
         }
         else
         {
-            // 腾出空间
             make_room(false, 1);
+            push_back(back()); // 添加一个冗余的末尾元素
+            auto back1 = end();
+            --back1;
+            auto back2 = back1;
+            --back2;
+            stl::copy_backward(static_cast<iterator>(pos), back2, back1);
 
-            // 插入新值
-            start[pos - cbegin()] = std::move(value);
+            iterator iter = start + stl::distance(cbegin(), pos);
+            *iter = std::move(value);
+
+            return iter;
         }
     }
 
@@ -920,20 +998,47 @@ namespace stl
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::insert(const_iterator pos, size_type count, const T &value)
     {
-        auto index = pos - cbegin();
-        bool at_begin = pos == cbegin();
-        bool at_end = pos == cend();
+        size_type index = stl::distance(cbegin(), pos);
+        size_type old_len = length;
+        iterator iter;
 
-        make_room(false, count);
+        if (!count)
+            return begin() + index;
 
-        iterator iter = at_begin ? begin() : (at_end ? end() : begin() + index);
-        if (at_begin || at_end)
+        make_room(index == 0, count);
+        length += count;
+
+        if (index == 0)
         {
-            stl::uninitialized_fill_n(iter, count, value);
+            stl::uninitialized_fill_n(begin(), count, value);
+            iter = begin();
         }
         else
         {
+            iter = begin() + index;
+
+            if (index == old_len - 1)
+                stl::uninitialized_fill_n(iter, count, value);
+            else
+            {
+                auto nums_after_pos = old_len - index;
+                auto old_finish = begin() + old_len;
+
+                if (nums_after_pos > count)
+                {
+                    stl::uninitialized_copy(old_finish - count, old_finish, old_finish);
+                    stl::copy_backward(iter, old_finish - count, old_finish);
+                    stl::fill(iter, iter + count, value);
+                }
+                else
+                {
+                    stl::uninitialized_copy(iter, old_finish, iter + count);
+                    stl::fill_n(iter, nums_after_pos, value);
+                    stl::uninitialized_fill_n(old_finish, count - nums_after_pos, value);
+                }
+            }
         }
+        finish = start + length;
 
         return iter;
     }
@@ -951,18 +1056,20 @@ namespace stl
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::erase(const_iterator pos)
     {
-        const_iterator next = pos;
+        if (!(pos < cend() && pos >= cbegin()))
+            return pos;
+        iterator next = pos;
         ++next;
 
-        difference_type index = pos - start;
-        if (index < (length >> 1))
+        difference_type index = stl::distance(cbegin(), pos);
+        if (index <= (length >> 1))
         {
             stl::copy_backward(cbegin(), pos, next);
             pop_front();
         }
         else
         {
-            stl::copy(cbegin(), cend(), pos);
+            stl::copy(next, end(), static_cast<iterator>(pos));
             pop_back();
         }
 
@@ -973,6 +1080,24 @@ namespace stl
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::erase(const_iterator first, const_iterator last)
     {
+        if (!(last <= cend() && first >= cbegin() && first <= last))
+            return first;
+
+        size_type nums_before_erase = stl::distance(cbegin(), first);
+        size_type nums_after_erase = stl::distance(last, cend());
+
+        if (nums_after_erase < nums_before_erase)
+        {
+            stl::copy(static_cast<iterator>(last), end(), static_cast<iterator>(first));
+            stl::destroy(first + nums_after_erase, cend());
+        }
+        else
+        {
+            start = stl::copy_backward(begin(), static_cast<iterator>(first), static_cast<iterator>(last));
+            stl::destroy(cbegin(), last - nums_before_erase);
+        }
+        length -= stl::distance(first, last);
+        finish = start + length;
     }
 
     template <typename T, typename Alloc>
@@ -1101,11 +1226,9 @@ namespace stl
         }
 
         else if (count < old_length)
-        {
             stl::destroy(begin() + count, finish);
-            length = count;
-            finish = start + length;
-        }
+        length = count;
+        finish = start + length;
     }
 
     template <typename T, typename Alloc>

@@ -235,59 +235,64 @@ void test_capacity()
     for (auto &it : vd1)
         assert(it == 1.25);
     assert(vd2.empty());
-    // vd2.erase(vd2.begin());
-    // assert(vd2.size() == 3);
+
+    vd2.erase(vd2.begin());
+    assert(vd2.empty());
+
+    vd1.erase(vd1.begin());
+    assert(vd1.size() ==  n / 2 - 1);
 }
 
 void test_modifiers_built_in_types()
 {
     printf("=============%s=================\n", __FUNCTION__);
 
-    // static int arr[] = {11, 12, 13, 14, 15};
-    // /* Insert */
-    // stl::deque<int> vi;
-    // static stl::deque<int>::size_type len = 5;
+    static int arr[] = {11, 12, 13, 14, 15};
+    /* Insert */
+    stl::deque<int> vi;
+    static stl::deque<int>::size_type len = 5;
 
-    // // 1.1 insert lvalue
-    // stl::deque<int>::iterator iter;
-    // for (auto &i : arr)
-    // {
-    //     iter = vi.insert(vi.begin(), i);
-    //     assert(*iter == i);
-    // }
-    // // 15 14 13 12 11
-    // int i = 0;
-    // for_each(vi.rbegin(), vi.rend(), [&i](auto &item)
-    //          { assert(item == arr[i++]); });
+    // 1.1 insert lvalue
+    stl::deque<int>::iterator iter;
+    for (auto &i : arr)
+    {
+        iter = vi.insert(vi.begin(), i);
+        assert(*iter == i);
+    }
+    // 15 14 13 12 11
+    int i = 0;
+    for_each(vi.rbegin(), vi.rend(), [&i](auto &item)
+             { assert(item == arr[i++]); });
+    assert(to_str(vi) == "15 14 13 12 11 ");
 
-    // // 1.2 insert rvalue
+    // 1.2 insert rvalue
 
-    // iter = vi.begin();
-    // ++iter;
-    // ++iter;
+    iter = vi.begin();
+    ++iter;
+    ++iter;
 
-    // iter = vi.insert(iter, 9); // 15 14 9 13 12 11
-    // assert(*iter == 9);
-    // assert(to_str(vi) == "15 14 9 13 12 11 ");
+    iter = vi.insert(iter, 9); // 15 14 9 13 12 11
+    assert(*iter == 9);
+    assert(to_str(vi) == "15 14 9 13 12 11 ");
 
-    // // 1.3 insert n items
-    // vi.insert(++vi.begin(), 3, 88); // 15 88 88 88 14 9 13 12 11
-    // iter = vi.begin();
-    // assert(*++iter == 88 && *++iter == 88 && *++iter == 88);
+    // 1.3 insert n items
+    vi.insert(++vi.begin(), 3, 88); // 15 88 88 88 14 9 13 12 11
+    iter = vi.begin();
+    assert(*++iter == 88 && *++iter == 88 && *++iter == 88);
 
-    // assert(to_str(vi) == "15 88 88 88 14 9 13 12 11 ");
+    assert(to_str(vi) == "15 88 88 88 14 9 13 12 11 ");
 
-    // // 1.4 insert initializer-deque
-    // iter = vi.end();
-    // --iter;
-    // --iter;
-    // vi.insert(iter, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
-    // cout << to_str(vi) << endl;
-    // assert(to_str(vi) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
+    // 1.4 insert initializer-deque
+    iter = vi.end();
+    --iter;
+    --iter;
+    vi.insert(iter, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
+    cout << to_str(vi) << endl;
+    assert(to_str(vi) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
 
-    // // clear
-    // vi.clear();
-    // assert(vi.empty());
+    // clear
+    vi.clear();
+    assert(vi.empty());
 }
 
 void test_modifiers_complex()
@@ -295,139 +300,143 @@ void test_modifiers_complex()
     printf("=============%s=================\n", __FUNCTION__);
     std::cout << "-----------complex------------\n";
 
-    // stl::deque<complex> vc;
+    stl::deque<complex> vc;
 
-    // // 为了更方便逐步测试，使用标准库的实现作为参考
-    // // 但是也意味着很多操作都要分别做两次……，属实难绷
-    // std::deque<complex> rvc;
+    // 为了更方便逐步测试，使用标准库的实现作为参考
+    // 但是也意味着很多操作都要分别做两次……，属实难绷
+    std::deque<complex> rvc;
 
-    // /* Insert */
+    /* Insert */
 
-    // // 1.1 insert lvalue
-    // stl::deque<complex>::iterator ic;
-    // std::deque<complex>::iterator ric;
+    // 1.1 insert lvalue
+    stl::deque<complex>::iterator ic;
+    std::deque<complex>::iterator ric;
 
-    // for (auto &i : cs)
-    // {
-    //     ic = vc.insert(vc.begin(), i);
-    //     ric = rvc.insert(rvc.begin(), i);
-    //     assert(*ic == i);
-    //     assert(*ric == i);
-    // }
-    // check_equal(vc, rvc, 1);
+    for (auto &i : cs)
+    {
+        ic = vc.insert(vc.begin(), i);
+        ric = rvc.insert(rvc.begin(), i);
+        assert(*ic == i);
+        assert(*ric == i);
+    }
+    check_equal(vc, rvc, 1);
 
-    // // 1.2 insert rvalue
-    // ic = vc.begin();
-    // stl::advance(ic, 2);
-    // ric = rvc.begin();
-    // stl::advance(ric, 2);
+    // 1.2 insert rvalue
+    ic = vc.begin();
+    stl::advance(ic, 2);
+    ric = rvc.begin();
+    stl::advance(ric, 2);
 
-    // ic = vc.insert(ic, complex(12, 13));
-    // ric = rvc.insert(ric, complex(12, 13));
+    ic = vc.insert(ic, complex(12, 13));
+    ric = rvc.insert(ric, complex(12, 13));
 
-    // assert(*ic == complex(12, 13));
-    // ic = vc.begin();
-    // stl::advance(ic, 2);
-    // assert(*ic == complex(12, 13));
-    // check_equal(vc, rvc, 1);
+    assert(*ic == complex(12, 13));
+    ic = vc.begin();
+    stl::advance(ic, 2);
+    assert(*ic == complex(12, 13));
+    check_equal(vc, rvc, 1);
 
-    // // 1.3 insert n items
-    // vc.insert(++vc.begin(), 3, complex(11, 43));
-    // rvc.insert(++rvc.begin(), 3, complex(11, 43));
-    // ic = vc.begin();
-    // assert(*++ic == complex(11, 43) && *++ic == complex(11, 43) && *++ic == complex(11, 43));
-    // check_equal(vc, rvc, 1);
+    // 1.3 insert n items
+    vc.insert(++vc.begin(), 3, complex(11, 43));
+    rvc.insert(++rvc.begin(), 3, complex(11, 43));
+    ic = vc.begin();
+    assert(*++ic == complex(11, 43) && *++ic == complex(11, 43) && *++ic == complex(11, 43));
+    check_equal(vc, rvc, 1);
 
-    // // 1.4 insert initializer-deque
-    // std::initializer_deque<complex> ilst{complex(3, 2), complex(1, 0), complex(45, 9)};
-    // ic = vc.end();
-    // stl::advance(ic, -2);
-    // vc.insert(ic, ilst);
-    // ric = rvc.end();
-    // stl::advance(ric, -2);
-    // rvc.insert(ric, ilst);
-    // check_equal(vc, rvc, 1);
+    // 1.4 insert initializer-deque
+    std::initializer_list<complex> ilst{complex(3, 2), complex(1, 0), complex(45, 9)};
+    ic = vc.end();
+    stl::advance(ic, -2);
+    vc.insert(ic, ilst);
+    ric = rvc.end();
+    stl::advance(ric, -2);
+    rvc.insert(ric, ilst);
+    check_equal(vc, rvc, 1);
 
-    // // 1.5 clear
-    // vc.clear();
-    // rvc.clear();
-    // assert(vc.empty());
+    // 1.5 clear
+    vc.clear();
+    rvc.clear();
+    assert(vc.empty());
 
-    // // 1.6 emplace
-    // ic = vc.emplace(vc.begin(), 12, 3.14);
-    // ric = rvc.emplace(rvc.begin(), 12, 3.14);
-    // check_equal(vc, rvc, 1);
+    // 1.6 emplace
+    ic = vc.emplace(vc.begin(), 12, 3.14);
+    ric = rvc.emplace(rvc.begin(), 12, 3.14);
+    check_equal(vc, rvc, 1);
 
-    // ic = vc.emplace(vc.end(), 1.2, 3.14);
-    // ric = rvc.emplace(rvc.end(), 1.2, 3.14);
-    // ic = vc.emplace(ic, complex(0, 1));
-    // ric = rvc.emplace(ric, complex(0, 1));
-    // check_equal(vc, rvc, 1);
+    ic = vc.emplace(vc.end(), 1.2, 3.14);
+    ric = rvc.emplace(rvc.end(), 1.2, 3.14);
+    ic = vc.emplace(ic, complex(0, 1));
+    ric = rvc.emplace(ric, complex(0, 1));
+    check_equal(vc, rvc, 1);
 
-    // assert(*ic == *ric);
+    assert(*ic == *ric);
 
-    // // 1.7 push/emplace back
-    // for (int i = 0; i < 15; ++i)
-    // {
-    //     vc.push_back(complex(i, i + 1));
-    //     rvc.push_back(complex(i, i + 1));
-    // }
-    // check_equal(vc, rvc, 1);
+    // 1.7 push/emplace back
+    for (int i = 0; i < 15; ++i)
+    {
+        vc.push_back(complex(i, i + 1));
+        rvc.push_back(complex(i, i + 1));
+    }
+    check_equal(vc, rvc, 1);
 
-    // for (int i = 0; i < 15; ++i)
-    // {
-    //     vc.emplace_back(i, i + 1);
-    //     rvc.emplace_back(i, i + 1);
-    // }
-    // check_equal(vc, rvc, 1);
+    for (int i = 0; i < 15; ++i)
+    {
+        vc.emplace_back(i, i + 1);
+        rvc.emplace_back(i, i + 1);
+    }
+    check_equal(vc, rvc, 1);
 
-    // // 1.8 pop back
-    // for (int i = 0; i < 10; ++i)
-    // {
-    //     vc.pop_back();
-    //     rvc.pop_back();
-    // }
-    // check_equal(vc, rvc, 1);
+    // 1.8 pop back
+    for (int i = 0; i < 10; ++i)
+    {
+        vc.pop_back();
+        rvc.pop_back();
+    }
+    check_equal(vc, rvc, 1);
 
-    // // 1.9 erase
-    // for (int i = 0; i < 5; ++i)
-    // {
-    //     vc.erase(--vc.end());
-    //     rvc.erase(--rvc.end());
-    // }
-    // check_equal(vc, rvc, 1);
+    // 1.9 erase
+    for (int i = 0; i < 5; ++i)
+    {
+        vc.erase(--vc.end());
+        rvc.erase(--rvc.end());
+    }
+    check_equal(vc, rvc, 1);
 
-    // ic = vc.end();
-    // stl::advance(ic, -5);
 
-    // ric = rvc.end();
-    // stl::advance(ric, -5);
+    ic = vc.end();
+    stl::advance(ic, -5);
 
-    // vc.erase(ic, vc.end());
-    // rvc.erase(ric, rvc.end());
-    // check_equal(vc, rvc, 1);
+    ric = rvc.end();
+    stl::advance(ric, -5);
 
-    // // 1.10 resize
-    // auto size = rvc.size();
-    // vc.insert(vc.end(), 10, complex());
-    // rvc.insert(rvc.end(), 10, complex());
-    // check_equal(vc, rvc, 1);
+    assert(vc.begin() + vc.size() == vc.end());
+    vc.erase(ic, vc.end());
+    rvc.erase(ric, rvc.end());
+    check_equal(vc, rvc, 1);
+    assert(vc.begin() + vc.size() == vc.end());
 
-    // ic = vc.end();
-    // stl::advance(ic, -10);
-    // ric = rvc.end();
-    // stl::advance(ric, -10);
-    // vc.erase(ic, vc.end());
-    // rvc.erase(ric, rvc.end());
-    // check_equal(vc, rvc, 1);
 
-    // vc.clear();
-    // rvc.clear();
-    // check_equal(vc, rvc, 1);
+    // 1.10 resize
+    auto size = rvc.size();
+    vc.insert(vc.end(), 10, complex());
+    rvc.insert(rvc.end(), 10, complex());
+    check_equal(vc, rvc, 1);
 
-    // vc.assign(10, complex(1, 9));
-    // rvc.assign(10, complex(1, 9));
-    // check_equal(vc, rvc, 1);
+    ic = vc.end();
+    stl::advance(ic, -10);
+    ric = rvc.end();
+    stl::advance(ric, -10);
+    vc.erase(ic, vc.end());
+    rvc.erase(ric, rvc.end());
+    check_equal(vc, rvc, 1);
+
+    vc.clear();
+    rvc.clear();
+    check_equal(vc, rvc, 1);
+
+    vc.assign(10, complex(1, 9));
+    rvc.assign(10, complex(1, 9));
+    check_equal(vc, rvc, 1);
 
     std::cout << "-----------end---------------\n";
 }
@@ -448,33 +457,33 @@ void test_modifiers_string()
         return res;
     };
 
-    // stl::deque<String> vs;
+    stl::deque<String> vs;
 
-    // vs.emplace(vs.end(), "Hello");
-    // vs.emplace_back(String("world"));
+    vs.emplace(vs.end(), "Hello");
+    vs.emplace_back(String("world"));
 
-    // assert(vs.size() == 2);
-    // assert(connect_strs(vs) == "Hello world ");
+    assert(vs.size() == 2);
+    assert(connect_strs(vs) == "Hello world ");
 
-    // vs.emplace(++(++vs.begin()), "exit"); // Hello world exit
+    vs.emplace(++(++vs.begin()), "exit"); // Hello world exit
 
-    // assert(vs.size() == 3);
-    // assert(connect_strs(vs) == "Hello world exit ");
+    assert(vs.size() == 3);
+    assert(connect_strs(vs) == "Hello world exit ");
 
-    // std::cout << "after 2 pop back\n";
-    // vs.pop_back();
-    // vs.pop_back();
-    // assert(connect_strs(vs) == "Hello ");
-    // assert(vs.size() == 1);
+    std::cout << "after 2 pop back\n";
+    vs.pop_back();
+    vs.pop_back();
+    assert(connect_strs(vs) == "Hello ");
+    assert(vs.size() == 1);
 
-    // vs.push_back("what");
-    // vs.insert(--vs.end(), "how"); // Hello how what
-    // assert(vs.size() == 3);
-    // assert(connect_strs(vs) == "Hello how what ");
+    vs.push_back("what");
+    vs.insert(--vs.end(), "how"); // Hello how what
+    assert(vs.size() == 3);
+    assert(connect_strs(vs) == "Hello how what ");
 
-    // vs.erase(vs.begin(), --vs.end()); // what
-    // assert(connect_strs(vs) == "what ");
-    // assert(vs.size() == 1);
+    vs.erase(vs.begin(), --vs.end()); // what
+    assert(connect_strs(vs) == "what ");
+    assert(vs.size() == 1);
 
     std::cout << "-----------end---------------\n";
 }
