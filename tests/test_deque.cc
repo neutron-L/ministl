@@ -216,6 +216,7 @@ void test_capacity()
         assert(it == 1.25);
     assert(vd2.size() == n);
 
+    vd2.shrink_to_fit();
     vd2.resize(2 * n, 123);
     assert(vd2.size() == 2 * n);
     for (int i = 0; i < 2 * n; ++i)
@@ -226,6 +227,7 @@ void test_capacity()
             assert(vd2[i] == 123);
     }
 
+    vd2.shrink_to_fit();
     vd2.resize(n / 2, 123);
     assert(vd2.size() == n / 2);
     for (auto &it : vd2)
@@ -236,11 +238,35 @@ void test_capacity()
         assert(it == 1.25);
     assert(vd2.empty());
 
+    vd2.shrink_to_fit();
     vd2.erase(vd2.begin());
     assert(vd2.empty());
 
+    vd2.shrink_to_fit();
     vd1.erase(vd1.begin());
-    assert(vd1.size() ==  n / 2 - 1);
+    assert(vd1.size() == n / 2 - 1);
+
+    size_t len1 = 100, len2 = 321;
+    double d1 = 13, d2 = 90;
+    vd1.assign(len1, d1);
+    vd2.assign(len2, d2);
+    assert(vd1.size() == len1 && vd1.size() == stl::distance(vd1.begin(), vd1.end()));
+    assert(vd2.size() == len2 && vd1.size() == stl::distance(vd1.begin(), vd1.end()));
+
+    for (auto &i : vd1)
+        assert(i == d1);
+    for (auto &i : vd2)
+        assert(i == d2);
+
+    vd1.swap(vd2);
+
+    assert(vd1.size() == len2 && vd1.size() == stl::distance(vd1.begin(), vd1.end()));
+    assert(vd2.size() == len1 && vd1.size() == stl::distance(vd1.begin(), vd1.end()));
+
+    for (auto &i : vd1)
+        assert(i == d2);
+    for (auto &i : vd2)
+        assert(i == d1);
 }
 
 void test_modifiers_built_in_types()
@@ -266,7 +292,7 @@ void test_modifiers_built_in_types()
     assert(to_str(vi) == "15 14 13 12 11 ");
 
     // 1.2 insert rvalue
-
+    vi.shrink_to_fit();
     iter = vi.begin();
     ++iter;
     ++iter;
@@ -276,13 +302,14 @@ void test_modifiers_built_in_types()
     assert(to_str(vi) == "15 14 9 13 12 11 ");
 
     // 1.3 insert n items
+    vi.shrink_to_fit();
     vi.insert(++vi.begin(), 3, 88); // 15 88 88 88 14 9 13 12 11
     iter = vi.begin();
     assert(*++iter == 88 && *++iter == 88 && *++iter == 88);
-
     assert(to_str(vi) == "15 88 88 88 14 9 13 12 11 ");
 
     // 1.4 insert initializer-deque
+    vi.shrink_to_fit();
     iter = vi.end();
     --iter;
     --iter;
@@ -292,6 +319,8 @@ void test_modifiers_built_in_types()
 
     // clear
     vi.clear();
+    assert(vi.empty());
+    vi.shrink_to_fit();
     assert(vi.empty());
 }
 
@@ -402,7 +431,6 @@ void test_modifiers_complex()
     }
     check_equal(vc, rvc, 1);
 
-
     ic = vc.end();
     stl::advance(ic, -5);
 
@@ -414,7 +442,6 @@ void test_modifiers_complex()
     rvc.erase(ric, rvc.end());
     check_equal(vc, rvc, 1);
     assert(vc.begin() + vc.size() == vc.end());
-
 
     // 1.10 resize
     auto size = rvc.size();

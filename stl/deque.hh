@@ -308,8 +308,11 @@ namespace stl
         // 归还一个node
         void deallocate_node(map_pointer mp)
         {
-            data_allocator::deallocate(*mp);
-            *mp = nullptr; // 标注该指针为空
+            if (*mp)
+            {
+                data_allocator::deallocate(*mp);
+                *mp = nullptr; // 标注该指针为空
+            }
         }
 
         // 负责初始化一个deque并且填充count个value元素
@@ -939,6 +942,23 @@ namespace stl
     void
     deque<T, Alloc>::shrink_to_fit()
     {
+        size_type nums_before_cur = start.cur - start.first;
+        size_type len = std::min(nums_before_cur, size());
+        iterator new_start = start - nums_before_cur;
+
+        stl::uninitialized_copy(begin(), begin() + len, new_start);
+        stl::copy(begin() + len, end(), new_start + len);
+
+        if (size() > len)
+            stl::destroy(new_start + size(), end());
+        start = new_start;
+        finish = start + length;
+
+        // 释放map中[start.node, finish.node]前后的缓冲区
+        for (map_pointer mp = start.node - 1; mp >= map; --mp)
+            deallocate_node(mp);
+        for (map_pointer mp = finish.node + 1; mp < map + map_size; ++mp)
+            deallocate_node(mp);
     }
 
     /*
