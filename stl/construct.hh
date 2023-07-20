@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "type_traits.hh"
+#include "iterator.hh"
 
 namespace stl
 {

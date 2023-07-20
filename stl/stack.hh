@@ -15,10 +15,10 @@ namespace stl
     {
     public:
         using container_type = Container;
-        using value_type = Container::value_type;
-        using size_type = Container::size_type;
-        using reference = Container::reference;
-        using const_reference = Container::const_reference;
+        using value_type = typename Container::value_type;
+        using size_type = typename Container::size_type;
+        using reference = typename Container::reference;
+        using const_reference = typename Container::const_reference;
 
     protected:
         Container container;
@@ -27,6 +27,7 @@ namespace stl
         /*
          * Constructors
          * */
+        stack() : stack(Container()) {}
         explicit stack(const Container &cont) : container(cont) {}
         explicit stack(Container &&cont) : container(std::move(cont))
         {
@@ -53,10 +54,14 @@ namespace stl
         stack &operator=(const stack &other)
         {
             container = other.container;
+
+            return *this;
         }
         stack &operator=(stack &&other)
         {
             container = std::move(other.container);
+
+            return *this;
         }
 
         /*
@@ -101,7 +106,11 @@ namespace stl
             container.emplace_back(std::forward<Args>(args)...);
         }
 
-        void pop();
+        void pop()
+        {
+            container.pop_back();
+        }
+
         void swap(stack &other) noexcept
         {
             container.swap(other.container);

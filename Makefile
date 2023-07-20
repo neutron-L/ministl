@@ -35,6 +35,11 @@ test_list: $(TEST)/test_list.cc $(STL)/list.hh $(STL)/alloc.hh $(STL)/iterator.h
 test_deque: $(TEST)/test_deque.cc $(STL)/deque.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
+
+test_stack: $(TEST)/test_stack.cc $(STL)/stack.hh  $(STL)/deque.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
+	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
+
+
 test_numeric: $(TEST)/test_numeric.cc $(STL)/numeric.hh $(STL)/type_traits.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
