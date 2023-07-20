@@ -528,7 +528,7 @@ void test_non_member_func()
 int main()
 {
     test_constructors();
-    // test_assignment();
+    test_assignment();
     test_capacity();
     test_modifiers_built_in_types();
     test_modifiers_complex();
