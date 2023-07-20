@@ -48,63 +48,63 @@ void test_constructors()
     stl::deque<int>::size_type n;
 
     // 1. default constructor
-    stl::deque<int> vi1;
-    assert(vi1.size() == 0);
+    stl::deque<int> di1;
+    assert(di1.size() == 0);
 
     // 2. initializer-deque constructor
-    stl::deque<int> vi2{1, 2, 3, 4, 5};
-    cout << (vi2.begin() != vi2.end()) << endl;
-    cout << (vi2.begin() == vi2.end()) << endl;
-    cout << (vi2.begin() < vi2.end()) << endl;
-    assert(to_str(vi2) == "1 2 3 4 5 ");
+    stl::deque<int> di2{1, 2, 3, 4, 5};
+    cout << (di2.begin() != di2.end()) << endl;
+    cout << (di2.begin() == di2.end()) << endl;
+    cout << (di2.begin() < di2.end()) << endl;
+    assert(to_str(di2) == "1 2 3 4 5 ");
 
     // 3. range constructor
-    stl::deque<int> vi3(vi2.begin(), vi2.end());
+    stl::deque<int> di3(di2.begin(), di2.end());
 
-    check_equal(vi2, vi3, 1);
+    check_equal(di2, di3, 1);
 
-    for_each(vi2.begin(), vi2.end(), [](int &i)
+    for_each(di2.begin(), di2.end(), [](int &i)
              { i <<= 1; });
 
     // 4. copy constructor
-    stl::deque<int> vi4(vi2);
-    check_equal(vi4, vi2, 1);
-    check_equal(vi4, vi3, 2);
+    stl::deque<int> di4(di2);
+    check_equal(di4, di2, 1);
+    check_equal(di4, di3, 2);
 
     // 5. <n> constructor
-    stl::deque<int> vi5(10);
-    n = vi5.size();
-    for (auto &i : vi5)
+    stl::deque<int> di5(10);
+    n = di5.size();
+    for (auto &i : di5)
         assert(i == int());
 
-    stl::deque<int> vc1(n);
-    stl::deque<String> vs1(n);
+    stl::deque<int> dc1(n);
+    stl::deque<String> ds1(n);
 
-    for (auto &i : vc1)
+    for (auto &i : dc1)
         assert(i == complex());
 
-    for (auto &i : vs1)
+    for (auto &i : ds1)
         assert(i == String());
 
     // 6. <n, elem> constructor
     int elem = -12;
-    stl::deque<int> vi6(10, elem);
+    stl::deque<int> di6(10, elem);
 
     complex c(1.3, 2.4);
-    stl::deque<complex> vc2(n, c);
+    stl::deque<complex> dc2(n, c);
     String str("what??");
-    stl::deque<String> vs2(n, str);
-    for (auto &i : vi6)
+    stl::deque<String> ds2(n, str);
+    for (auto &i : di6)
         assert(i == elem);
-    for (auto &i : vc2)
+    for (auto &i : dc2)
         assert(i == c);
-    for (auto &i : vs2)
+    for (auto &i : ds2)
         assert(i == str);
 
     // 7. move constructor
-    stl::deque<String> vs3(std::move(vs2));
-    assert(vs2.empty() && vs2.begin() == vs2.end());
-    for (auto &i : vs3)
+    stl::deque<String> ds3(std::move(ds2));
+    assert(ds2.empty() && ds2.begin() == ds2.end());
+    for (auto &i : ds3)
         assert(i == str);
 }
 
@@ -112,21 +112,21 @@ void test_assignment()
 {
     printf("=============%s=================\n", __FUNCTION__);
     stl::deque<double>::size_type n;
-    stl::deque<double> vd1{3.14, 18.90, 10};
-    stl::deque<double> vd2;
+    stl::deque<double> dd1{3.14, 18.90, 10};
+    stl::deque<double> dd2;
 
     // 1. =(const deque &)
-    vd2 = vd1;
+    dd2 = dd1;
 
-    check_equal(vd1, vd2, 1);
-    for_each(vd2.begin(), vd2.end(), [](double &i)
+    check_equal(dd1, dd2, 1);
+    for_each(dd2.begin(), dd2.end(), [](double &i)
              { i *= 2; });
-    check_equal(vd2, vd1, 2);
+    check_equal(dd2, dd1, 2);
 
     // 2. =(deque &&)
-    stl::deque<double> vd3;
-    vd3 = std::move(vd1);
-    check_equal(vd2, vd3, 2);
+    stl::deque<double> dd3;
+    dd3 = std::move(dd1);
+    check_equal(dd2, dd3, 2);
 
     String s1("What");
     String s2("How");
@@ -147,125 +147,125 @@ void test_assignment()
 
     // 3. assign(n, elem)
     const complex c(3.14, 6.18);
-    stl::deque<complex> vc1(4, c);
-    for_each(vc1.begin(), vc1.end(), [&](const complex &i)
+    stl::deque<complex> dc1(4, c);
+    for_each(dc1.begin(), dc1.end(), [&](const complex &i)
              { assert(i == c); });
 
     // 4&5. = initialized deque & assign(init list)
     const complex c1(1, 2);
     const complex c2(3, 4);
     const complex c3;
-    const stl::deque<complex> vc2 = {c, c1, c2, c3};
+    const stl::deque<complex> dc2 = {c, c1, c2, c3};
 
-    auto iter = vc2.begin();
+    auto iter = dc2.begin();
     assert(*iter == c);
     ++iter;
     assert(*iter == c1);
     ++iter;
     assert(*iter == c2);
-    assert(*(--vc2.end()) == c3);
+    assert(*(--dc2.end()) == c3);
 
     stl::deque<complex> cv;
     cv.assign({c, c1, c2, c3});
-    check_equal(vc2, cv, 1);
+    check_equal(dc2, cv, 1);
 
     // 6. range assign
-    stl::deque<String> vs1;
-    vs1.assign({String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])});
+    stl::deque<String> ds1;
+    ds1.assign({String(str[0]), String(str[1]), String(str[2]), String(str[3]), String(str[4])});
     n = 4;
-    stl::deque<String> vs2(n);
-    for (auto &s : vs2)
+    stl::deque<String> ds2(n);
+    for (auto &s : ds2)
         assert(s == String());
 
-    vs2.assign(vs1.begin(), vs1.end());
-    std::equal(vs1.begin(), vs1.end(), vs2.begin());
+    ds2.assign(ds1.begin(), ds1.end());
+    std::equal(ds1.begin(), ds1.end(), ds2.begin());
 }
 
 void test_capacity()
 {
     printf("=============%s=================\n", __FUNCTION__);
     stl::deque<double>::size_type n;
-    stl::deque<double> vd1{3.14, 18.90, 10};
-    stl::deque<double> vd2;
+    stl::deque<double> dd1{3.14, 18.90, 10};
+    stl::deque<double> dd2;
 
     // 1. empty
-    assert(!vd1.empty() && vd2.empty());
-    vd2 = vd1;
-    assert(!vd2.empty() && vd1.size() == vd2.size());
+    assert(!dd1.empty() && dd2.empty());
+    dd2 = dd1;
+    assert(!dd2.empty() && dd1.size() == dd2.size());
 
     // 2. size
-    assert(vd1.size() == 3);
-    vd1.pop_back();
-    assert(vd1.size() == 2);
-    vd1.push_front(4);
-    assert(vd1.size() == 3);
+    assert(dd1.size() == 3);
+    dd1.pop_back();
+    assert(dd1.size() == 2);
+    dd1.push_front(4);
+    assert(dd1.size() == 3);
 
-    vd2.assign({1.2, 3.4, 5.6, 1.0});
-    assert(vd2.size() == 4);
+    dd2.assign({1.2, 3.4, 5.6, 1.0});
+    assert(dd2.size() == 4);
 
-    vd2.clear();
-    assert(vd2.empty());
+    dd2.clear();
+    assert(dd2.empty());
 
-    vd2.assign(1233, 1.25);
-    for (auto &it : vd2)
+    dd2.assign(1233, 1.25);
+    for (auto &it : dd2)
         assert(it == 1.25);
 
     n = 512;
-    vd2.resize(n);
-    for (auto &it : vd2)
+    dd2.resize(n);
+    for (auto &it : dd2)
         assert(it == 1.25);
-    assert(vd2.size() == n);
+    assert(dd2.size() == n);
 
-    vd2.shrink_to_fit();
-    vd2.resize(2 * n, 123);
-    assert(vd2.size() == 2 * n);
+    dd2.shrink_to_fit();
+    dd2.resize(2 * n, 123);
+    assert(dd2.size() == 2 * n);
     for (int i = 0; i < 2 * n; ++i)
     {
         if (i < n)
-            assert(vd2[i] == 1.25);
+            assert(dd2[i] == 1.25);
         else
-            assert(vd2[i] == 123);
+            assert(dd2[i] == 123);
     }
 
-    vd2.shrink_to_fit();
-    vd2.resize(n / 2, 123);
-    assert(vd2.size() == n / 2);
-    for (auto &it : vd2)
+    dd2.shrink_to_fit();
+    dd2.resize(n / 2, 123);
+    assert(dd2.size() == n / 2);
+    for (auto &it : dd2)
         assert(it == 1.25);
-    vd1 = std::move(vd2);
-    assert(vd1.size() == n / 2);
-    for (auto &it : vd1)
+    dd1 = std::move(dd2);
+    assert(dd1.size() == n / 2);
+    for (auto &it : dd1)
         assert(it == 1.25);
-    assert(vd2.empty());
+    assert(dd2.empty());
 
-    vd2.shrink_to_fit();
-    vd2.erase(vd2.begin());
-    assert(vd2.empty());
+    dd2.shrink_to_fit();
+    dd2.erase(dd2.begin());
+    assert(dd2.empty());
 
-    vd2.shrink_to_fit();
-    vd1.erase(vd1.begin());
-    assert(vd1.size() == n / 2 - 1);
+    dd2.shrink_to_fit();
+    dd1.erase(dd1.begin());
+    assert(dd1.size() == n / 2 - 1);
 
     size_t len1 = 100, len2 = 321;
     double d1 = 13, d2 = 90;
-    vd1.assign(len1, d1);
-    vd2.assign(len2, d2);
-    assert(vd1.size() == len1 && vd1.size() == stl::distance(vd1.begin(), vd1.end()));
-    assert(vd2.size() == len2 && vd1.size() == stl::distance(vd1.begin(), vd1.end()));
+    dd1.assign(len1, d1);
+    dd2.assign(len2, d2);
+    assert(dd1.size() == len1 && dd1.size() == stl::distance(dd1.begin(), dd1.end()));
+    assert(dd2.size() == len2 && dd1.size() == stl::distance(dd1.begin(), dd1.end()));
 
-    for (auto &i : vd1)
+    for (auto &i : dd1)
         assert(i == d1);
-    for (auto &i : vd2)
+    for (auto &i : dd2)
         assert(i == d2);
 
-    vd1.swap(vd2);
+    dd1.swap(dd2);
 
-    assert(vd1.size() == len2 && vd1.size() == stl::distance(vd1.begin(), vd1.end()));
-    assert(vd2.size() == len1 && vd1.size() == stl::distance(vd1.begin(), vd1.end()));
+    assert(dd1.size() == len2 && dd1.size() == stl::distance(dd1.begin(), dd1.end()));
+    assert(dd2.size() == len1 && dd1.size() == stl::distance(dd1.begin(), dd1.end()));
 
-    for (auto &i : vd1)
+    for (auto &i : dd1)
         assert(i == d2);
-    for (auto &i : vd2)
+    for (auto &i : dd2)
         assert(i == d1);
 }
 
@@ -275,53 +275,53 @@ void test_modifiers_built_in_types()
 
     static int arr[] = {11, 12, 13, 14, 15};
     /* Insert */
-    stl::deque<int> vi;
+    stl::deque<int> di;
     static stl::deque<int>::size_type len = 5;
 
     // 1.1 insert lvalue
     stl::deque<int>::iterator iter;
     for (auto &i : arr)
     {
-        iter = vi.insert(vi.begin(), i);
+        iter = di.insert(di.begin(), i);
         assert(*iter == i);
     }
     // 15 14 13 12 11
     int i = 0;
-    for_each(vi.rbegin(), vi.rend(), [&i](auto &item)
+    for_each(di.rbegin(), di.rend(), [&i](auto &item)
              { assert(item == arr[i++]); });
-    assert(to_str(vi) == "15 14 13 12 11 ");
+    assert(to_str(di) == "15 14 13 12 11 ");
 
     // 1.2 insert rvalue
-    vi.shrink_to_fit();
-    iter = vi.begin();
+    di.shrink_to_fit();
+    iter = di.begin();
     ++iter;
     ++iter;
 
-    iter = vi.insert(iter, 9); // 15 14 9 13 12 11
+    iter = di.insert(iter, 9); // 15 14 9 13 12 11
     assert(*iter == 9);
-    assert(to_str(vi) == "15 14 9 13 12 11 ");
+    assert(to_str(di) == "15 14 9 13 12 11 ");
 
     // 1.3 insert n items
-    vi.shrink_to_fit();
-    vi.insert(++vi.begin(), 3, 88); // 15 88 88 88 14 9 13 12 11
-    iter = vi.begin();
+    di.shrink_to_fit();
+    di.insert(++di.begin(), 3, 88); // 15 88 88 88 14 9 13 12 11
+    iter = di.begin();
     assert(*++iter == 88 && *++iter == 88 && *++iter == 88);
-    assert(to_str(vi) == "15 88 88 88 14 9 13 12 11 ");
+    assert(to_str(di) == "15 88 88 88 14 9 13 12 11 ");
 
     // 1.4 insert initializer-deque
-    vi.shrink_to_fit();
-    iter = vi.end();
+    di.shrink_to_fit();
+    iter = di.end();
     --iter;
     --iter;
-    vi.insert(iter, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
-    cout << to_str(vi) << endl;
-    assert(to_str(vi) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
+    di.insert(iter, {3, 2, 1}); // 15 88 88 88 14 9 13 3 2 1 12 11
+    cout << to_str(di) << endl;
+    assert(to_str(di) == "15 88 88 88 14 9 13 3 2 1 12 11 ");
 
     // clear
-    vi.clear();
-    assert(vi.empty());
-    vi.shrink_to_fit();
-    assert(vi.empty());
+    di.clear();
+    assert(di.empty());
+    di.shrink_to_fit();
+    assert(di.empty());
 }
 
 void test_modifiers_complex()
@@ -329,11 +329,11 @@ void test_modifiers_complex()
     printf("=============%s=================\n", __FUNCTION__);
     std::cout << "-----------complex------------\n";
 
-    stl::deque<complex> vc;
+    stl::deque<complex> dc;
 
     // 为了更方便逐步测试，使用标准库的实现作为参考
     // 但是也意味着很多操作都要分别做两次……，属实难绷
-    std::deque<complex> rvc;
+    std::deque<complex> rdc;
 
     /* Insert */
 
@@ -343,127 +343,127 @@ void test_modifiers_complex()
 
     for (auto &i : cs)
     {
-        ic = vc.insert(vc.begin(), i);
-        ric = rvc.insert(rvc.begin(), i);
+        ic = dc.insert(dc.begin(), i);
+        ric = rdc.insert(rdc.begin(), i);
         assert(*ic == i);
         assert(*ric == i);
     }
-    check_equal(vc, rvc, 1);
+    check_equal(dc, rdc, 1);
 
     // 1.2 insert rvalue
-    ic = vc.begin();
+    ic = dc.begin();
     stl::advance(ic, 2);
-    ric = rvc.begin();
+    ric = rdc.begin();
     stl::advance(ric, 2);
 
-    ic = vc.insert(ic, complex(12, 13));
-    ric = rvc.insert(ric, complex(12, 13));
+    ic = dc.insert(ic, complex(12, 13));
+    ric = rdc.insert(ric, complex(12, 13));
 
     assert(*ic == complex(12, 13));
-    ic = vc.begin();
+    ic = dc.begin();
     stl::advance(ic, 2);
     assert(*ic == complex(12, 13));
-    check_equal(vc, rvc, 1);
+    check_equal(dc, rdc, 1);
 
     // 1.3 insert n items
-    vc.insert(++vc.begin(), 3, complex(11, 43));
-    rvc.insert(++rvc.begin(), 3, complex(11, 43));
-    ic = vc.begin();
+    dc.insert(++dc.begin(), 3, complex(11, 43));
+    rdc.insert(++rdc.begin(), 3, complex(11, 43));
+    ic = dc.begin();
     assert(*++ic == complex(11, 43) && *++ic == complex(11, 43) && *++ic == complex(11, 43));
-    check_equal(vc, rvc, 1);
+    check_equal(dc, rdc, 1);
 
     // 1.4 insert initializer-deque
     std::initializer_list<complex> ilst{complex(3, 2), complex(1, 0), complex(45, 9)};
-    ic = vc.end();
+    ic = dc.end();
     stl::advance(ic, -2);
-    vc.insert(ic, ilst);
-    ric = rvc.end();
+    dc.insert(ic, ilst);
+    ric = rdc.end();
     stl::advance(ric, -2);
-    rvc.insert(ric, ilst);
-    check_equal(vc, rvc, 1);
+    rdc.insert(ric, ilst);
+    check_equal(dc, rdc, 1);
 
     // 1.5 clear
-    vc.clear();
-    rvc.clear();
-    assert(vc.empty());
+    dc.clear();
+    rdc.clear();
+    assert(dc.empty());
 
     // 1.6 emplace
-    ic = vc.emplace(vc.begin(), 12, 3.14);
-    ric = rvc.emplace(rvc.begin(), 12, 3.14);
-    check_equal(vc, rvc, 1);
+    ic = dc.emplace(dc.begin(), 12, 3.14);
+    ric = rdc.emplace(rdc.begin(), 12, 3.14);
+    check_equal(dc, rdc, 1);
 
-    ic = vc.emplace(vc.end(), 1.2, 3.14);
-    ric = rvc.emplace(rvc.end(), 1.2, 3.14);
-    ic = vc.emplace(ic, complex(0, 1));
-    ric = rvc.emplace(ric, complex(0, 1));
-    check_equal(vc, rvc, 1);
+    ic = dc.emplace(dc.end(), 1.2, 3.14);
+    ric = rdc.emplace(rdc.end(), 1.2, 3.14);
+    ic = dc.emplace(ic, complex(0, 1));
+    ric = rdc.emplace(ric, complex(0, 1));
+    check_equal(dc, rdc, 1);
 
     assert(*ic == *ric);
 
     // 1.7 push/emplace back
     for (int i = 0; i < 15; ++i)
     {
-        vc.push_back(complex(i, i + 1));
-        rvc.push_back(complex(i, i + 1));
+        dc.push_back(complex(i, i + 1));
+        rdc.push_back(complex(i, i + 1));
     }
-    check_equal(vc, rvc, 1);
+    check_equal(dc, rdc, 1);
 
     for (int i = 0; i < 15; ++i)
     {
-        vc.emplace_back(i, i + 1);
-        rvc.emplace_back(i, i + 1);
+        dc.emplace_back(i, i + 1);
+        rdc.emplace_back(i, i + 1);
     }
-    check_equal(vc, rvc, 1);
+    check_equal(dc, rdc, 1);
 
     // 1.8 pop back
     for (int i = 0; i < 10; ++i)
     {
-        vc.pop_back();
-        rvc.pop_back();
+        dc.pop_back();
+        rdc.pop_back();
     }
-    check_equal(vc, rvc, 1);
+    check_equal(dc, rdc, 1);
 
     // 1.9 erase
     for (int i = 0; i < 5; ++i)
     {
-        vc.erase(--vc.end());
-        rvc.erase(--rvc.end());
+        dc.erase(--dc.end());
+        rdc.erase(--rdc.end());
     }
-    check_equal(vc, rvc, 1);
+    check_equal(dc, rdc, 1);
 
-    ic = vc.end();
+    ic = dc.end();
     stl::advance(ic, -5);
 
-    ric = rvc.end();
+    ric = rdc.end();
     stl::advance(ric, -5);
 
-    assert(vc.begin() + vc.size() == vc.end());
-    vc.erase(ic, vc.end());
-    rvc.erase(ric, rvc.end());
-    check_equal(vc, rvc, 1);
-    assert(vc.begin() + vc.size() == vc.end());
+    assert(dc.begin() + dc.size() == dc.end());
+    dc.erase(ic, dc.end());
+    rdc.erase(ric, rdc.end());
+    check_equal(dc, rdc, 1);
+    assert(dc.begin() + dc.size() == dc.end());
 
     // 1.10 resize
-    auto size = rvc.size();
-    vc.insert(vc.end(), 10, complex());
-    rvc.insert(rvc.end(), 10, complex());
-    check_equal(vc, rvc, 1);
+    auto size = rdc.size();
+    dc.insert(dc.end(), 10, complex());
+    rdc.insert(rdc.end(), 10, complex());
+    check_equal(dc, rdc, 1);
 
-    ic = vc.end();
+    ic = dc.end();
     stl::advance(ic, -10);
-    ric = rvc.end();
+    ric = rdc.end();
     stl::advance(ric, -10);
-    vc.erase(ic, vc.end());
-    rvc.erase(ric, rvc.end());
-    check_equal(vc, rvc, 1);
+    dc.erase(ic, dc.end());
+    rdc.erase(ric, rdc.end());
+    check_equal(dc, rdc, 1);
 
-    vc.clear();
-    rvc.clear();
-    check_equal(vc, rvc, 1);
+    dc.clear();
+    rdc.clear();
+    check_equal(dc, rdc, 1);
 
-    vc.assign(10, complex(1, 9));
-    rvc.assign(10, complex(1, 9));
-    check_equal(vc, rvc, 1);
+    dc.assign(10, complex(1, 9));
+    rdc.assign(10, complex(1, 9));
+    check_equal(dc, rdc, 1);
 
     std::cout << "-----------end---------------\n";
 }
@@ -484,33 +484,33 @@ void test_modifiers_string()
         return res;
     };
 
-    stl::deque<String> vs;
+    stl::deque<String> ds;
 
-    vs.emplace(vs.end(), "Hello");
-    vs.emplace_back(String("world"));
+    ds.emplace(ds.end(), "Hello");
+    ds.emplace_back(String("world"));
 
-    assert(vs.size() == 2);
-    assert(connect_strs(vs) == "Hello world ");
+    assert(ds.size() == 2);
+    assert(connect_strs(ds) == "Hello world ");
 
-    vs.emplace(++(++vs.begin()), "exit"); // Hello world exit
+    ds.emplace(++(++ds.begin()), "exit"); // Hello world exit
 
-    assert(vs.size() == 3);
-    assert(connect_strs(vs) == "Hello world exit ");
+    assert(ds.size() == 3);
+    assert(connect_strs(ds) == "Hello world exit ");
 
     std::cout << "after 2 pop back\n";
-    vs.pop_back();
-    vs.pop_back();
-    assert(connect_strs(vs) == "Hello ");
-    assert(vs.size() == 1);
+    ds.pop_back();
+    ds.pop_back();
+    assert(connect_strs(ds) == "Hello ");
+    assert(ds.size() == 1);
 
-    vs.push_back("what");
-    vs.insert(--vs.end(), "how"); // Hello how what
-    assert(vs.size() == 3);
-    assert(connect_strs(vs) == "Hello how what ");
+    ds.push_back("what");
+    ds.insert(--ds.end(), "how"); // Hello how what
+    assert(ds.size() == 3);
+    assert(connect_strs(ds) == "Hello how what ");
 
-    vs.erase(vs.begin(), --vs.end()); // what
-    assert(connect_strs(vs) == "what ");
-    assert(vs.size() == 1);
+    ds.erase(ds.begin(), --ds.end()); // what
+    assert(connect_strs(ds) == "what ");
+    assert(ds.size() == 1);
 
     std::cout << "-----------end---------------\n";
 }
