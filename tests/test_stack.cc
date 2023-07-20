@@ -19,38 +19,40 @@
 const char *str[]{"one", "two", "three", "four", "five"};
 const complex cs[]{complex(1.2, 3.14), complex(0, 0), complex(9.14, 4.5), complex(4.2, 6.18)};
 
+template <typename Container>
 void test_constructors()
 {
     printf("=============%s=================\n", __FUNCTION__);
-    stl::deque<int> di{1, 2, 3, 4, 5};
-    stl::stack<int>::size_type n;
+    Container di{1, 2, 3, 4, 5};
+    stl::deque<int> rdi(di.begin(), di.end());
+    typename stl::stack<int, Container>::size_type n;
 
     // 1. default constructor
-    stl::stack<int> stk1;
+    stl::stack<int, Container> stk1;
     assert(stk1.size() == 0 && stk1.empty());
 
     // 2. constructor(const container &)
-    stl::stack<int> stk2(di);
-    n = di.size();
+    stl::stack<int, Container> stk2(di);
+    n = rdi.size();
     while (!stk2.empty())
     {
-        assert(stk2.top() == di[--n]);
+        assert(stk2.top() == rdi[--n]);
         stk2.pop();
     }
 
     // 3. constructor(container &)
-    stl::deque<int> d2{1, 2, 3, 4, 5};
-    stl::stack<int> stk3(std::move(d2));
-    n = di.size();
+    Container d2{1, 2, 3, 4, 5};
+    stl::stack<int, Container> stk3(std::move(d2));
+    n = rdi.size();
     while (!stk3.empty())
     {
-        assert(stk3.top() == di[--n]);
+        assert(stk3.top() == rdi[--n]);
         stk3.pop();
     }
 
     // 4. copy constructor
-    stl::stack<int> t1(di);
-    stl::stack<int> stk4(t1);
+    stl::stack<int, Container> t1(di);
+    stl::stack<int, Container> stk4(t1);
     while (!stk4.empty())
     {
         assert(stk4.top() == t1.top());
@@ -59,18 +61,22 @@ void test_constructors()
     }
 
     // 5. move constructor
-    stl::stack<int> t2(di);
-    stl::stack<int> stk5(std::move(t2));
-    n = di.size();
+    stl::stack<int, Container> t2(di);
+    stl::stack<int, Container> stk5(std::move(t2));
+    n = rdi.size();
     while (!stk5.empty())
     {
-        assert(stk5.top() == di[--n]);
+        assert(stk5.top() == rdi[--n]);
         stk5.pop();
     }
 
     // 6. range constructor
-    stl::stack<int> stk6(di.begin() + 1, di.end() - 1);
-    assert(stk6.size() == stl::distance(di.begin() + 1, di.end() - 1));
+    auto iter1 = di.begin();
+    auto iter2 = di.end();
+    ++iter1;
+    --iter2;
+    stl::stack<int, Container> stk6(iter1, iter2);
+    assert(stk6.size() == stl::distance(iter1, iter2));
     assert(stk6.top() == 4);
     stk6.pop();
     assert(stk6.size() == 2);
@@ -184,7 +190,9 @@ static bool is_valid(const string & str)
 
 int main()
 {
-    test_constructors();
+    test_constructors<stl::list<int>>();
+    test_constructors<stl::deque<int>>();
+    test_constructors<stl::vector<int>>();
     test_assignment();
     test_modifiers_complex();
     test_modifiers_string();
