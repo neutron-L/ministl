@@ -5,10 +5,7 @@
 #ifndef MINISTL_STACK_HH
 #define MINISTL_STACK_HH
 
-#include "alloc.hh"
-#include "iterator.hh"
 #include "construct.hh"
-#include "algobase.hh"
 #include "deque.hh"
 
 namespace stl
@@ -23,50 +20,92 @@ namespace stl
         using reference = Container::reference;
         using const_reference = Container::const_reference;
 
+    protected:
+        Container container;
+
+    public:
         /*
          * Constructors
          * */
-        explicit stack(const Container &cont);
-        explicit stack(Container &&cont);
-        stack(const stack &other);
-        stack(stack &&other);
+        explicit stack(const Container &cont) : container(cont) {}
+        explicit stack(Container &&cont) : container(std::move(cont))
+        {
+        }
+        stack(const stack &other) : container(other.container)
+        {
+        }
+        stack(stack &&other) : container(std::move(other.container))
+        {
+        }
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
-        stack(InputIt first, InputIt last);
+        stack(InputIt first, InputIt last) : container(first, last)
+        {
+        }
 
         /*
          * Destructor
          * */
-        ~stack();
+        ~stack() = default;
 
         /*
          * assignment operation
          * */
-        stack &operator=(const stack &other);
-        stack &operator=(stack &&other);
+        stack &operator=(const stack &other)
+        {
+            container = other.container;
+        }
+        stack &operator=(stack &&other)
+        {
+            container = std::move(other.container);
+        }
 
         /*
          * Element access
          * */
-        reference top();
-        const_reference top() const;
+        reference top()
+        {
+            return const_cast<reference>(const_cast<const stack &>(*this).top());
+        }
+        const_reference top() const
+        {
+            return container.back();
+        }
 
         /*
          * Capacity
          * */
-        bool empty() const;
-        size_type size() const;
+        bool empty() const
+        {
+            return container.empty();
+        }
+        size_type size() const
+        {
+            return container.size();
+        }
 
         /*
          * Modifiers
          * */
-        void push(const value_type &value);
-        void push(value_type &&value);
+        void push(const value_type &value)
+        {
+            container.push_back(value);
+        }
+        void push(value_type &&value)
+        {
+            container.push_back(std::move(value));
+        }
 
         template <class... Args>
-        void emplace(Args &&...args);
+        void emplace(Args &&...args)
+        {
+            container.emplace_back(std::forward<Args>(args)...);
+        }
 
         void pop();
-        void swap(stack &other) noexcept;
+        void swap(stack &other) noexcept
+        {
+            container.swap(other.container);
+        }
     };
 
 } // namespace stl
