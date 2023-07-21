@@ -32,7 +32,7 @@ namespace stl
         explicit queue(Container &&cont) : container(std::move(cont))
         {
         }
-        queue(queue &&other) : container(other.container)
+        queue(const queue &other) : container(other.container)
         {
         }
         queue(queue &&other) : container(std::move(other.container))
@@ -69,7 +69,7 @@ namespace stl
          * */
         reference front()
         {
-            return const_cast<reference>(const_cast<const stack &>(*this).front());
+            return const_cast<reference>(const_cast<const queue &>(*this).front());
         }
         const_reference front() const
         {
@@ -77,7 +77,7 @@ namespace stl
         }
         reference back()
         {
-            return const_cast<reference>(const_cast<const stack &>(*this).front());
+            return const_cast<reference>(const_cast<const queue &>(*this).back());
         }
         const_reference back() const
         {
@@ -116,7 +116,7 @@ namespace stl
 
         void pop()
         {
-            container.pop_back();
+            container.pop_front();
         }
         void swap(queue &other) noexcept
         {
