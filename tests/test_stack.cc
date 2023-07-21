@@ -156,6 +156,7 @@ void test_modifiers_string()
     for (int i = n - 1; i >= 0; --i)
     {
         assert(!strcmp(str_stk.top().get_c_str(), str[i]));
+        std::cout << str_stk.top().get_c_str() << std::endl;
         str_stk.pop();
     }
     assert(str_stk.empty());
