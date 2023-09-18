@@ -141,7 +141,7 @@ namespace stl
         using base_ptr = Rb_tree_node_base *;
         using rb_tree_node = Rb_tree_node<value_type>;
         using color_type = Rb_tree_color;
-        using rb_tree_node_allocator = simple_alloc<Value, Alloc>;
+        using rb_tree_node_allocator = simple_alloc<rb_tree_node, Alloc>;
 
         link_type header{};
         size_type node_count{};
@@ -221,10 +221,16 @@ namespace stl
             leftmost() = rightmost() = header;
         }
 
+        void rb_tree_rebalance(Rb_tree_node_base * p, Rb_tree_node_base *& root);
+        void rb_tree_rotate_left(Rb_tree_node_base * p, Rb_tree_node_base *& root);
+        void rb_tree_rotate_right(Rb_tree_node_base * p, Rb_tree_node_base *& root);
+
+
     public:
         Rb_tree(const Compare &comp = Compare())
             : key_compare(com)
         {
+            init();
         }
 
         Compare key_comp() const { return key_comp; }
@@ -233,6 +239,12 @@ namespace stl
         bool empty() const { return node_count == 0; }
         size_type size() const { return node_count; }
         size_type max_size() const { return static_cast<size_type>(-1); }
+
+    public:
+        pair<iterator, bool> insert_unique();
+        iterator insert_equal();
+
+
     };
 
 } // namespace stl
