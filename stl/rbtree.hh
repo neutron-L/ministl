@@ -243,6 +243,7 @@ namespace stl
     public:
         pair<iterator, bool> insert_unique();
         iterator insert_equal();
+        iterator find(const key_type &key);
     };
 
     template <typename Key, typename Value, typename KeyOfValue,
@@ -282,7 +283,7 @@ namespace stl
                     x = p;
                     rb_tree_rotate_right(x, root);
                 }
-                auto y = p->parent->left;               // 伯父节点
+                auto y = p->parent->left;                // 伯父节点
                 if (y && y->color == Rb_tree_color::Red) // 伯父节点为Red，则祖父节点为Black
                 {
                     p->color = y->color = Rb_tree_color::Black;
@@ -302,14 +303,11 @@ namespace stl
         root->color = Rb_tree_color::Black;
     }
 
-
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
     void rb_tree_erase_rebalance(Rb_tree_node_base *p, Rb_tree_node_base *&root)
     {
-        
     }
-
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
@@ -348,6 +346,29 @@ namespace stl
             x->parent->right = y;
         y->right = x;
         x->parent = y;
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::find(const key_type & key)
+    {
+        link_type y = header;
+        link_type x = root();
+
+        while (x)
+        {
+            if (!key_compare(key(x), key))
+            {
+                y = x;
+                x = left(x);
+            }
+            else
+                x = right(x);
+        }
+
+        iterator j = iterator(y);
+        if (j == end() || key_compare(key, key(j.node))) ? end() : j;
     }
 
 } // namespace stl
