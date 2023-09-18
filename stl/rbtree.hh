@@ -247,6 +247,53 @@ namespace stl
 
     };
 
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_rebalance(Rb_tree_node_base * p, Rb_tree_node_base *& root)
+    {
+
+    }
+    
+    
+     template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_rotate_left(Rb_tree_node_base * x, Rb_tree_node_base *& root)
+    {
+        Rb_tree_node_base * y = x->right;
+
+        x->right = y->left;
+        if (y->left)
+            y->left->parent = x;
+
+        if (root == x)
+            root = y;
+        else if (x->parent->left == x)
+            x->parent->left = y;
+        else
+            x->parent->right = y;
+        y->left = x;
+        x->parent = y;
+    }
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_rotate_right(Rb_tree_node_base * x, Rb_tree_node_base *& root)
+    {
+        Rb_tree_node_base * y = x->left;
+
+        x->left = y->right;
+        if (y->right)
+            y->right->parent = x;
+
+        if (root == x)
+            root = y;
+        else if (x->parent->left == x)
+            x->parent->left = y;
+        else
+            x->parent->right = y;
+        y->right = x;
+        x->parent = y;
+    }
+
 } // namespace stl
 
 #endif
