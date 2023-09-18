@@ -221,10 +221,10 @@ namespace stl
             leftmost() = rightmost() = header;
         }
 
-        void rb_tree_rebalance(Rb_tree_node_base * p, Rb_tree_node_base *& root);
-        void rb_tree_rotate_left(Rb_tree_node_base * p, Rb_tree_node_base *& root);
-        void rb_tree_rotate_right(Rb_tree_node_base * p, Rb_tree_node_base *& root);
-
+        void rb_tree_insert_rebalance(Rb_tree_node_base *p, Rb_tree_node_base *&root);
+        void rb_tree_erase_rebalance(Rb_tree_node_base *p, Rb_tree_node_base *&root);
+        void rb_tree_rotate_left(Rb_tree_node_base *p, Rb_tree_node_base *&root);
+        void rb_tree_rotate_right(Rb_tree_node_base *p, Rb_tree_node_base *&root);
 
     public:
         Rb_tree(const Compare &comp = Compare())
@@ -243,23 +243,79 @@ namespace stl
     public:
         pair<iterator, bool> insert_unique();
         iterator insert_equal();
-
-
     };
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
-    void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_rebalance(Rb_tree_node_base * p, Rb_tree_node_base *& root)
+    void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_insert_rebalance(Rb_tree_node_base *x, Rb_tree_node_base *&root)
     {
+        x->color = Rb_tree_color::Red;
+        while (x != root && x->parent->color == Rb_tree_color::Red)
+        {
+            auto p = x->parent;
+            if (p == p->parent->left) // 父亲节点是祖父节点的左孩子
+            {
+                if (x == p->right) // 把x调整为父亲节点的左孩子
+                {
+                    x = p;
+                    rb_tree_rotate_left(x, root);
+                }
+                auto y = p->parent->right;               // 伯父节点
+                if (y && y->color == Rb_tree_color::Red) // 伯父节点为Red，则祖父节点为Black
+                {
+                    p->color = y->color = Rb_tree_color::Black;
+                    p->parent->color = Rb_tree_color::Red;
+                    x = p->parent;
+                }
+                else // 伯父节点不存在或为Black
+                {
+                    p->parent->color = Rb_tree_color::Red;
+                    p->color = Rb_tree_color::Black;
+                    x = p;
+                    rb_tree_rotate_right(p->parent, root);
+                }
+            }
+            else
+            {
+                if (x == p->left) // 把x调整为父亲节点的右孩子
+                {
+                    x = p;
+                    rb_tree_rotate_right(x, root);
+                }
+                auto y = p->parent->left;               // 伯父节点
+                if (y && y->color == Rb_tree_color::Red) // 伯父节点为Red，则祖父节点为Black
+                {
+                    p->color = y->color = Rb_tree_color::Black;
+                    p->parent->color = Rb_tree_color::Red;
+                    x = p->parent;
+                }
+                else // 伯父节点不存在或为Black
+                {
+                    p->parent->color = Rb_tree_color::Red;
+                    p->color = Rb_tree_color::Black;
+                    x = p;
+                    rb_tree_rotate_left(p->parent, root);
+                }
+            }
+        }
 
+        root->color = Rb_tree_color::Black;
     }
-    
-    
-     template <typename Key, typename Value, typename KeyOfValue,
+
+
+    template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
-    void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_rotate_left(Rb_tree_node_base * x, Rb_tree_node_base *& root)
+    void rb_tree_erase_rebalance(Rb_tree_node_base *p, Rb_tree_node_base *&root)
     {
-        Rb_tree_node_base * y = x->right;
+        
+    }
+
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_rotate_left(Rb_tree_node_base *x, Rb_tree_node_base *&root)
+    {
+        Rb_tree_node_base *y = x->right;
 
         x->right = y->left;
         if (y->left)
@@ -276,9 +332,9 @@ namespace stl
     }
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
-    void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_rotate_right(Rb_tree_node_base * x, Rb_tree_node_base *& root)
+    void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_rotate_right(Rb_tree_node_base *x, Rb_tree_node_base *&root)
     {
-        Rb_tree_node_base * y = x->left;
+        Rb_tree_node_base *y = x->left;
 
         x->left = y->right;
         if (y->right)
