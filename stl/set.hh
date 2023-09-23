@@ -19,6 +19,8 @@ namespace stl
     public:
         using key_type = Key;
         using value_type = Key;
+        using key_compare = Compare;
+        using value_compare = Compare;
         using size_type = std::size_type;
         using difference_type = std::ptrdiff_t;
         using key_compare = Compare;
@@ -29,9 +31,10 @@ namespace stl
         using pointer = value_type *;
         using const_pointer = const value_type *;
 
-        // using iterator
-    protected:
-        Container container;
+    private:
+        using rep_type = Rb_tree<key_type, value_type, std::_Identity<value_type>, key_compare, Alloc>;
+
+        rep_type tree;
 
     public:
         /*
@@ -133,7 +136,44 @@ namespace stl
         /*
          * Modifiers
          * */
-        
+        void clear() noexcept;
+
+        std::pair<iterator, bool> insert(const value_type &value);
+        std::pair<iterator, bool> insert(value_type &&value);
+        iterator insert(const_iterator pos, const value_type &value);
+        iterator insert(const_iterator pos, value_type &&value);
+
+        template <typename InputIt, typename = std::_RequireInputIter<InputIterator>>
+        void insert(InputIt first, InputIt last);
+        void insert(std::initializer_list<value_type> ilist);
+        template <class... Args>
+        std::pair<iterator, bool> emplace(Args &&...args);
+
+        iterator erase(iterator pos);
+        iterator erase(const_iterator pos);
+        iterator erase(const_iterator first, const_iterator last);
+        size_type erase(const Key &key);
+        void swap(set &other) noexcept;
+
+        /*
+         * Lookup
+         * */
+
+        size_type count(const Key &key) const;
+        iterator find(const Key &key);
+        const_iterator find(const Key &key) const;
+        std::pair<iterator, iterator> equal_range(const Key &key);
+        std::pair<const_iterator, const_iterator> equal_range(const Key &key) const;
+
+        iterator lower_bound(const Key &key);
+        const_iterator lower_bound(const Key &key) const;
+        iterator upper_bound(const Key &key);
+        const_iterator upper_bound(const Key &key) const;
+        /*
+         * Observers
+         * */
+        key_compare key_comp() const;
+        std::set::value_compare value_comp() const;
     };
 
 } // namespace stl
