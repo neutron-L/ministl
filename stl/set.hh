@@ -19,13 +19,12 @@ namespace stl
     public:
         using key_type = Key;
         using value_type = Key;
-        
-         using size_type = std::size_type;
+
+        using size_type = std::size_type;
         using difference_type = std::ptrdiff_t;
 
         using key_compare = Compare;
         using value_compare = Compare;
-
 
         using allocator_type = Alloc;
         using reference = value_type &;
@@ -41,13 +40,13 @@ namespace stl
     public:
         using iterator = typename rep_type::const_iterator;
         using const_iterator = typename rep_type::const_iterator;
-        using reverse_iterator = stl::reverse_iterator<iterator>;
-        using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
+        using reverse_iterator = typename rep_type::const_reverse_iterator;
+        using const_reverse_iterator = typename rep_type::const_reverse_iterator;
         /*
          * Constructors
          * */
         set() : set(Compare()) {}
-        explicit set(const Compare &comp) {}
+        explicit set(const Compare &comp) : tree(comp) {}
         template <typename InputIterator, typename = std::_RequireInputIter<InputIterator>>
         set(InputIterator first, InputIterator last, const Compare &comp = Compare())
             : tree(comp)
@@ -186,24 +185,24 @@ namespace stl
         template <class... Args>
         std::pair<iterator, bool> emplace(Args &&...args)
         {
-            tree.emplace(std::forward<Args>(args)...);
+            return tree.emplace(std::forward<Args>(args)...);
         }
 
         iterator erase(iterator pos)
         {
-            tree.erase(pos);
+            return tree.erase(pos);
         }
         iterator erase(const_iterator pos)
         {
-            tree.erase(pos);
+            return tree.erase(pos);
         }
         iterator erase(const_iterator first, const_iterator last)
         {
-            tree.erase(first, last);
+            return tree.erase(first, last);
         }
         size_type erase(const Key &key)
         {
-            tree.erase(key);
+            return tree.erase(key);
         }
         void swap(set &other) noexcept
         {
