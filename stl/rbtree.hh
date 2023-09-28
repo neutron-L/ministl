@@ -65,10 +65,44 @@ namespace stl
 
         void increment()
         {
+            if (node->right)                // CASE 1: 进入右子树，寻找右子树的最小节点
+            {
+                node = node->right;
+                while (node->left)
+                    node = node->left;
+            }
+            else
+            {
+                base_ptr p = node->parent;
+                while (node == p->right)    // CASE 2: 已经是某树的左子树最大节点
+                {
+                    node = p;
+                    p = p->parent;
+                }
+                if (node->right != p)       // node可能为header
+                    node = p;
+            }
         }
 
         void decrement()
         {
+            if (node->color == Rb_tree_color::Red && node->parent->parent == node)
+                node = node->right;
+            else if (node->left)
+            {
+                node = node->left;
+                while (node->right)
+                    node = node->right;
+            }
+            else
+            {
+                base_ptr p = node->parent;
+                while (node = p->left)
+                {
+                    node = p;
+                    p = p->parent;
+                }
+            }
         }
     };
 
@@ -233,7 +267,13 @@ namespace stl
             init();
         }
 
-        Compare key_comp() const { return key_comp; }
+        ~Rb_tree()
+        {
+            clear();
+            put_node(header);
+        }
+
+        Compare key_comp() const { return key_compare; }
         iterator begin() const { return leftmost(); }
         iterator end() const { return header; }
         bool empty() const { return node_count == 0; }
