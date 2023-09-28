@@ -65,7 +65,7 @@ namespace stl
 
         void increment()
         {
-            if (node->right)                // CASE 1: 进入右子树，寻找右子树的最小节点
+            if (node->right) // CASE 1: 进入右子树，寻找右子树的最小节点
             {
                 node = node->right;
                 while (node->left)
@@ -74,12 +74,12 @@ namespace stl
             else
             {
                 base_ptr p = node->parent;
-                while (node == p->right)    // CASE 2: 已经是某树的左子树最大节点
+                while (node == p->right) // CASE 2: 已经是某树的左子树最大节点
                 {
                     node = p;
                     p = p->parent;
                 }
-                if (node->right != p)       // node可能为header
+                if (node->right != p) // node可能为header
                     node = p;
             }
         }
@@ -240,6 +240,8 @@ namespace stl
     public:
         using iterator = Rb_tree_iterator<value_type, reference, pointer>::iterator;
         using const_iterator = Rb_tree_iterator<value_type, reference, pointer>::const_iterator;
+        using reverse_iterator = stl::reverse_iterator<iterator>;
+        using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
     private:
         itrator insert(base_ptr x, base_ptr y, const value_type &v);
@@ -267,25 +269,149 @@ namespace stl
             init();
         }
 
+        Rb_tree(const Rb_tree &other)
+        {
+            clear();
+
+            // insert all elements
+        }
+        Rb_tree(Rb_tree &&other)
+            : header(std::move(other.header)), node_count(std::move(other.node_count))
+        {
+            other.header = nullptr;
+            other.node_count = 0;
+        }
+
+        /*
+         * Destructor
+         * */
         ~Rb_tree()
         {
             clear();
             put_node(header);
         }
 
-        Compare key_comp() const { return key_compare; }
-        iterator begin() const { return leftmost(); }
-        iterator end() const { return header; }
-        bool empty() const { return node_count == 0; }
-        size_type size() const { return node_count; }
-        size_type max_size() const { return static_cast<size_type>(-1); }
+        /*
+         * assignment operation
+         * */
+        Rb_tree &operator=(const Rb_tree &other)
+        {
+        }
 
-    public:
-        pair<iterator, bool> insert_unique();
+        Rb_tree &operator=(Rb_tree &&other) noexcept
+        {
+            clear();
+            put_node(header);
+
+            header = std::move(other.header);
+            node_count = other.node_count;
+
+            other.header = nullptr;
+            other.node_count = 0;
+
+            return *this;
+        }
+
+        /*
+         * Iterator function
+         * */
+        iterator begin() noexcept
+        {
+            return iterator(leftmost());
+        }
+
+        const_iterator begin() const noexcept
+        {
+            return const_iterator(leftmost());
+        }
+
+        const_iterator cbegin() const noexcept
+        {
+            return const_iterator(leftmost());
+        }
+
+        iterator end() noexcept
+        {
+            return iterator(header);
+        }
+
+        const_iterator end() const noexcept
+        {
+            return const_iterator(header);
+        }
+
+        const_iterator cend() const noexcept
+        {
+            return const_iterator(header);
+        }
+
+        reverse_iterator rbegin() noexcept
+        {
+            return reverse_iterator(end());
+        }
+        const_reverse_iterator rbegin() const noexcept
+        {
+            return const_reverse_iterator(end());
+        }
+        const_reverse_iterator crbegin() const noexcept
+        {
+            return const_reverse_iterator(end());
+        }
+
+        reverse_iterator rend() noexcept
+        {
+            return reverse_iterator(begin());
+        }
+        const_reverse_iterator rend() const noexcept
+        {
+            return const_reverse_iterator(begin());
+        }
+        const_reverse_iterator crend() const noexcept
+        {
+            return const_reverse_iterator(begin());
+        }
+
+        /*
+         * Capacity
+         * */
+        bool empty() const noexcept { return node_count == 0; }
+        size_type size() const noexcept { return node_count; }
+        size_type max_size() const noexcept { return static_cast<size_type>(-1); }
+
+        /*
+         * Modifiers
+         * */
+        void clear() noexcept
+        {
+            erase(begin(), end());
+        }
+
+        pair<iterator, bool> insert_unique(const value_type &value);
+        pair<iterator, bool> insert_unique(value_type &&value);
+        pair<iterator, bool> insert_unique(const_iterator pos, const value_type &value);
+        pair<iterator, bool> insert_unique(const_iterator pos, value_type &&value);
+
+        template <typename InputIt, typename = std::_RequireInputIter<InputIterator>>
+        void insert_unique(InputIt first, InputIt last)
+        {
+            while (first != last)
+            {
+                insert_unique(*first);
+                ++first;
+            }
+        }
+
         iterator insert_equal();
         iterator find(const key_type &key);
+        /*
+         * Observers
+         * */
+        Compare key_comp() const { return key_compare; }
     };
 
+    /*
+     * Rb-Tree insert and erase
+     * */
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
     void Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_insert_rebalance(Rb_tree_node_base *x, Rb_tree_node_base *&root)
@@ -390,8 +516,24 @@ namespace stl
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::find(const key_type & key)
+    std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator, bool> 
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_unique(const typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::value_type &value)
+    {}
+
+    // template <typename Key, typename Value, typename KeyOfValue,
+    //           typename Compare, typename Alloc>
+    // std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator, bool> 
+    // Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_unique(value_type &&value)
+    // {
+    // }
+
+    // pair<iterator, bool> insert_unique(const_iterator pos, const value_type &value);
+    // pair<iterator, bool> insert_unique(const_iterator pos, value_type &&value);
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::find(const key_type &key)
     {
         link_type y = header;
         link_type x = root();
@@ -408,7 +550,7 @@ namespace stl
         }
 
         iterator j = iterator(y);
-        if (j == end() || key_compare(key, key(j.node))) ? end() : j;
+        return (j == end() || key_compare(key, key(j.node))) ? end() : j;
     }
 
 } // namespace stl
