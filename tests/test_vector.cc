@@ -407,6 +407,10 @@ int main()
     test_modifiers_complex();
     test_modifiers_string();
     test_non_member_func();
+
+    // test pair
+    stl::vector<std::pair<int, int>> vp;
+    vp.push_back({12,14});
     std::cout << "Pass!\n";
 
     return 0;
