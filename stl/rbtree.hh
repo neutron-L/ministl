@@ -8,6 +8,8 @@
 #include "alloc.hh"
 #include "construct.hh"
 #include "iterator.hh"
+#include "vector.hh"
+#include "stack.hh"
 
 namespace stl
 {
@@ -252,7 +254,7 @@ namespace stl
         using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
     private:
-        iterator insert(base_ptr cur, value_type && value);
+        iterator insert(base_ptr cur, value_type &&value);
         link_type copy(link_type x, link_type y);
         void erase(link_type cur);
 
@@ -413,25 +415,29 @@ namespace stl
                 now = comp ? left(now) : right(now);
             }
 
-            if (comp || key_compare(key(now), KeyOfValue()(value)))
-                return {insert(pre, std::move(value)), true};
-            else
+            iterator j = iterator(pre);
+            if (comp)
             {
-                assert(key(pre) == value);
-                return {pre, false};
+                if (j == begin())
+                    return {insert(pre, std::move(value)), true};
+                else
+                    --j;
             }
+            if (key_compare(key(j.node), KeyOfValue()(value)))
+                return {insert(pre, std::move(value)), true};
+            return {j, false};
         }
 
-        pair<iterator, bool> insert_unique(const_iterator pos, const value_type &value);
-        pair<iterator, bool> insert_unique(const_iterator pos, value_type &&value);
+        std::pair<iterator, bool> insert_unique(const_iterator pos, const value_type &value);
+        std::pair<iterator, bool> insert_unique(const_iterator pos, value_type &&value);
 
-        pair<iterator, bool> insert_equal(const value_type &value)
+        std::pair<iterator, bool> insert_equal(const value_type &value)
         {
             value_type v(std::move(value));
             return insert_equal(std::move(v));
         }
 
-        pair<iterator, bool> insert_equal(value_type &&value)
+        std::pair<iterator, bool> insert_equal(value_type &&value)
         {
             link_type pre = header;
             link_type now = root();
@@ -445,8 +451,8 @@ namespace stl
             return insert(pre, std::move(value));
         }
 
-        pair<iterator, bool> insert_equal(const_iterator pos, const value_type &value);
-        pair<iterator, bool> insert_equal(const_iterator pos, value_type &&value);
+        std::pair<iterator, bool> insert_equal(const_iterator pos, const value_type &value);
+        std::pair<iterator, bool> insert_equal(const_iterator pos, value_type &&value);
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIterator>>
         void insert_unique(InputIt first, InputIt last)
@@ -474,6 +480,11 @@ namespace stl
          * Observers
          * */
         Compare key_comp() const { return key_compare; }
+        // Traverse Rb-tree
+        // first: value field; second: color(0 for red, 1 for black)
+        stl::vector<std::pair<Value, int>> pre_traverse(); 
+        stl::vector<std::pair<Value, int>> mid_traverse(); 
+        stl::vector<std::pair<Value, int>> post_traverse(); 
     };
 
     /*
@@ -581,21 +592,21 @@ namespace stl
         x->parent = y;
     }
 
-template <typename Key, typename Value, typename KeyOfValue,
+    template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
-    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator 
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(base_ptr cur, value_type && value)
+    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(base_ptr cur, value_type &&value)
     {
         link_type node = create_node(std::move(value));
 
-        if (cur == header || key_compare(KeyOfValue()(value), key(cur)))   // CASE 1: left
+        if (cur == header || key_compare(KeyOfValue()(value), key(cur))) // CASE 1: left
         {
             left(cur) = node;
             if (cur == header)
             {
                 root() = node;
                 rightmost() = node;
-            } 
+            }
             if (cur == leftmost())
                 leftmost() = node;
         }
@@ -614,7 +625,6 @@ template <typename Key, typename Value, typename KeyOfValue,
 
         return iterator(node);
     }
-
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
@@ -637,6 +647,21 @@ template <typename Key, typename Value, typename KeyOfValue,
 
         iterator j = iterator(y);
         return (j == end() || key_compare(key, key(j.node))) ? end() : j;
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    stl::vector<std::pair<Value, int>> 
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::pre_traverse()
+    {
+        stl::vector<std::pair<Value, int>> info;
+        stl::stack<link_type> stk;
+
+        
+
+
+
+        return info;
     }
 
 } // namespace stl
