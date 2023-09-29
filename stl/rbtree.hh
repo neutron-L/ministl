@@ -108,6 +108,7 @@ namespace stl
                     node = p;
                     p = p->parent;
                 }
+                node = p;
             }
         }
     };
@@ -523,6 +524,8 @@ namespace stl
         }
         void swap(Rb_tree &other) noexcept
         {
+            swap(header, other.header);
+            swap(node_count, other.node_count);
         }
 
         iterator find(const key_type &key);
@@ -554,6 +557,7 @@ namespace stl
                 {
                     x = p;
                     rb_tree_rotate_left(x, root);
+                    p = x->parent;
                 }
                 auto y = p->parent->right;               // 伯父节点
                 if (y && y->color == Rb_tree_color::Red) // 伯父节点为Red，则祖父节点为Black
@@ -576,6 +580,7 @@ namespace stl
                 {
                     x = p;
                     rb_tree_rotate_right(x, root);
+                    p = x->parent;
                 }
                 auto y = p->parent->left;                // 伯父节点
                 if (y && y->color == Rb_tree_color::Red) // 伯父节点为Red，则祖父节点为Black
@@ -612,7 +617,7 @@ namespace stl
         x->right = y->left;
         if (y->left)
             y->left->parent = x;
-
+        y->parent = x->parent;
         if (root == x)
             root = y;
         else if (x->parent->left == x)
@@ -631,6 +636,7 @@ namespace stl
         x->left = y->right;
         if (y->right)
             y->right->parent = x;
+        y->parent = x->parent;
 
         if (root == x)
             root = y;
@@ -713,7 +719,7 @@ namespace stl
             if (p)
             {
                 stk.push(p);
-                info.push_back({key(p), !!(color(p) == Rb_tree_color::Red)});
+                info.push_back({key(p), !(color(p) == Rb_tree_color::Red)});
                 p = static_cast<link_type>(p->left);
             }
             else
@@ -747,7 +753,7 @@ namespace stl
             {
                 p = stk.top();
                 stk.pop();
-                info.push_back({key(p), !!(color(p) == Rb_tree_color::Red)});
+                info.push_back({key(p), !(color(p) == Rb_tree_color::Red)});
 
                 p = static_cast<link_type>(p->right);
             }
@@ -781,7 +787,7 @@ namespace stl
                     p = static_cast<link_type>(p->right);
                 else
                 {
-                    info.push_back({key(p), !!(color(p) == Rb_tree_color::Red)});
+                    info.push_back({key(p), !(color(p) == Rb_tree_color::Red)});
 
                     stk.pop();
                     r = p;
