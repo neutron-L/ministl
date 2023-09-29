@@ -482,9 +482,9 @@ namespace stl
         Compare key_comp() const { return key_compare; }
         // Traverse Rb-tree
         // first: value field; second: color(0 for red, 1 for black)
-        stl::vector<std::pair<Value, int>> pre_traverse(); 
-        stl::vector<std::pair<Value, int>> mid_traverse(); 
-        stl::vector<std::pair<Value, int>> post_traverse(); 
+        stl::vector<std::pair<Value, int>> pre_traverse();
+        stl::vector<std::pair<Value, int>> mid_traverse();
+        stl::vector<std::pair<Value, int>> post_traverse();
     };
 
     /*
@@ -651,15 +651,92 @@ namespace stl
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
-    stl::vector<std::pair<Value, int>> 
+    stl::vector<std::pair<Value, int>>
     Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::pre_traverse()
     {
         stl::vector<std::pair<Value, int>> info;
         stl::stack<link_type> stk;
+        link_type p = root();
 
-        
+        while (p || !stk.empty())
+        {
+            if (p)
+            {
+                stk.push(p);
+                info.push_back(key(p));
+                p = p->left;
+            }
+            else
+            {
+                p = stk.top();
+                stk.pop();
+                p = p->right;
+            }
+        }
 
+        return info;
+    }
 
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    stl::vector<std::pair<Value, int>>
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::mid_traverse()
+    {
+        stl::vector<std::pair<Value, int>> info;
+        stl::stack<link_type> stk;
+        link_type p = root();
+
+        while (p || !stk.empty())
+        {
+            if (p)
+            {
+                stk.push(p);
+                p = p->left;
+            }
+            else
+            {
+                p = stk.top();
+                stk.pop();
+                info.push_back(key(p));
+                p = p->right;
+            }
+        }
+
+        return info;
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    stl::vector<std::pair<Value, int>>
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::post_traverse()
+    {
+        stl::vector<std::pair<Value, int>> info;
+        stl::stack<link_type> stk;
+
+        link_type p = root();
+        link_type r = nullptr;
+
+        while (p || !stk.empty())
+        {
+            if (p)
+            {
+                stk.push(p);
+                p = p->left;
+            }
+            else
+            {
+                p = stk.top();
+                if (p->right && p->right != r)
+                    p = p->right;
+                else
+                {
+                    info.push_back(key(p));
+                    stk.pop();
+                    r = p;
+                    p = nullptr;
+                }
+            }
+        }
 
         return info;
     }
