@@ -93,7 +93,7 @@ namespace stl
          * */
         ~vector()
         {
-            destroy(start, finish);
+            stl::destroy(start, finish);
             deallocate();
         }
 
