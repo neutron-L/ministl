@@ -192,6 +192,14 @@ namespace stl
             return node;
         }
 
+        link_type create_node(value_type &&val)
+        {
+            link_type node = get_node();
+            stl::construct(&node->value_field, std::move(val));
+
+            return node;
+        }
+
         link_type clone_node(link_type p)
         {
             link_type node = create_node(p->value_field);
@@ -244,9 +252,9 @@ namespace stl
         using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
     private:
-        itrator insert(base_ptr x, base_ptr y, const value_type &v);
+        iterator insert(base_ptr cur, value_type && value);
         link_type copy(link_type x, link_type y);
-        void erase(link_type x);
+        void erase(link_type cur);
 
         void init()
         {
@@ -386,10 +394,59 @@ namespace stl
             erase(begin(), end());
         }
 
-        pair<iterator, bool> insert_unique(const value_type &value);
-        pair<iterator, bool> insert_unique(value_type &&value);
+        pair<iterator, bool> insert_unique(const value_type &value)
+        {
+            value_type v(std::move(value));
+            return insert_unique(std::move(v));
+        }
+
+        pair<iterator, bool> insert_unique(value_type &&value)
+        {
+            link_type pre = header;
+            link_type now = root();
+            bool comp = true;
+
+            while (now)
+            {
+                pre = now;
+                comp = key_compare(KeyOfValue()(value), key(now));
+                now = comp ? left(now) : right(now);
+            }
+
+            if (comp || key_compare(key(now), KeyOfValue()(value)))
+                return {insert(pre, std::move(value)), true};
+            else
+            {
+                assert(key(pre) == value);
+                return {pre, false};
+            }
+        }
+
         pair<iterator, bool> insert_unique(const_iterator pos, const value_type &value);
         pair<iterator, bool> insert_unique(const_iterator pos, value_type &&value);
+
+        pair<iterator, bool> insert_equal(const value_type &value)
+        {
+            value_type v(std::move(value));
+            return insert_equal(std::move(v));
+        }
+
+        pair<iterator, bool> insert_equal(value_type &&value)
+        {
+            link_type pre = header;
+            link_type now = root();
+
+            while (now)
+            {
+                pre = now;
+                now = key_compare(KeyOfValue()(value), key(now)) ? left(now) : right(now);
+            }
+
+            return insert(pre, std::move(value));
+        }
+
+        pair<iterator, bool> insert_equal(const_iterator pos, const value_type &value);
+        pair<iterator, bool> insert_equal(const_iterator pos, value_type &&value);
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIterator>>
         void insert_unique(InputIt first, InputIt last)
@@ -397,6 +454,16 @@ namespace stl
             while (first != last)
             {
                 insert_unique(*first);
+                ++first;
+            }
+        }
+
+        template <typename InputIt, typename = std::_RequireInputIter<InputIterator>>
+        void insert_equal(InputIt first, InputIt last)
+        {
+            while (first != last)
+            {
+                insert_equal(*first);
                 ++first;
             }
         }
@@ -514,21 +581,40 @@ namespace stl
         x->parent = y;
     }
 
-    template <typename Key, typename Value, typename KeyOfValue,
+template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
-    std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator, bool> 
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_unique(const typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::value_type &value)
-    {}
+    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator 
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(base_ptr cur, value_type && value)
+    {
+        link_type node = create_node(std::move(value));
 
-    // template <typename Key, typename Value, typename KeyOfValue,
-    //           typename Compare, typename Alloc>
-    // std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator, bool> 
-    // Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_unique(value_type &&value)
-    // {
-    // }
+        if (cur == header || key_compare(KeyOfValue()(value), key(cur)))   // CASE 1: left
+        {
+            left(cur) = node;
+            if (cur == header)
+            {
+                root() = node;
+                rightmost() = node;
+            } 
+            if (cur == leftmost())
+                leftmost() = node;
+        }
+        else
+        {
+            right(cur) = node;
+            if (cur == rightmost())
+                rightmost() = node;
+        }
 
-    // pair<iterator, bool> insert_unique(const_iterator pos, const value_type &value);
-    // pair<iterator, bool> insert_unique(const_iterator pos, value_type &&value);
+        parent(node) = y;
+        left(node) = right(node) = nullptr;
+
+        rb_tree_insert_rebalance(node, header->parent);
+        ++node_count;
+
+        return iterator(node);
+    }
+
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
