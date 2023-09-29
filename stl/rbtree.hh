@@ -5,6 +5,7 @@
 #ifndef MINISTL_RBTREE_HH
 #define MINISTL_RBTREE_HH
 
+#include <iostream>
 #include "alloc.hh"
 #include "construct.hh"
 #include "iterator.hh"
@@ -13,6 +14,9 @@
 
 namespace stl
 {
+    using std::cerr;
+    using std::endl;
+
     // RB-Tree Node Color, include red and black
     enum class Rb_tree_color
     {
@@ -99,7 +103,7 @@ namespace stl
             else
             {
                 base_ptr p = node->parent;
-                while (node = p->left)
+                while (node == p->left)
                 {
                     node = p;
                     p = p->parent;
@@ -141,16 +145,28 @@ namespace stl
             return obj;
         }
 
-        self &operator++()
+        self &operator--()
         {
             decrement();
             return *this;
         }
-        self operator++(int)
+        self operator--(int)
         {
             auto obj = *this;
             decrement();
             return obj;
+        }
+
+        friend bool
+        operator==(const self &lhs, const self &rhs)
+        {
+            return lhs.node == rhs.node;
+        }
+
+        friend bool
+        operator!=(const self &lhs, const self &rhs)
+        {
+            return lhs.node != rhs.node;
         }
     };
 
@@ -184,7 +200,7 @@ namespace stl
         Compare key_compare{};
 
         link_type get_node() { return rb_tree_node_allocator::allocate(); }
-        void put_node(link_type p) { rb_tree_node_allocator::deallcate(p); }
+        void put_node(link_type p) { rb_tree_node_allocator::deallocate(p); }
 
         link_type create_node(const value_type &val)
         {
@@ -218,38 +234,55 @@ namespace stl
         }
 
         // get the members of header
-        link_type &root() const { return header->parent; }
-        link_type &leftmost() const { return header->left; }
-        link_type &rightmost() const { return header->right; }
+        base_ptr &root() const { return header->parent; }
+        base_ptr &leftmost() const { return header->left; }
+        base_ptr &rightmost() const { return header->right; }
 
         // get the members of node
-        static link_type &left(link_type p)
+        static base_ptr &left(base_ptr p)
         {
-            try
-            {
-                return dynamic_cast<link_type &>(p->left);
-            }
-            catch (std::bad_cast)
-            {
-                std::cerr << "bad cast " << endl;
-                exit(-1);
-            }
+            return p->left;
+        }
+
+        static base_ptr &right(base_ptr p)
+        {
+            return p->right;
+        }
+
+        static base_ptr &parent(base_ptr p)
+        {
+            return p->parent;
+        }
+
+        static reference value(base_ptr p)
+        {
+            return static_cast<link_type>(p)->value_field;
+        }
+
+        static const Key &key(base_ptr p)
+        {
+            return KeyOfValue()(value(p));
+        }
+
+        static color_type &color(base_ptr p)
+        {
+            return static_cast<link_type>(p)->color;
         }
 
         // find the max/min node
         static link_type minimum(link_type p)
         {
-            return dynamic_cast<link_type>(Rb_tree_node_base::minimum(p));
+            return static_cast<link_type>(Rb_tree_node_base::minimum(p));
         }
 
         static link_type maximum(link_type p)
         {
-            return dynamic_cast<link_type>(Rb_tree_node_base::maximum(p));
+            return static_cast<link_type>(Rb_tree_node_base::maximum(p));
         }
 
     public:
-        using iterator = Rb_tree_iterator<value_type, reference, pointer>::iterator;
-        using const_iterator = Rb_tree_iterator<value_type, reference, pointer>::const_iterator;
+        using iterator = typename Rb_tree_iterator<value_type, reference, pointer>::iterator;
+        using const_iterator = typename Rb_tree_iterator<value_type, reference, pointer>::const_iterator;
         using reverse_iterator = stl::reverse_iterator<iterator>;
         using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
@@ -274,7 +307,7 @@ namespace stl
 
     public:
         Rb_tree(const Compare &comp = Compare())
-            : key_compare(com)
+            : key_compare(comp)
         {
             init();
         }
@@ -284,6 +317,7 @@ namespace stl
             clear();
 
             // insert all elements
+            insert_equal(other.begin(), other.end());
         }
         Rb_tree(Rb_tree &&other)
             : header(std::move(other.header)), node_count(std::move(other.node_count))
@@ -327,17 +361,17 @@ namespace stl
          * */
         iterator begin() noexcept
         {
-            return iterator(leftmost());
+            return iterator(static_cast<link_type>(leftmost()));
         }
 
         const_iterator begin() const noexcept
         {
-            return const_iterator(leftmost());
+            return const_iterator(static_cast<link_type>(leftmost()));
         }
 
         const_iterator cbegin() const noexcept
         {
-            return const_iterator(leftmost());
+            return const_iterator(static_cast<link_type>(leftmost()));
         }
 
         iterator end() noexcept
@@ -396,16 +430,16 @@ namespace stl
             erase(begin(), end());
         }
 
-        pair<iterator, bool> insert_unique(const value_type &value)
+        std::pair<iterator, bool> insert_unique(const value_type &value)
         {
             value_type v(std::move(value));
             return insert_unique(std::move(v));
         }
 
-        pair<iterator, bool> insert_unique(value_type &&value)
+        std::pair<iterator, bool> insert_unique(value_type &&value)
         {
-            link_type pre = header;
-            link_type now = root();
+            base_ptr pre = header;
+            base_ptr now = root();
             bool comp = true;
 
             while (now)
@@ -415,7 +449,7 @@ namespace stl
                 now = comp ? left(now) : right(now);
             }
 
-            iterator j = iterator(pre);
+            iterator j = iterator(static_cast<link_type>(pre));
             if (comp)
             {
                 if (j == begin())
@@ -454,7 +488,7 @@ namespace stl
         std::pair<iterator, bool> insert_equal(const_iterator pos, const value_type &value);
         std::pair<iterator, bool> insert_equal(const_iterator pos, value_type &&value);
 
-        template <typename InputIt, typename = std::_RequireInputIter<InputIterator>>
+        template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void insert_unique(InputIt first, InputIt last)
         {
             while (first != last)
@@ -464,7 +498,7 @@ namespace stl
             }
         }
 
-        template <typename InputIt, typename = std::_RequireInputIter<InputIterator>>
+        template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void insert_equal(InputIt first, InputIt last)
         {
             while (first != last)
@@ -474,7 +508,23 @@ namespace stl
             }
         }
 
-        iterator insert_equal();
+
+        iterator erase(iterator pos)
+        {
+        }
+        iterator erase(const_iterator pos)
+        {
+        }
+        iterator erase(const_iterator first, const_iterator last)
+        {
+        }
+        size_type erase(const Key &key)
+        {
+        }
+        void swap(Rb_tree &other) noexcept
+        {
+        }
+
         iterator find(const key_type &key);
         /*
          * Observers
@@ -617,7 +667,7 @@ namespace stl
                 rightmost() = node;
         }
 
-        parent(node) = y;
+        parent(node) = cur;
         left(node) = right(node) = nullptr;
 
         rb_tree_insert_rebalance(node, header->parent);
@@ -656,21 +706,21 @@ namespace stl
     {
         stl::vector<std::pair<Value, int>> info;
         stl::stack<link_type> stk;
-        link_type p = root();
+        link_type p = static_cast<link_type>(root());
 
         while (p || !stk.empty())
         {
             if (p)
             {
                 stk.push(p);
-                info.push_back(key(p));
-                p = p->left;
+                info.push_back({key(p), !!(color(p) == Rb_tree_color::Red)});
+                p = static_cast<link_type>(p->left);
             }
             else
             {
                 p = stk.top();
                 stk.pop();
-                p = p->right;
+                p = static_cast<link_type>(p->right);
             }
         }
 
@@ -684,21 +734,22 @@ namespace stl
     {
         stl::vector<std::pair<Value, int>> info;
         stl::stack<link_type> stk;
-        link_type p = root();
+        link_type p = static_cast<link_type>(root());
 
         while (p || !stk.empty())
         {
             if (p)
             {
                 stk.push(p);
-                p = p->left;
+                p = static_cast<link_type>(p->left);
             }
             else
             {
                 p = stk.top();
                 stk.pop();
-                info.push_back(key(p));
-                p = p->right;
+                info.push_back({key(p), !!(color(p) == Rb_tree_color::Red)});
+
+                p = static_cast<link_type>(p->right);
             }
         }
 
@@ -713,7 +764,7 @@ namespace stl
         stl::vector<std::pair<Value, int>> info;
         stl::stack<link_type> stk;
 
-        link_type p = root();
+        link_type p = static_cast<link_type>(root());
         link_type r = nullptr;
 
         while (p || !stk.empty())
@@ -721,16 +772,17 @@ namespace stl
             if (p)
             {
                 stk.push(p);
-                p = p->left;
+                p = static_cast<link_type>(p->left);
             }
             else
             {
                 p = stk.top();
                 if (p->right && p->right != r)
-                    p = p->right;
+                    p = static_cast<link_type>(p->right);
                 else
                 {
-                    info.push_back(key(p));
+                    info.push_back({key(p), !!(color(p) == Rb_tree_color::Red)});
+
                     stk.pop();
                     r = p;
                     p = nullptr;
