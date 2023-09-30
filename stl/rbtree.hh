@@ -224,7 +224,8 @@ namespace stl
 
         link_type clone_node(link_type p)
         {
-            link_type node = create_node(p->value_field);
+            auto v{p->value_field};
+            link_type node = create_node(std::move(v));
             node->color = p->color;
             node->left = node->right = node->parent = nullptr;
 
