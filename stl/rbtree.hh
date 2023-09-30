@@ -6,6 +6,8 @@
 #define MINISTL_RBTREE_HH
 
 #include <iostream>
+#include <cassert>
+
 #include "alloc.hh"
 #include "construct.hh"
 #include "iterator.hh"
@@ -57,7 +59,7 @@ namespace stl
     struct Rb_tree_node : public Rb_tree_node_base
     {
         using link_type = Rb_tree_node<Value> *;
-        Value value_field;
+        Value value_field{};
     };
 
     // RB-Tree iterator base class
@@ -130,7 +132,7 @@ namespace stl
         Rb_tree_iterator(link_type lt) { node = lt; }
         Rb_tree_iterator(const iterator &it) { node = it.node; }
 
-        reference operator*() const { return link_type(node)->value_field; }
+        reference operator*() const { return ((link_type)node)->value_field; }
 
         pointer operator->() const { return &operator*(); }
 
@@ -197,11 +199,12 @@ namespace stl
         using rb_tree_node_allocator = simple_alloc<rb_tree_node, Alloc>;
 
         link_type header{};
+        // link_type nil{};           // 作为rb-tree中的空指针（空节点），所有叶子节点的左右指针指向它，为黑色
         size_type node_count{};
         Compare key_compare{};
 
-        link_type get_node() { return rb_tree_node_allocator::allocate(); }
-        void put_node(link_type p) { rb_tree_node_allocator::deallocate(p); }
+        static link_type get_node() { return rb_tree_node_allocator::allocate(); }
+        static void put_node(link_type p) { rb_tree_node_allocator::deallocate(p); }
 
         link_type create_node(const value_type &val)
         {
@@ -289,16 +292,31 @@ namespace stl
 
     private:
         iterator insert(base_ptr cur, value_type &&value);
-        link_type copy(link_type x, link_type y);
-        void erase(link_type cur);
+        void transplant(link_type x, link_type y);
+        /*
+         * 创建一个伪节点nil，颜色为black，默认是p（不为header）的右子节点
+         * */
+        link_type create_nil(link_type p)
+        {
+            link_type nil = get_node();
+            left(nil) = right(nil) = nullptr;
+            parent(nil) = p;
+            color(nil) = Rb_tree_color::Black;
+
+            p->right = nil;
+        }
+        iterator erase(link_type cur);
 
         void init()
         {
             header = get_node();
+            // nil = get_node();
 
             color(header) = color_type::Red;
             root() = nullptr;
             leftmost() = rightmost() = header;
+
+            node_count = 0;
         }
 
         void rb_tree_insert_rebalance(Rb_tree_node_base *p, Rb_tree_node_base *&root);
@@ -323,8 +341,7 @@ namespace stl
         Rb_tree(Rb_tree &&other)
             : header(std::move(other.header)), node_count(std::move(other.node_count))
         {
-            other.header = nullptr;
-            other.node_count = 0;
+            other.init(); // other还原到初始状态
         }
 
         /*
@@ -334,6 +351,7 @@ namespace stl
         {
             clear();
             put_node(header);
+            // put_node(nil);
         }
 
         /*
@@ -349,10 +367,10 @@ namespace stl
             put_node(header);
 
             header = std::move(other.header);
+            // nil = std::move(other.nil);
             node_count = other.node_count;
 
-            other.header = nullptr;
-            other.node_count = 0;
+            other.init(); // other还原到初始状态
 
             return *this;
         }
@@ -509,12 +527,13 @@ namespace stl
             }
         }
 
-
         iterator erase(iterator pos)
         {
+            return erase(pos.node);
         }
         iterator erase(const_iterator pos)
         {
+            return erase(pos.node);
         }
         iterator erase(const_iterator first, const_iterator last)
         {
@@ -541,7 +560,7 @@ namespace stl
     };
 
     /*
-     * Rb-Tree insert and erase
+     * Rb-Tree insert and erase balance
      * */
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
@@ -604,8 +623,93 @@ namespace stl
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
-    void rb_tree_erase_rebalance(Rb_tree_node_base *p, Rb_tree_node_base *&root)
+    void
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::rb_tree_erase_rebalance(Rb_tree_node_base *x, Rb_tree_node_base *&root)
     {
+        while (x != root && x->color == Rb_tree_color::Black)
+        {
+            if (x == x->parent->left)
+            {
+                auto w = x->parent->right;
+                assert(w);
+
+                if (w->color == Rb_tree_color::Red)
+                {
+                    w->color = Rb_tree_color::Black;
+                    w->parent->color = Rb_tree_color::Red;
+                    rb_tree_rotate_left(w->parent, root);
+                    w = x->parent->right;
+                    assert(w);
+                }
+                assert(w->color == Rb_tree_color::Black);
+                if (!((w->left && w->left->color ==Rb_tree_color::Red) 
+                || (w->right && w->right->color ==Rb_tree_color::Red)))
+                {
+                    w->color = Rb_tree_color::Red;
+                    x = x->parent;
+                }
+                else
+                {
+                    if (!(w->right && w->right->color == Rb_tree_color::Red))
+                    {
+                        w->color = Rb_tree_color::Red;
+                        w->left->color = Rb_tree_color::Black;
+                        rb_tree_rotate_right(w, root);
+                        w = x->parent->right;
+                        assert(w->right->color == Rb_tree_color::Red);
+                    }
+                    assert(w->color == Rb_tree_color::Black);
+
+                    w->color = w->parent->color;
+                    w->parent->color = Rb_tree_color::Black;
+                    w->right->color = Rb_tree_color::Black;
+                    rb_tree_rotate_right(w->parent, root);
+                    x = root;
+                } 
+            }
+
+            else
+            {
+                auto w = x->parent->left;
+                assert(w);
+
+                if (w->color == Rb_tree_color::Red)
+                {
+                    w->color = Rb_tree_color::Black;
+                    w->parent->color = Rb_tree_color::Red;
+                    rb_tree_rotate_left(w->parent, root);
+                    w = x->parent->left;
+                    assert(w);
+                }
+                assert(w->color == Rb_tree_color::Black);
+                if (!((w->left && w->left->color ==Rb_tree_color::Red) 
+                || (w->right && w->right->color ==Rb_tree_color::Red)))
+                {
+                    w->color = Rb_tree_color::Red;
+                    x = x->parent;
+                }
+                else
+                {
+                    if (!(w->left && w->left->color == Rb_tree_color::Red))
+                    {
+                        w->color = Rb_tree_color::Red;
+                        w->right->color = Rb_tree_color::Black;
+                        rb_tree_rotate_right(w, root);
+                        w = x->parent->left;
+                        assert(w->left->color == Rb_tree_color::Red);
+                    }
+                    assert(w->color == Rb_tree_color::Black);
+
+                    w->color = w->parent->color;
+                    w->parent->color = Rb_tree_color::Black;
+                    w->left->color = Rb_tree_color::Black;
+                    rb_tree_rotate_right(w->parent, root);
+                    x = root;
+                } 
+            }
+        }
+
+        x->color = Rb_tree_color::Black;
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
@@ -680,6 +784,115 @@ namespace stl
         ++node_count;
 
         return iterator(node);
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    void
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::transplant(link_type x, link_type y)
+    {
+        assert(x && y);
+        if (x->parent->left == x)
+            x->parent->left = y;
+        else if (x->parent->right == x)
+            x->parent->right = y;
+        y->parent = x->parent;
+        if (header->parent == x)
+            header->parent = y;
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::erase(link_type cur)
+    {
+        static link_type nil = nullptr;
+
+        Rb_tree_color origin_color = cur->color;
+        link_type x, y;
+        iterator ret = iterator(y);
+        ++ret;
+
+        // step 1. 调整leftmost和rightmost
+        if (y == leftmost())
+            leftmost() = ret.node;
+        if (y == rightmost())
+        {
+            auto i = iterator(y);
+            --i;
+            rightmost() = i.node;
+        }
+
+        // step 2. 寻找“替代”，若无则为nil
+        if (cur->left && cur->right)
+        {
+            y = ret.node;
+            x = y->right;
+            origin_color = y->color;
+
+            if (!x)
+            {
+                nil = create_nil(y);
+
+                // x为伪节点nil
+                x = nil;
+            }
+
+            if (y->parent != cur)
+            {
+                transplant(y, x);
+                y->right = cur->right;
+                y->right->parent = y;
+            }
+            transplant(cur, y);
+            y->left = cur->left;
+            y->left->parent = y;
+            y->color = cur->color;
+        }
+        else
+        {
+            if (!cur->left && !cur->right)
+            {
+                nil = create_nil(cur);
+                x = nil;
+            }
+            else if (!cur->left)
+            {
+                x = cur->right;
+            }
+            else
+                x = cur->left;
+            transplant(cur, x);
+            if (cur == root())
+                left(header) = right(header) = x;
+        }
+
+        // step 3. rebalance
+        rb_tree_erase_rebalance(x, header->parent);
+        put_node(cur);
+        --node_count;
+
+        // step 4. if nil, delete it
+        if (nil)
+        {
+            if (nil == root())
+            {
+                left(header) = right(header) = header;
+                parent(header) = nullptr;
+            }
+            else
+            {
+                if (nil->parent->left == nil)
+                    nil->parent->left = nullptr;
+                else
+                    nil->parent->right = nullptr;
+            }
+
+            put_node(nil);
+            nil = nullptr;
+        }
+
+        return ret;
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
