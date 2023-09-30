@@ -307,15 +307,15 @@ void test_modifiers_complex()
     // 1.7 push/emplace back
     for (int i = 0; i < 15; ++i)
     {
-        vc.push_back(complex(i, i+1));
-        rvc.push_back(complex(i, i+1));
+        vc.push_back(complex(i, i + 1));
+        rvc.push_back(complex(i, i + 1));
     }
     check(vc, rvc);
 
     for (int i = 0; i < 15; ++i)
     {
-        vc.emplace_back(i, i+1);
-        rvc.emplace_back(i, i+1);
+        vc.emplace_back(i, i + 1);
+        rvc.emplace_back(i, i + 1);
     }
     check(vc, rvc);
 
@@ -326,7 +326,6 @@ void test_modifiers_complex()
         rvc.pop_back();
     }
     check(vc, rvc);
-
 
     // 1.9 erase
     for (int i = 0; i < 5; ++i)
@@ -342,7 +341,7 @@ void test_modifiers_complex()
     check(vc, rvc);
 
     // 1.10 resize
-    auto size= rvc.size();
+    auto size = rvc.size();
     vc.resize(size + 10);
     rvc.resize(size + 10);
     check(vc, rvc);
@@ -372,30 +371,39 @@ void test_modifiers_string()
 
     assert(vs.size() == 4);
     vs.emplace(vs.begin() + 2, "exit");
-    for (auto & i : vs)
+    for (auto &i : vs)
         std::cout << i.get_c_str() << '*';
     std::cout << endl;
     std::cout << "after 2 pop back\n";
     vs.pop_back();
     vs.pop_back();
-    for (auto & i : vs)
+    for (auto &i : vs)
         std::cout << i.get_c_str() << '*';
     assert(vs.size() == 3);
     std::cout << endl;
-    
+
     vs.erase(vs.begin(), vs.end() - 1);
     cout << "after erase [0, -1)\n";
-    for (auto & i : vs)
+    for (auto &i : vs)
         std::cout << i.get_c_str() << '*';
     std::cout << endl;
     assert(vs.size() == 1);
-    
+
     std::cout << "-----------end---------------\n";
 }
 
 void test_non_member_func()
 {
     printf("=============%s=================\n", __FUNCTION__);
+    stl::vector<int> vi1{1, 2, 3};
+    stl::vector<int> vi2{1, 2};
+    stl::vector<int> vi3{1, 4, 3};
+    stl::vector<int> vi4{1, 2, 3, 4};
+    assert(vi1 >= vi1 && vi1 <= vi1);
+    assert(vi1 < vi4 && vi1 <= vi4);
+    assert(vi1 > vi2 && vi1 >= vi2);
+    assert(vi1 < vi3 && vi1 <= vi3);
+    assert(vi3 >= vi4);
 }
 
 int main()
@@ -410,7 +418,7 @@ int main()
 
     // test pair
     stl::vector<std::pair<int, int>> vp;
-    vp.push_back({12,14});
+    vp.push_back({12, 14});
     std::cout << "Pass!\n";
 
     return 0;
