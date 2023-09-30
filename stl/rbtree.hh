@@ -270,8 +270,40 @@ namespace stl
 
         static color_type &color(base_ptr p)
         {
-            return static_cast<link_type>(p)->color;
+            return p->color;
         }
+
+
+        // link type
+        // static link_type &left(link_type p)
+        // {
+        //     return static_cast<link_type>(p->left);
+        // }
+
+        // static link_type &right(link_type p)
+        // {
+        //     return static_cast<link_type>(p->right);
+        // }
+
+        // static link_type &parent(link_type p)
+        // {
+        //     return static_cast<link_type>(p->parent);
+        // }
+
+        static reference value(link_type p)
+        {
+            return p->value_field;
+        }
+
+        static const Key &key(link_type p)
+        {
+            return KeyOfValue()(value(p));
+        }
+
+        // static color_type &color(link_type p)
+        // {
+        //     return p->color;
+        // }
 
         // find the max/min node
         static link_type minimum(link_type p)
@@ -291,12 +323,12 @@ namespace stl
         using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
     private:
-        iterator insert(base_ptr cur, value_type &&value);
+        iterator insert(link_type cur, value_type &&value);
         void transplant(base_ptr x, base_ptr y);
         /*
          * 创建一个伪节点nil，颜色为black，默认是p（不为header）的右子节点
          * */
-        link_type create_nil(link_type p)
+        link_type create_nil(base_ptr p)
         {
             link_type nil = get_node();
             left(nil) = right(nil) = nullptr;
@@ -304,6 +336,8 @@ namespace stl
             color(nil) = Rb_tree_color::Black;
 
             p->right = nil;
+
+            return nil;
         }
         iterator erase(link_type cur);
 
@@ -472,28 +506,28 @@ namespace stl
             if (comp)
             {
                 if (j == begin())
-                    return {insert(pre, std::move(value)), true};
+                    return {insert(static_cast<link_type>(pre), std::move(value)), true};
                 else
                     --j;
             }
             if (key_compare(key(j.node), KeyOfValue()(value)))
-                return {insert(pre, std::move(value)), true};
+                return {insert(static_cast<link_type>(pre), std::move(value)), true};
             return {j, false};
         }
 
         std::pair<iterator, bool> insert_unique(const_iterator pos, const value_type &value);
         std::pair<iterator, bool> insert_unique(const_iterator pos, value_type &&value);
 
-        std::pair<iterator, bool> insert_equal(const value_type &value)
+        iterator insert_equal(const value_type &value)
         {
             value_type v(std::move(value));
             return insert_equal(std::move(v));
         }
 
-        std::pair<iterator, bool> insert_equal(value_type &&value)
+        iterator insert_equal(value_type &&value)
         {
-            link_type pre = header;
-            link_type now = root();
+            base_ptr pre = header;
+            base_ptr now = root();
 
             while (now)
             {
@@ -501,11 +535,11 @@ namespace stl
                 now = key_compare(KeyOfValue()(value), key(now)) ? left(now) : right(now);
             }
 
-            return insert(pre, std::move(value));
+            return insert(static_cast<link_type>(pre), std::move(value));
         }
 
-        std::pair<iterator, bool> insert_equal(const_iterator pos, const value_type &value);
-        std::pair<iterator, bool> insert_equal(const_iterator pos, value_type &&value);
+        iterator insert_equal(const_iterator pos, const value_type &value);
+        iterator insert_equal(const_iterator pos, value_type &&value);
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void insert_unique(InputIt first, InputIt last)
@@ -562,6 +596,7 @@ namespace stl
          * Observers
          * */
         Compare key_comp() const { return key_compare; }
+        
         // Traverse Rb-tree
         // first: value field; second: color(0 for red, 1 for black)
         stl::vector<std::pair<Value, int>> pre_traverse();
@@ -764,19 +799,19 @@ namespace stl
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
     typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(base_ptr cur, value_type &&value)
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(link_type cur, value_type &&value)
     {
         link_type node = create_node(std::move(value));
 
-        if (cur == header || key_compare(KeyOfValue()(value), key(cur))) // CASE 1: left
+        if (cur ==static_cast<link_type>(header) || key_compare(KeyOfValue()(value), key(cur))) // CASE 1: left
         {
             left(cur) = node;
-            if (cur == header)
+            if (cur ==static_cast<link_type>(header))
             {
                 root() = node;
                 rightmost() = node;
             }
-            if (cur == leftmost())
+            if (cur == static_cast<link_type>(leftmost()))
                 leftmost() = node;
         }
         else
@@ -820,7 +855,7 @@ namespace stl
         Rb_tree_color origin_color = cur->color;
         base_ptr x, y;
         y = cur;
-        iterator ret = iterator(static_cast<link_type>(y));
+        iterator ret = iterator(cur);
         ++ret;
 
         // step 1. 调整leftmost和rightmost
@@ -842,7 +877,7 @@ namespace stl
 
             if (!x)
             {
-                nil = create_nil(static_cast<link_type>(y));
+                nil = create_nil(y);
 
                 // x为伪节点nil
                 x = nil;
@@ -878,7 +913,8 @@ namespace stl
         }
 
         // step 3. rebalance
-        rb_tree_erase_rebalance(x, header->parent);
+        if (origin_color == Rb_tree_color::Black)
+            rb_tree_erase_rebalance(x, header->parent);
         put_node(cur);
         --node_count;
 
@@ -910,8 +946,8 @@ namespace stl
     typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
     Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::find(const key_type &key)
     {
-        link_type y = header;
-        link_type x = root();
+        base_ptr y = header;
+        base_ptr x = root();
 
         while (x)
         {
@@ -924,7 +960,7 @@ namespace stl
                 x = right(x);
         }
 
-        iterator j = iterator(y);
+        iterator j = iterator(static_cast<link_type>(y));
         return (j == end() || key_compare(key, key(j.node))) ? end() : j;
     }
 
