@@ -292,7 +292,7 @@ namespace stl
 
     private:
         iterator insert(base_ptr cur, value_type &&value);
-        void transplant(link_type x, link_type y);
+        void transplant(base_ptr x, base_ptr y);
         /*
          * 创建一个伪节点nil，颜色为black，默认是p（不为header）的右子节点
          * */
@@ -529,14 +529,24 @@ namespace stl
 
         iterator erase(iterator pos)
         {
-            return erase(pos.node);
+            return erase(static_cast<link_type>(pos.node));
         }
         iterator erase(const_iterator pos)
         {
-            return erase(pos.node);
+            iterator i = iterator(static_cast<link_type>(pos.node));
+            return erase(static_cast<link_type>(i.node));
         }
         iterator erase(const_iterator first, const_iterator last)
         {
+            iterator ret;
+
+            while (first != last)
+            {
+                ret = erase(first++);
+                // ++first;
+                assert(*ret == *first);
+            }
+            return ret;
         }
         size_type erase(const Key &key)
         {
@@ -663,11 +673,10 @@ namespace stl
                     w->color = w->parent->color;
                     w->parent->color = Rb_tree_color::Black;
                     w->right->color = Rb_tree_color::Black;
-                    rb_tree_rotate_right(w->parent, root);
+                    rb_tree_rotate_left(w->parent, root);
                     x = root;
                 } 
             }
-
             else
             {
                 auto w = x->parent->left;
@@ -677,7 +686,7 @@ namespace stl
                 {
                     w->color = Rb_tree_color::Black;
                     w->parent->color = Rb_tree_color::Red;
-                    rb_tree_rotate_left(w->parent, root);
+                    rb_tree_rotate_right(w->parent, root);
                     w = x->parent->left;
                     assert(w);
                 }
@@ -694,7 +703,7 @@ namespace stl
                     {
                         w->color = Rb_tree_color::Red;
                         w->right->color = Rb_tree_color::Black;
-                        rb_tree_rotate_right(w, root);
+                        rb_tree_rotate_left(w, root);
                         w = x->parent->left;
                         assert(w->left->color == Rb_tree_color::Red);
                     }
@@ -789,12 +798,12 @@ namespace stl
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
     void
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::transplant(link_type x, link_type y)
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::transplant(base_ptr x, base_ptr y)
     {
         assert(x && y);
         if (x->parent->left == x)
             x->parent->left = y;
-        else if (x->parent->right == x)
+        else
             x->parent->right = y;
         y->parent = x->parent;
         if (header->parent == x)
@@ -806,11 +815,12 @@ namespace stl
     typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
     Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::erase(link_type cur)
     {
-        static link_type nil = nullptr;
+        static base_ptr nil = nullptr;
 
         Rb_tree_color origin_color = cur->color;
-        link_type x, y;
-        iterator ret = iterator(y);
+        base_ptr x, y;
+        y = cur;
+        iterator ret = iterator(static_cast<link_type>(y));
         ++ret;
 
         // step 1. 调整leftmost和rightmost
@@ -818,7 +828,7 @@ namespace stl
             leftmost() = ret.node;
         if (y == rightmost())
         {
-            auto i = iterator(y);
+            auto i = iterator(static_cast<link_type>(y));
             --i;
             rightmost() = i.node;
         }
@@ -832,7 +842,7 @@ namespace stl
 
             if (!x)
             {
-                nil = create_nil(y);
+                nil = create_nil(static_cast<link_type>(y));
 
                 // x为伪节点nil
                 x = nil;
@@ -888,7 +898,7 @@ namespace stl
                     nil->parent->right = nullptr;
             }
 
-            put_node(nil);
+            put_node(static_cast<link_type>(nil));
             nil = nullptr;
         }
 
