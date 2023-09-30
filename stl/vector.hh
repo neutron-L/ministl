@@ -840,42 +840,42 @@ namespace stl
     bool operator==(const stl::vector<T, Alloc> &lhs,
                     const stl::vector<T, Alloc> &rhs)
     {
-        return false;
+        return (lhs.size() == rhs.size() && stl::equal(lhs.begin(), lhs.end(), rhs.begin()));
     }
 
     template <typename T, typename Alloc>
     bool operator!=(const stl::vector<T, Alloc> &lhs,
                     const stl::vector<T, Alloc> &rhs)
     {
-        return false;
+        return !(lhs == rhs);
     }
 
     template <typename T, typename Alloc>
     bool operator<(const stl::vector<T, Alloc> &lhs,
                    const stl::vector<T, Alloc> &rhs)
     {
-        return false;
+        return stl::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
     }
 
     template <typename T, typename Alloc>
     bool operator<=(const stl::vector<T, Alloc> &lhs,
                     const stl::vector<T, Alloc> &rhs)
     {
-        return false;
+        return !(lhs > rhs);
     }
 
     template <typename T, typename Alloc>
     bool operator>(const stl::vector<T, Alloc> &lhs,
                    const stl::vector<T, Alloc> &rhs)
     {
-        return false;
+        return rhs < lhs;
     }
 
     template <typename T, typename Alloc>
     bool operator>=(const stl::vector<T, Alloc> &lhs,
                     const stl::vector<T, Alloc> &rhs)
     {
-        return false;
+        return !(lhs < rhs);
     }
 
     template <typename T, typename Alloc>
