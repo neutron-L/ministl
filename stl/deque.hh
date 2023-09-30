@@ -68,7 +68,10 @@ namespace stl
         reference operator*() const { return *cur; }
         pointer operator->() const { return &(operator*()); }
 
-        difference_type operator-(const Self &rhs) const {}
+        difference_type operator-(const Self &rhs) const
+        {
+            return static_cast<difference_type>((node - rhs.node - 1) * BUFFER_SIZE + (cur - first) + (rhs.last - rhs.cur));
+        }
 
         Self &operator++()
         {
