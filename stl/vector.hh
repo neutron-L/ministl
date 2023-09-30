@@ -515,7 +515,7 @@ namespace stl
     vector<T, Alloc> &vector<T, Alloc>::operator=(vector<T, Alloc> &&rhs) noexcept
     {
         // release old storage
-        destroy(begin(), end());
+        stl::destroy(begin(), end());
         deallocate();
 
         start = rhs.start;
@@ -553,7 +553,7 @@ namespace stl
     template <typename InputIt>
     void vector<T, Alloc>::assign(InputIt first, InputIt last)
     {
-        destroy(begin(), end());
+        stl::destroy(begin(), end());
         size_type n = stl::distance(first, last);
 
         if (capacity() < n)
