@@ -274,7 +274,6 @@ namespace stl
             return p->color;
         }
 
-
         // link type
         // static link_type &left(link_type p)
         // {
@@ -585,6 +584,12 @@ namespace stl
         }
         size_type erase(const Key &key)
         {
+            auto first = lower_bound(key);
+            auto last = upper_bound(key);
+            size_type ret = stl::advance(first, last);
+            erase(first, last);
+
+            return ret;
         }
         void swap(Rb_tree &other) noexcept
         {
@@ -592,12 +597,27 @@ namespace stl
             swap(node_count, other.node_count);
         }
 
+        /*
+         * Lookup
+         * */
+        size_type count(const key_type &key) const
+        {
+            return stl::advance(lower_bound(key), upper_bound(key));
+        }
         iterator find(const key_type &key);
+        const_iterator find(const key_type &key) const;
+        std::pair<iterator, iterator> equal_range(const key_type &key);
+        std::pair<const_iterator, const_iterator> equal_range(const Key &key) const;
+        iterator lower_bound(const Key &key);
+        const_iterator lower_bound(const Key &key) const;
+        iterator upper_bound(const Key &key);
+        const_iterator upper_bound(const Key &key) const;
+
         /*
          * Observers
          * */
         Compare key_comp() const { return key_compare; }
-        
+
         // Traverse Rb-tree
         // first: value field; second: color(0 for red, 1 for black)
         stl::vector<std::pair<Value, int>> pre_traverse();
@@ -688,8 +708,7 @@ namespace stl
                     assert(w);
                 }
                 assert(w->color == Rb_tree_color::Black);
-                if (!((w->left && w->left->color ==Rb_tree_color::Red) 
-                || (w->right && w->right->color ==Rb_tree_color::Red)))
+                if (!((w->left && w->left->color == Rb_tree_color::Red) || (w->right && w->right->color == Rb_tree_color::Red)))
                 {
                     w->color = Rb_tree_color::Red;
                     x = x->parent;
@@ -711,7 +730,7 @@ namespace stl
                     w->right->color = Rb_tree_color::Black;
                     rb_tree_rotate_left(w->parent, root);
                     x = root;
-                } 
+                }
             }
             else
             {
@@ -727,8 +746,7 @@ namespace stl
                     assert(w);
                 }
                 assert(w->color == Rb_tree_color::Black);
-                if (!((w->left && w->left->color ==Rb_tree_color::Red) 
-                || (w->right && w->right->color ==Rb_tree_color::Red)))
+                if (!((w->left && w->left->color == Rb_tree_color::Red) || (w->right && w->right->color == Rb_tree_color::Red)))
                 {
                     w->color = Rb_tree_color::Red;
                     x = x->parent;
@@ -750,7 +768,7 @@ namespace stl
                     w->left->color = Rb_tree_color::Black;
                     rb_tree_rotate_right(w->parent, root);
                     x = root;
-                } 
+                }
             }
         }
 
@@ -804,10 +822,10 @@ namespace stl
     {
         link_type node = create_node(std::move(value));
 
-        if (cur ==static_cast<link_type>(header) || key_compare(KeyOfValue()(value), key(cur))) // CASE 1: left
+        if (cur == static_cast<link_type>(header) || key_compare(KeyOfValue()(value), key(cur))) // CASE 1: left
         {
             left(cur) = node;
-            if (cur ==static_cast<link_type>(header))
+            if (cur == static_cast<link_type>(header))
             {
                 root() = node;
                 rightmost() = node;
