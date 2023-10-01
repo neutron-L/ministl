@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <initializer_list>
 
 #include "rbtree.hh"
 #include "vector.hh"
@@ -29,6 +30,10 @@ void test_modifiers()
     stl::vector<std::pair<int, int>> mid{{5, 0}, {6, 1}, {7, 0}, {8, 1}, {10, 1}, {11, 0}, {12, 0}, {13, 1}, {15, 0}};
     stl::vector<std::pair<int, int>> post{{5, 0}, {7, 0}, {6, 1}, {10, 1}, {12, 0}, {15, 0}, {13, 1}, {11, 0}, {8, 1}};
     // rbtree.insert_unique(elems.begin(), elems.end());
+
+    /*
+     * Test Insert
+     * */
     for (auto &elem : elems)
     {
         auto res = rbtree.insert_unique(elem);
@@ -155,7 +160,29 @@ void test_modifiers()
     assert(post_tree == post);
 
     /*
-     * 测试删除
+     * Test Lookup
+     * */
+    iter = rbtree.find(100);
+    assert(iter == rbtree.end());
+    iter = rbtree.find(8);
+    assert(*iter == 8);
+    ++iter;
+    assert(*iter == 8); // 树中有两个8，默认应该返回第一个
+
+    iter = rbtree.find(6);
+    assert(*iter == 6);
+
+    // find所有元素
+    dump.clear();
+    dump.insert(dump.end(), rbtree.begin(), rbtree.end());
+    for (auto & elem : dump)
+    {
+        iter = rbtree.find(elem);
+        assert(*iter == elem);
+    }
+
+    /*
+     * Test Erase
      * */
     // 8. erase 
 }
