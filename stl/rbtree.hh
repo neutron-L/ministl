@@ -604,7 +604,11 @@ namespace stl
         {
             return stl::advance(lower_bound(key), upper_bound(key));
         }
-        iterator find(const key_type &key);
+        iterator find(const key_type &key)
+        {
+            base_ptr node = const_cast<const Rb_tree *>(this)->find(key).node;
+            return iterator(static_cast<link_type>(node));
+        }
         const_iterator find(const key_type &key) const;
         std::pair<iterator, iterator> equal_range(const key_type &key);
         std::pair<const_iterator, const_iterator> equal_range(const Key &key) const;
@@ -962,15 +966,15 @@ namespace stl
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
-    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::find(const key_type &key)
+    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::const_iterator
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::find(const key_type &k) const
     {
         base_ptr y = header;
         base_ptr x = root();
 
         while (x)
         {
-            if (!key_compare(key(x), key))
+            if (!key_compare(key(x), k))
             {
                 y = x;
                 x = left(x);
@@ -980,7 +984,7 @@ namespace stl
         }
 
         iterator j = iterator(static_cast<link_type>(y));
-        return (j == end() || key_compare(key, key(j.node))) ? end() : j;
+        return (j == end() || key_compare(k, key(j.node))) ? end() : j;
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
