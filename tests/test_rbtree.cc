@@ -162,6 +162,7 @@ void test_modifiers()
     /*
      * Test Lookup
      * */
+    // 8. find单个元素
     iter = rbtree.find(100);
     assert(iter == rbtree.end());
     iter = rbtree.find(8);
@@ -172,19 +173,41 @@ void test_modifiers()
     iter = rbtree.find(6);
     assert(*iter == 6);
 
-    // find所有元素
+    // 9. find所有元素
     dump.clear();
     dump.insert(dump.end(), rbtree.begin(), rbtree.end());
-    for (auto & elem : dump)
+    for (auto &elem : dump)
     {
         iter = rbtree.find(elem);
         assert(*iter == elem);
     }
 
+    // 10. lower_bound
+    iter = rbtree.lower_bound(6);
+    assert(*iter++ == 6);
+    assert(*iter++ == 6);
+    assert(*iter == 7);
+
+    auto min_elem = *rbtree.begin();
+    for (int i = -3; i <= min_elem; ++i)
+    {
+        iter = rbtree.lower_bound(i);
+        assert(iter == rbtree.begin() && *iter == min_elem);
+    }
+
+    assert(rbtree.lower_bound(100) == rbtree.end());
+
+    // 11. upper_bound
+    for (int i = -3; i < min_elem; ++i)
+    {
+        iter = rbtree.lower_bound(i);
+        assert(iter == rbtree.begin() && *iter == min_elem);
+    }
+
     /*
      * Test Erase
      * */
-    // 8. erase 
+    // 8. erase
 }
 
 int main()
