@@ -195,12 +195,25 @@ void test_modifiers()
         assert(iter == rbtree.begin() && *iter == min_elem);
     }
 
+    assert(rbtree.lower_bound(*(--rbtree.end())) == --rbtree.end());
     assert(rbtree.lower_bound(100) == rbtree.end());
 
     // 11. upper_bound
+    iter = rbtree.upper_bound(5);
+    assert(*iter++ == 6);
+    assert(*iter++ == 6);
+    iter = rbtree.upper_bound(6);
+    assert(*iter == 7);
+    iter = rbtree.upper_bound(11);
+    assert(*iter == 12);
+
+    iter = rbtree.upper_bound(15);
+    assert(iter == rbtree.end());
+    assert(rbtree.upper_bound(*(--rbtree.end())) == rbtree.end());
+
     for (int i = -3; i < min_elem; ++i)
     {
-        iter = rbtree.lower_bound(i);
+        iter = rbtree.upper_bound(i);
         assert(iter == rbtree.begin() && *iter == min_elem);
     }
 
