@@ -116,6 +116,8 @@ void test_modifiers()
     assert(pre_tree == pre);
     assert(mid_tree == mid);
     assert(post_tree == post);
+    assert(rbtree.size() == pre.size());
+
     for (auto &i : rbtree)
         cout << i << ' ';
     cout << endl;
@@ -142,6 +144,7 @@ void test_modifiers()
     assert(pre_tree == pre);
     assert(mid_tree == mid);
     assert(post_tree == post);
+    assert(rbtree.size() == pre.size());
 
     // 7. insert equal 8
     iter = rbtree.insert_equal(8);
@@ -158,6 +161,7 @@ void test_modifiers()
     assert(pre_tree == pre);
     assert(mid_tree == mid);
     assert(post_tree == post);
+    assert(rbtree.size() == pre.size());
 
     /*
      * Test Lookup
