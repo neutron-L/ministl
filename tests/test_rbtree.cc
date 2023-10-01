@@ -4,7 +4,7 @@
 /*
  * 前序遍历和中序遍历可以确定一棵树的唯一构造，不过当前采用对红黑树的前中后序遍历，判断是否和预期的一致
  * 红黑树的遍历返回的每一个元素为pair{值，颜色}
-*/
+ */
 #include <iostream>
 #include <vector>
 #include <cassert>
@@ -230,7 +230,7 @@ void test_modifiers()
     iter = rbtree.erase(rbtree.find(8));
     assert(*iter == 8);
 
-    // check 
+    // check
     pre = {{11, 1}, {8, 1}, {6, 0}, {5, 1}, {6, 1}, {7, 0}, {10, 0}, {9, 1}, {10, 1}, {13, 1}, {12, 1}, {11, 0}, {15, 1}};
     mid = {{5, 1}, {6, 0}, {6, 1}, {7, 0}, {8, 1}, {9, 1}, {10, 0}, {10, 1}, {11, 1}, {11, 0}, {12, 1}, {13, 1}, {15, 1}};
     post = {{5, 1}, {7, 0}, {6, 1}, {6, 0}, {9, 1}, {10, 1}, {10, 0}, {8, 1}, {11, 0}, {12, 1}, {15, 1}, {13, 1}, {11, 1}};
@@ -244,8 +244,6 @@ void test_modifiers()
     assert(post_tree == post);
     assert(rbtree.size() == pre.size());
     assert(rbtree.size() == shadow.size() - 1);
-
-
 
     iter = rbtree.find(8);
     iter = rbtree.erase(iter);
@@ -287,11 +285,106 @@ void test_modifiers()
     assert(rbtree.size() == shadow.size() - 3);
 
     // 12. erase key
-    
+    cout << "before erasing 6:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    assert(rbtree.erase(6) == 2);
+    cout << "aftererasing 6:\n";
+
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+
+    assert(rbtree.erase(11) == 2);
+    cout << "aftererasing 11:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    assert(rbtree.erase(7) == 1);
+    cout << "aftererasing 7:\n";
+
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+
+    assert(rbtree.erase(15) == 1);
+    cout << "aftererasing 15:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+
+    assert(rbtree.erase(16) == 0);
+    cout << "aftererasing 16:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    assert(rbtree.erase(5) == 1);
+    cout << "aftererasing 5:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    assert(rbtree.erase(4) == 0);
+    cout << "aftererasing 4:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+
     // 12. erase range
     rbtree = shadow;
+    cout << "before erasing [begin+2, end-1):\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    auto first = rbtree.begin();
+    auto last = rbtree.end();
+    ++first;
+    ++first;
+    --last;
+    rbtree.erase(first, last);
+    cout << "aftererasing [begin+2, end-1):\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
 
+    cout << "restore rbtree:\n";
+    rbtree = shadow;
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    cout << "before erasing [begin+4, end-5):\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    first = rbtree.begin();
+    last = rbtree.end();
+    ++first;
+    ++first;
+    ++first;
+    ++first;
+    --last;
+    --last;
+    --last;
+    --last;
+    --last;
+    rbtree.erase(first, last);
+    cout << "aftererasing [begin+4, end-5):\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
 
+    first = rbtree.begin();
+    last = rbtree.end();
+    ++first;
+    ++first;
+    --last;
+    --last;
+    --last;
+    rbtree.erase(first, last);
+    cout << "aftererasing [begin+2, end-3):\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
 }
 
 int main()
