@@ -367,10 +367,13 @@ namespace stl
 
         Rb_tree(const Rb_tree &other)
         {
+            init();
             clear();
 
             // insert all elements
             insert_equal(other.begin(), other.end());
+
+            assert(node_count == other.node_count);
         }
         Rb_tree(Rb_tree &&other)
             : header(std::move(other.header)), node_count(std::move(other.node_count))
@@ -393,6 +396,11 @@ namespace stl
          * */
         Rb_tree &operator=(const Rb_tree &other)
         {
+            clear();
+
+            insert_equal(other.begin(), other.end());
+
+            return *this;
         }
 
         Rb_tree &operator=(Rb_tree &&other) noexcept
@@ -577,7 +585,6 @@ namespace stl
             while (first != last)
             {
                 ret = erase(first++);
-                // ++first;
                 assert(*ret == *first);
             }
             return ret;
@@ -586,7 +593,7 @@ namespace stl
         {
             auto first = lower_bound(key);
             auto last = upper_bound(key);
-            size_type ret = stl::advance(first, last);
+            size_type ret = stl::distance(first, last);
             erase(first, last);
 
             return ret;
