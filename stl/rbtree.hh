@@ -610,12 +610,24 @@ namespace stl
             return iterator(static_cast<link_type>(node));
         }
         const_iterator find(const key_type &key) const;
-        std::pair<iterator, iterator> equal_range(const key_type &key);
-        std::pair<const_iterator, const_iterator> equal_range(const Key &key) const;
-        iterator lower_bound(const Key &key);
-        const_iterator lower_bound(const Key &key) const;
-        iterator upper_bound(const Key &key);
-        const_iterator upper_bound(const Key &key) const;
+        std::pair<iterator, iterator> equal_range(const key_type &key)
+        {
+            auto ret = const_cast<const Rb_tree *>(this)->equal_range(key);
+            return {iterator(static_cast<link_type>(ret.first.node)), iterator(static_cast<link_type>(ret.second.node))};
+        }
+        std::pair<const_iterator, const_iterator> equal_range(const Key &k) const;
+        iterator lower_bound(const Key &k)
+        {
+            base_ptr node = const_cast<const Rb_tree *>(this)->lower_bound(k).node;
+            return iterator(static_cast<link_type>(node));
+        }
+        const_iterator lower_bound(const Key &) const;
+        iterator upper_bound(const Key &k)
+        {
+            base_ptr node = const_cast<const Rb_tree *>(this)->upper_bound(k).node;
+            return iterator(static_cast<link_type>(node));
+        }
+        const_iterator upper_bound(const Key &) const;
 
         /*
          * Observers
@@ -985,6 +997,50 @@ namespace stl
 
         iterator j = iterator(static_cast<link_type>(y));
         return (j == end() || key_compare(k, key(j.node))) ? end() : j;
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::const_iterator
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::lower_bound(const Key &k) const
+    {
+        base_ptr pre = header;
+        base_ptr now = root();
+        bool comp = false;
+
+        while (now)
+        {
+            pre = now;
+            comp = key_compare(key(now), KeyOfValue()(k));
+            now = comp ? right(now) : left(now);
+        }
+
+        auto iter = const_iterator(static_cast<link_type>(pre));
+        if (comp)
+            ++iter;
+        return iter;
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::const_iterator
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::upper_bound(const Key &k) const
+    {
+        base_ptr pre = header;
+        base_ptr now = root();
+        bool comp = false;
+
+        while (now)
+        {
+            pre = now;
+            comp = key_compare(KeyOfValue()(k), key(now));
+            now = comp ? left(now) : right(now);
+        }
+
+        auto iter = const_iterator(static_cast<link_type>(pre));
+        if (!comp)
+            ++iter;
+        return iter;
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
