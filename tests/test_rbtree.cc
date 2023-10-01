@@ -2,7 +2,8 @@
 // Created by rda on 2023/9/29.
 //
 /*
- 前序遍历和中序遍历可以确定一棵树的唯一构造，
+ * 前序遍历和中序遍历可以确定一棵树的唯一构造，不过当前采用对红黑树的前中后序遍历，判断是否和预期的一致
+ * 红黑树的遍历返回的每一个元素为pair{值，颜色}
 */
 #include <iostream>
 #include <vector>
@@ -15,7 +16,7 @@
 using std::cout;
 using std::endl;
 
-void test_constructors()
+void test_constructors_assign()
 {
 }
 
@@ -224,12 +225,78 @@ void test_modifiers()
     /*
      * Test Erase
      * */
-    // 8. erase
+    Rb_tree shadow = rbtree;
+    // 12. erase pos
+    iter = rbtree.erase(rbtree.find(8));
+    assert(*iter == 8);
+
+    // check 
+    pre = {{11, 1}, {8, 1}, {6, 0}, {5, 1}, {6, 1}, {7, 0}, {10, 0}, {9, 1}, {10, 1}, {13, 1}, {12, 1}, {11, 0}, {15, 1}};
+    mid = {{5, 1}, {6, 0}, {6, 1}, {7, 0}, {8, 1}, {9, 1}, {10, 0}, {10, 1}, {11, 1}, {11, 0}, {12, 1}, {13, 1}, {15, 1}};
+    post = {{5, 1}, {7, 0}, {6, 1}, {6, 0}, {9, 1}, {10, 1}, {10, 0}, {8, 1}, {11, 0}, {12, 1}, {15, 1}, {13, 1}, {11, 1}};
+
+    pre_tree = rbtree.pre_traverse();
+    mid_tree = rbtree.mid_traverse();
+    post_tree = rbtree.post_traverse();
+
+    assert(pre_tree == pre);
+    assert(mid_tree == mid);
+    assert(post_tree == post);
+    assert(rbtree.size() == pre.size());
+    assert(rbtree.size() == shadow.size() - 1);
+
+
+
+    iter = rbtree.find(8);
+    iter = rbtree.erase(iter);
+    assert(*iter == 9);
+
+    pre = {{11, 1}, {9, 1}, {6, 0}, {5, 1}, {6, 1}, {7, 0}, {10, 1}, {10, 0}, {13, 1}, {12, 1}, {11, 0}, {15, 1}};
+    mid = {{5, 1}, {6, 0}, {6, 1}, {7, 0}, {9, 1}, {10, 1}, {10, 0}, {11, 1}, {11, 0}, {12, 1}, {13, 1}, {15, 1}};
+    post = {{5, 1}, {7, 0}, {6, 1}, {6, 0}, {10, 0}, {10, 1}, {9, 1}, {11, 0}, {12, 1}, {15, 1}, {13, 1}, {11, 1}};
+
+    pre_tree = rbtree.pre_traverse();
+    mid_tree = rbtree.mid_traverse();
+    post_tree = rbtree.post_traverse();
+
+    assert(pre_tree == pre);
+    assert(mid_tree == mid);
+    assert(post_tree == post);
+    assert(rbtree.size() == pre.size());
+
+    assert(rbtree.size() == shadow.size() - 2);
+
+    iter = rbtree.find(13);
+    iter = rbtree.erase(iter);
+    assert(*iter == 15);
+    assert(iter == --rbtree.end());
+
+    pre = {{11, 1}, {9, 1}, {6, 0}, {5, 1}, {6, 1}, {7, 0}, {10, 1}, {10, 0}, {12, 1}, {11, 1}, {15, 1}};
+    mid = {{5, 1}, {6, 0}, {6, 1}, {7, 0}, {9, 1}, {10, 1}, {10, 0}, {11, 1}, {11, 1}, {12, 1}, {15, 1}};
+    post = {{5, 1}, {7, 0}, {6, 1}, {6, 0}, {10, 0}, {10, 1}, {9, 1}, {11, 1}, {15, 1}, {12, 1}, {11, 1}};
+
+    pre_tree = rbtree.pre_traverse();
+    mid_tree = rbtree.mid_traverse();
+    post_tree = rbtree.post_traverse();
+
+    assert(pre_tree == pre);
+    assert(mid_tree == mid);
+    assert(post_tree == post);
+    assert(rbtree.size() == pre.size());
+
+    assert(rbtree.size() == shadow.size() - 3);
+
+    // 12. erase key
+    
+    // 12. erase range
+    rbtree = shadow;
+
+
 }
 
 int main()
 {
-    test_constructors();
+    test_constructors_assign();
     test_modifiers();
 
     return 0;
