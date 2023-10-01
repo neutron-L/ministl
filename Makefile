@@ -51,5 +51,8 @@ test_rbtree: $(TEST)/test_rbtree.cc $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iter
 test_numeric: $(TEST)/test_numeric.cc $(STL)/numeric.hh $(STL)/type_traits.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
+test_algobase: $(TEST)/test_algobase.cc $(STL)/list.hh $(STL)/vector.hh $(STL)/deque.hh $(STL)/algobase.hh
+	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
+
 clean:
 	-rm $(BIN)/test_*
