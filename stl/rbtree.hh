@@ -609,7 +609,7 @@ namespace stl
          * */
         size_type count(const key_type &key) const
         {
-            return stl::advance(lower_bound(key), upper_bound(key));
+            return stl::distance(lower_bound(key), upper_bound(key));
         }
         iterator find(const key_type &key)
         {
@@ -661,47 +661,51 @@ namespace stl
             auto p = x->parent;
             if (p == p->parent->left) // 父亲节点是祖父节点的左孩子
             {
-                if (x == p->right) // 把x调整为父亲节点的左孩子
-                {
-                    x = p;
-                    rb_tree_rotate_left(x, root);
-                    p = x->parent;
-                }
                 auto y = p->parent->right;               // 伯父节点
                 if (y && y->color == Rb_tree_color::Red) // 伯父节点为Red，则祖父节点为Black
                 {
                     p->color = y->color = Rb_tree_color::Black;
+                    y->color = Rb_tree_color::Black;
                     p->parent->color = Rb_tree_color::Red;
                     x = p->parent;
                 }
                 else // 伯父节点不存在或为Black
                 {
-                    p->parent->color = Rb_tree_color::Red;
+                    if (x == p->right) // 把x调整为父亲节点的左孩子
+                    {
+                        x = p;
+                        rb_tree_rotate_left(x, root);
+                        p = x->parent;
+                    }
                     p->color = Rb_tree_color::Black;
-                    x = p;
+
+                    p->parent->color = Rb_tree_color::Red;
+                    // x = p;
                     rb_tree_rotate_right(p->parent, root);
                 }
             }
             else
             {
-                if (x == p->left) // 把x调整为父亲节点的右孩子
-                {
-                    x = p;
-                    rb_tree_rotate_right(x, root);
-                    p = x->parent;
-                }
                 auto y = p->parent->left;                // 伯父节点
                 if (y && y->color == Rb_tree_color::Red) // 伯父节点为Red，则祖父节点为Black
                 {
                     p->color = y->color = Rb_tree_color::Black;
+                    y->color = Rb_tree_color::Black;
                     p->parent->color = Rb_tree_color::Red;
                     x = p->parent;
                 }
                 else // 伯父节点不存在或为Black
                 {
-                    p->parent->color = Rb_tree_color::Red;
+                    if (x == p->left) // 把x调整为父亲节点的左孩子
+                    {
+                        x = p;
+                        rb_tree_rotate_right(x, root);
+                        p = x->parent;
+                    }
                     p->color = Rb_tree_color::Black;
-                    x = p;
+
+                    p->parent->color = Rb_tree_color::Red;
+                    // x = p;
                     rb_tree_rotate_left(p->parent, root);
                 }
             }
@@ -845,10 +849,10 @@ namespace stl
     {
         link_type node = create_node(std::move(value));
 
-        if (cur == static_cast<link_type>(header) || key_compare(KeyOfValue()(value), key(cur))) // CASE 1: left
+        if (cur == header || key_compare(KeyOfValue()(value), key(cur))) // CASE 1: left
         {
             left(cur) = node;
-            if (cur == static_cast<link_type>(header))
+            if (cur == header)
             {
                 root() = node;
                 rightmost() = node;
@@ -1004,6 +1008,15 @@ namespace stl
 
         iterator j = iterator(static_cast<link_type>(y));
         return (j == end() || key_compare(k, key(j.node))) ? end() : j;
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::const_iterator,
+              typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::const_iterator>
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::equal_range(const Key &k) const
+    {
+        return {lower_bound(k), upper_bound(k)};
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
