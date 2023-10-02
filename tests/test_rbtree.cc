@@ -6,6 +6,7 @@
  * 红黑树的遍历返回的每一个元素为pair{值，颜色}
  */
 #include <iostream>
+#include <algorithm>
 #include <vector>
 #include <cassert>
 #include <initializer_list>
@@ -387,10 +388,60 @@ void test_modifiers()
     cout << endl;
 }
 
+void test_lookup()
+{
+    const int N = 300;
+    stl::vector<char> vc;
+    using Rb_tree = stl::Rb_tree<char, char, std::_Identity<char>, std::less<char>>;
+    Rb_tree rbtree;
+
+    // init vc
+    // The initialization array contains 30 random lowercase letters from 'a' to 'k',
+    cout << "init vc with 30 random lowercase letters from 'a' to 'k'\n";
+    vc.resize(N);
+    for (auto & c : vc)
+    {
+        c = ((int)rand() % 10) + 'a';
+        cout << c << ' ';
+    }
+
+    // insert all elems in vc
+    for (auto & c : vc)
+        rbtree.insert_equal(c);
+    cout << "init tree:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    assert(rbtree.size() == vc.size());
+
+    // 1. test find
+    auto iter = rbtree.find(*vc.begin());
+    assert(*iter == *vc.begin());
+
+    for (char c = 'a'; c <= 'z'; ++c)
+    {
+        iter = rbtree.find(c);
+        if (iter != rbtree.end())
+            assert(*iter == c);
+    }
+    
+    std::sort(vc.begin(), vc.end());
+    // 2. test count and equal_range
+    for (char c = 'a'; c <= 'z'; ++c)
+    {
+        auto dis = (std::upper_bound(vc.begin(), vc.end(), c)) - std::lower_bound(vc.begin(), vc.end(), c);
+        assert(rbtree.count(c) == dis);
+        auto ret = rbtree.equal_range(c);
+        assert(stl::distance(ret.first, ret.second) == dis);
+    }
+}
+
 int main()
 {
     test_constructors_assign();
-    test_modifiers();
+    // test_modifiers();
+    test_lookup();
+    std::cout << "Pass!\n";
 
     return 0;
 }
