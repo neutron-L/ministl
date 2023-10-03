@@ -326,7 +326,7 @@ namespace stl
         // 通过判断black height，验证红黑树是否合法
         // 返回一个pair{balck height, is valid}
         static std::pair<int, bool> isValid(base_ptr);
-        iterator insert(link_type cur, value_type &&value);
+        iterator insert(link_type, link_type, value_type &&);
         void transplant(base_ptr x, base_ptr y);
         /*
          * 创建一个伪节点nil，颜色为black，默认是p（不为header）的右子节点
@@ -897,29 +897,29 @@ namespace stl
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
     typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(link_type cur, value_type &&value)
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(link_type x, link_type y, value_type &&value)
     {
         link_type node = create_node(std::move(value));
 
-        if (cur == header || key_compare(KeyOfValue()(value), key(cur))) // CASE 1: left
+        if (y == header || x != nullptr || key_compare(KeyOfValue()(value), key(y))) // CASE 1: left
         {
-            left(cur) = node;
-            if (cur == header)
+            left(y) = node;
+            if (y == header)
             {
                 root() = node;
                 rightmost() = node;
             }
-            if (cur == static_cast<link_type>(leftmost()))
+            else if (y == static_cast<link_type>(leftmost()))
                 leftmost() = node;
         }
         else
         {
-            right(cur) = node;
-            if (cur == rightmost())
+            right(y) = node;
+            if (y == rightmost())
                 rightmost() = node;
         }
 
-        parent(node) = cur;
+        parent(node) = y;
         left(node) = right(node) = nullptr;
 
         rb_tree_insert_rebalance(node, header->parent);
