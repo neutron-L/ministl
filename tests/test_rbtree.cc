@@ -19,10 +19,13 @@ using std::endl;
 
 void test_constructors_assign()
 {
+    printf("=============%s=================\n", __FUNCTION__);
 }
 
 void test_modifiers()
 {
+    printf("=============%s=================\n", __FUNCTION__);
+
     using Rb_tree = stl::Rb_tree<int, int, std::_Identity<int>, std::less<int>>;
     Rb_tree rbtree;
 
@@ -390,23 +393,25 @@ void test_modifiers()
 
 void test_lookup()
 {
+    printf("=============%s=================\n", __FUNCTION__);
+
     const int N = 300;
     stl::vector<char> vc;
     using Rb_tree = stl::Rb_tree<char, char, std::_Identity<char>, std::less<char>>;
     Rb_tree rbtree;
 
     // init vc
-    // The initialization array contains 30 random lowercase letters from 'a' to 'k',
+    // The initialization array contains N random lowercase letters from 'a' to 'k',
     cout << "init vc with 30 random lowercase letters from 'a' to 'k'\n";
     vc.resize(N);
-    for (auto & c : vc)
+    for (auto &c : vc)
     {
         c = ((int)rand() % 10) + 'a';
         cout << c << ' ';
     }
 
     // insert all elems in vc
-    for (auto & c : vc)
+    for (auto &c : vc)
         rbtree.insert_equal(c);
     cout << "init tree:\n";
     for (auto &i : rbtree)
@@ -424,7 +429,7 @@ void test_lookup()
         if (iter != rbtree.end())
             assert(*iter == c);
     }
-    
+
     std::sort(vc.begin(), vc.end());
     // 2. test count and equal_range
     for (char c = 'a'; c <= 'z'; ++c)
@@ -436,11 +441,155 @@ void test_lookup()
     }
 }
 
+void test_insert_pos()
+{
+    printf("=============%s=================\n", __FUNCTION__);
+
+    const int N = 20;
+
+    using Rb_tree = stl::Rb_tree<int, int, std::_Identity<int>, std::less<int>>;
+    Rb_tree rbtree;
+    stl::vector<int> vc;
+
+    // 1. init vc
+    // The initialization array contains N random numbers from 0 to 9,
+    cout << "init vc with 30 random lowercase letters from 'a' to 'k'\n";
+    vc.resize(N);
+    for (auto &c : vc)
+    {
+        c = ((int)rand() % 10);
+        cout << c << ' ';
+    }
+    cout << endl;
+
+    // 2. init rbtree
+    rbtree.insert_equal(vc.begin(), vc.end());
+    cout << "init tree:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    assert(rbtree.size() == vc.size());
+
+    // 3. test insert unique (noexist)
+    auto iter = rbtree.insert_unique(rbtree.end(), 11);
+    assert(*iter == 11);
+    iter = rbtree.begin();
+    stl::advance(iter, rbtree.size() / 2);
+
+    iter = rbtree.insert_unique(iter, -1);
+    assert(*iter == -1);
+
+    // 4. insert unique (exist)
+    iter = rbtree.begin();
+    stl::advance(iter, rbtree.size() / 2);
+    auto elem = *iter;
+    auto old_size = rbtree.size();
+    assert(*rbtree.insert_unique(rbtree.begin(), *iter) == elem);
+    assert(*rbtree.insert_unique(rbtree.end(), *iter) == elem);
+    assert(*rbtree.insert_unique(iter, *iter) == elem);
+    assert(rbtree.size() == old_size);
+
+    rbtree.clear();
+    assert(rbtree.empty());
+    vc = {1, 1, 3, 3, 3, 4, 4};
+    rbtree.insert_equal(vc.begin(), vc.end());
+    assert(*rbtree.begin() == 1 && *(--rbtree.end()) == 4);
+
+    // 5. insert equal (noexist)
+    iter = rbtree.insert_equal(rbtree.begin(), 2);
+    assert(*iter == 2 && stl::distance(rbtree.begin(), iter) == 2);
+    iter = rbtree.insert_equal(iter, 2);
+    assert(*iter == 2 && stl::distance(rbtree.begin(), iter) == 2 && *++iter == 2);
+    iter = rbtree.insert_equal(rbtree.end(), 2);
+    assert(*iter == 2 && stl::distance(rbtree.begin(), iter) == 4 && *--iter == 2 && *--iter == 2);
+    assert(*rbtree.begin() == 1 && *(--rbtree.end()) == 4);
+
+    cout << "tree:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    assert(rbtree.size() == vc.size() + 3);
+    assert(rbtree.erase(2) == 3);
+    assert(*rbtree.begin() == 1 && *(--rbtree.end()) == 4);
+
+    // 6. insert equal (exist)
+    iter = rbtree.insert_equal(rbtree.begin(), 3);
+    assert(*iter == 3 && stl::distance(rbtree.begin(), iter) == 2);
+    iter = rbtree.insert_equal(iter, 3);
+    assert(*iter == 3 && stl::distance(rbtree.begin(), iter) == 2);
+    ++iter;
+    iter = rbtree.insert_equal(iter, 3);
+    assert(*iter == 3 && stl::distance(rbtree.begin(), iter) == 3);
+    assert(*rbtree.begin() == 1 && *(--rbtree.end()) == 4);
+
+    cout << "tree:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+    iter = rbtree.end();
+    iter = rbtree.insert_equal(iter, 3);
+    assert(*iter == 3 && stl::distance(iter, rbtree.end()) == 3);
+    cout << "tree:\n";
+    for (auto &i : rbtree)
+        cout << i << ' ';
+    cout << endl;
+
+    // 7. big test!!
+    rbtree.clear();
+
+    int t = N;
+    while (t--)
+    {
+        for (int k = 0; k < 2; ++k)
+            for (int i = k; i <= 1000; i += 2)
+            {
+                int p = i % 5;
+                switch (i)
+                {
+                case 0:
+                    iter = rbtree.begin();
+                    break;
+                case 1:
+                    iter = rbtree.lower_bound(i);
+                    break;
+                case 2:
+                    iter = rbtree.lower_bound(i);
+                    stl::advance(iter, rbtree.count(i) / 2);
+                    break;
+                case 3:
+                    iter = rbtree.upper_bound(i);
+                    break;
+                case 4:
+                    iter = rbtree.end();
+                    break;
+                default:
+                    break;
+                }
+                assert(*rbtree.insert_equal(iter, i) == i);
+            }
+    }
+
+    vc.clear();
+    vc = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+    std::random_shuffle(vc.begin(), vc.end());
+    for (auto &j : vc)
+    {
+        cout << j << ' ';
+        for (int i = j * 100; i < (j + 1) * 100; ++i)
+            assert(rbtree.erase(i) == N);
+    }
+    cout << endl;
+    assert(rbtree.count(1000) == N);
+    assert(rbtree.erase(1000) == N);
+    assert(rbtree.empty());
+}
+
 int main()
 {
     test_constructors_assign();
     test_modifiers();
     test_lookup();
+    test_insert_pos();
     std::cout << "Pass!\n";
 
     return 0;
