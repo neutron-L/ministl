@@ -528,7 +528,7 @@ namespace stl
             auto res = get_insert_hint_unique_pos(pos, KeyOfValue()(value));
             if (res.second)
                 return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value));
-            return res.first;
+            return iterator(static_cast<link_type>(res.first));
         }
 
         iterator insert_equal(const value_type &value)
@@ -912,7 +912,7 @@ namespace stl
             else
                 return get_insert_unique_pos(k);
         }
-        else if (key_compare(k, key(p.node)))
+        else if (key_compare(key(p.node), k))
         {
             iterator after = p;
             if (p.node == rightmost() && key_compare(key(rightmost()), k))
