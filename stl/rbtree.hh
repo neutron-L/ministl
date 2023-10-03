@@ -507,6 +507,10 @@ namespace stl
 
         std::pair<iterator, bool> insert_unique(value_type &&value)
         {
+            auto res = get_insert_unique_pos(KeyOfValue()(value));
+            if (res.second)
+                return {insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value)), true};
+            return {iterator(static_cast<link_type>(res.first)), false};
         }
 
         iterator insert_unique(const_iterator pos, const value_type &value)
@@ -516,12 +520,16 @@ namespace stl
         }
         iterator insert_unique(const_iterator pos, value_type &&value)
         {
+            auto res = get_insert_hint_unique_pos(pos, KeyOfValue()(value));
+            if (res.second)
+                return insert(res.first, res.second, std::move(value));
+            return res.first;
         }
 
         iterator insert_equal(const value_type &value)
         {
             value_type v(value);
-            return insert_equal(pos, std::move(v));
+            return insert_equal(std::move(v));
         }
 
         iterator insert_equal(value_type &&value)
@@ -855,7 +863,7 @@ namespace stl
                 x = right(x);
         }
 
-        iterator j = iterator(y);
+        iterator j = iterator(static_cast<link_type>(y));
         if (comp)
         {
             if (j == begin())
@@ -866,6 +874,55 @@ namespace stl
         if (key_compare(key(j.node), k))
             return {x, y};
         return {j.node, 0};
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr,
+              typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr>
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::get_insert_hint_unique_pos(const_iterator  pos, const key_type & k)
+    {
+        iterator p = iterator(static_cast<link_type>(pos.node));
+
+        if (p == end())
+        {
+            if (size() > 0 && key_compare(key(rightmost()), k))
+                return {0, rightmost()};
+            else
+                return get_insert_unique_pos(k);
+        }
+        else if (key_compare(k, key(p.node)))
+        {
+            iterator before = p;
+            if (p == begin() && key_compare(k, key(leftmost())))
+                return {leftmost(), leftmost()};
+            else if (key_compare(key((--before).node), k))
+            {
+                if (right(before.node) == nullptr)
+                    return {0, before.node};
+                else 
+                    return {p.node, p.node}; 
+            }
+            else
+                return get_insert_unique_pos(k);
+        }
+        else if (key_compare(k, key(p.node)))
+        {
+            iterator after = p;
+            if (p.node == rightmost() && key_compare(key(rightmost()), k))
+                return {0, rightmost()};
+            else if (key_compare(k, key((++after).node)))
+            {
+                if (left(after.node) == nullptr)
+                    return {after.node, after.node};
+                else 
+                    return {0, p.node}; 
+            }
+            else
+                return get_insert_unique_pos(k);
+        }
+        else
+            return {pos.node, 0};
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
