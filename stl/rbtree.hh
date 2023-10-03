@@ -507,73 +507,31 @@ namespace stl
 
         std::pair<iterator, bool> insert_unique(value_type &&value)
         {
-            base_ptr pre = header;
-            base_ptr now = root();
-            bool comp = true;
-
-            while (now)
-            {
-                pre = now;
-                comp = key_compare(KeyOfValue()(value), key(now));
-                now = comp ? left(now) : right(now);
-            }
-
-            iterator j = iterator(static_cast<link_type>(pre));
-            if (comp)
-            {
-                if (j == begin())
-                    return {insert(static_cast<link_type>(pre), std::move(value)), true};
-                else
-                    --j;
-            }
-            if (key_compare(key(j.node), KeyOfValue()(value)))
-                return {insert(static_cast<link_type>(pre), std::move(value)), true};
-            return {j, false};
+            
         }
 
         iterator insert_unique(const_iterator pos, const value_type &value)
         {
-            value_type v(std::move(value));
-            return insert_unique(std::move(v));
         }
         iterator insert_unique(const_iterator pos, value_type &&value)
         {
-            return insert_unique(std::move(value)).first;
         }
 
         iterator insert_equal(const value_type &value)
         {
-            value_type v(std::move(value));
-            return insert_equal(std::move(v));
         }
 
         iterator insert_equal(value_type &&value)
         {
-            base_ptr pre = header;
-            base_ptr now = root();
-
-            while (now)
-            {
-                pre = now;
-                now = key_compare(KeyOfValue()(value), key(now)) ? left(now) : right(now);
-            }
-
-            return insert(static_cast<link_type>(pre), std::move(value));
+            
         }
 
         iterator insert_equal(const_iterator pos, const value_type &value)
         {
-            value_type v(std::move(value));
-            return insert_equal(pos, std::move(v));
         }
         iterator insert_equal(const_iterator pos, value_type &&value)
         {
-            if (*pos > value || !count(value)) // case 1: pos指向的值大于value或者value不存在，则直接插入
-                return insert_equal(std::move(value));
-            else // case 2: 新建一个node，替换pos的位置
-            {
-                // TODO
-            }
+           
         }
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
