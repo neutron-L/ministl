@@ -507,11 +507,12 @@ namespace stl
 
         std::pair<iterator, bool> insert_unique(value_type &&value)
         {
-            
         }
 
         iterator insert_unique(const_iterator pos, const value_type &value)
         {
+            value_type v(value);
+            return insert_unique(pos, std::move(v));
         }
         iterator insert_unique(const_iterator pos, value_type &&value)
         {
@@ -519,19 +520,21 @@ namespace stl
 
         iterator insert_equal(const value_type &value)
         {
+            value_type v(value);
+            return insert_equal(pos, std::move(v));
         }
 
         iterator insert_equal(value_type &&value)
         {
-            
         }
 
         iterator insert_equal(const_iterator pos, const value_type &value)
         {
+            value_type v(std::move(value));
+            return insert_equal(pos, std::move(v));
         }
         iterator insert_equal(const_iterator pos, value_type &&value)
         {
-           
         }
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
@@ -825,6 +828,65 @@ namespace stl
             x->parent->right = y;
         y->right = x;
         x->parent = y;
+    }
+
+    /*
+     * Auxiliary methods
+     * */
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr,
+              typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr>
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::get_insert_unique_pos(const key_type &k)
+    {
+        base_ptr y = header;
+        base_ptr x = root();
+        bool comp = true;
+
+        while (x)
+        {
+            comp = key_compare(k, key(x));
+            if (comp)
+            {
+                y = x;
+                x = left(x);
+            }
+            else
+                x = right(x);
+        }
+
+        iterator j = iterator(y);
+        if (comp)
+        {
+            if (j == begin())
+                return {x, y};
+            else
+                --j;
+        }
+        if (key_compare(key(j.node), k))
+            return {x, y};
+        return {j.node, 0};
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr,
+              typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr>
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::get_insert_equal_pos(const key_type &k)
+    {
+        base_ptr y = header;
+        base_ptr x = root();
+
+        while (x)
+        {
+            y = x;
+            if (key_compare(k, key(x)))
+                x = left(x);
+            else
+                x = right(x);
+        }
+
+        return {x, y};
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
