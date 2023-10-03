@@ -550,7 +550,7 @@ namespace stl
         }
         iterator insert_equal(const_iterator pos, value_type &&value)
         {
-            auto res = get_insert_hint_equal_pos(KeyOfValue()(value));
+            auto res = get_insert_hint_equal_pos(pos, KeyOfValue()(value));
             if (res.second)
                 return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value));
             return insert_equal_lower(std::move(value));
@@ -1016,7 +1016,8 @@ namespace stl
                 x = right(x);
         }
 
-        return;
+
+        return insert_lower(static_cast<link_type>(y), std::move(value));
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
@@ -1098,7 +1099,7 @@ namespace stl
         else
         {
             right(y) = node;
-            if (y == rightmost())
+            if (y == static_cast<link_type>(rightmost()))
                 rightmost() = node;
         }
 
@@ -1116,7 +1117,7 @@ namespace stl
         assert(x && y);
         if (x->parent->left == x)
             x->parent->left = y;
-        else
+        if (x->parent->right == x)
             x->parent->right = y;
         y->parent = x->parent;
         if (header->parent == x)
