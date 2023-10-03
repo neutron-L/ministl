@@ -44,7 +44,11 @@ test_queue: $(TEST)/test_queue.cc $(STL)/queue.hh  $(STL)/deque.hh $(STL)/alloc.
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 
-test_rbtree: $(TEST)/test_rbtree.cc $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
+test_rbtree: $(TEST)/test_rbtree.cc $(STL)/rbtree.hh $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
+	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
+
+
+test_set: $(TEST)/test_set.cc $(STL)/set.hh $(STL)/rbtree.hh $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 
