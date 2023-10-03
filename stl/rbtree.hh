@@ -327,11 +327,15 @@ namespace stl
         std::pair<base_ptr, base_ptr> get_insert_equal_pos(const key_type &);
         std::pair<base_ptr, base_ptr> get_insert_hint_equal_pos(const_iterator, const key_type &);
 
+        iterator insert_equal_lower(value_type &&);
+
     private:
         // 通过判断black height，验证红黑树是否合法
         // 返回一个pair{balck height, is valid}
         static std::pair<int, bool> isValid(base_ptr);
         iterator insert(link_type, link_type, value_type &&);
+        iterator insert_lower(link_type, value_type &&);
+        void insert_rebalance(bool, link_type, link_type, base_ptr &);
         void transplant(base_ptr x, base_ptr y);
         /*
          * 创建一个伪节点nil，颜色为black，默认是p（不为header）的右子节点
@@ -546,6 +550,10 @@ namespace stl
         }
         iterator insert_equal(const_iterator pos, value_type &&value)
         {
+            auto res = get_insert_hint_equal_pos(KeyOfValue()(value));
+            if (res.second)
+                return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value));
+            return insert_equal_lower(std::move(value));
         }
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
@@ -946,6 +954,73 @@ namespace stl
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
+    std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr,
+              typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr>
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::get_insert_hint_equal_pos(const_iterator pos, const key_type &k)
+    {
+        iterator p = iterator(static_cast<link_type>(pos.node));
+
+        if (p == end())
+        {
+            if (size() > 0 && !key_compare(k, key(rightmost())))
+                return {0, rightmost()};
+            else
+                return get_insert_equal_pos(k);
+        }
+        else if (!key_compare(key(p.node), k))
+        {
+            iterator before = p;
+            if (p == begin())
+                return {leftmost(), leftmost()};
+            else if (!key_compare(k, key((--before).node)))
+            {
+                if (right(before.node) == nullptr)
+                    return {0, before.node};
+                else
+                    return {p.node, p.node};
+            }
+            else
+                return get_insert_equal_pos(k);
+        }
+        else
+        {
+            iterator after = p;
+            if (p.node == rightmost())
+                return {0, rightmost()};
+            else if (!key_compare(key((++after).node), k))
+            {
+                if (left(after.node) == nullptr)
+                    return {after.node, after.node};
+                else
+                    return {nullptr, p.node};
+            }
+            else
+                return {nullptr, nullptr};
+        }
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_equal_lower(value_type &&value)
+    {
+        base_ptr y = header;
+        base_ptr x = root();
+
+        while (x)
+        {
+            y = x;
+            if (!key_compare(key(x), KeyOfValue()(value)))
+                x = left(x);
+            else
+                x = right(x);
+        }
+
+        return;
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
     std::pair<int, bool>
     Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::isValid(base_ptr p)
     {
@@ -981,7 +1056,35 @@ namespace stl
     {
         link_type node = create_node(std::move(value));
 
-        if (y == header || x != nullptr || key_compare(KeyOfValue()(value), key(y))) // CASE 1: left
+        bool insert_left = (y == header || x != nullptr || key_compare(KeyOfValue()(value), key(y)));
+        insert_rebalance(insert_left, node, y, header->parent);
+        ++node_count;
+
+        assert(isValid(root()).second);
+        return iterator(node);
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_lower(link_type y, value_type &&value)
+    {
+        link_type node = create_node(std::move(value));
+
+        bool insert_left = (y == header || !key_compare(key(y), KeyOfValue()(value)));
+        insert_rebalance(insert_left, node, y, header->parent);
+        ++node_count;
+
+        assert(isValid(root()).second);
+        return iterator(node);
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
+    void
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_rebalance(bool insert_left, link_type node, link_type y, base_ptr &r)
+    {
+        if (insert_left)
         {
             left(y) = node;
             if (y == header)
@@ -1002,11 +1105,7 @@ namespace stl
         parent(node) = y;
         left(node) = right(node) = nullptr;
 
-        rb_tree_insert_rebalance(node, header->parent);
-        ++node_count;
-
-        assert(isValid(root()).second);
-        return iterator(node);
+        rb_tree_insert_rebalance(node, r);
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
