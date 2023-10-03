@@ -69,7 +69,7 @@ namespace stl
         using iterator_category = stl::bidirectional_iterator_tag;
         using difference_type = std::ptrdiff_t;
 
-        base_ptr node;
+        base_ptr node{};
 
         void increment()
         {
@@ -323,6 +323,9 @@ namespace stl
         using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
     private:
+        // 通过判断black height，验证红黑树是否合法
+        // 返回一个pair{balck height, is valid}
+        static std::pair<int, bool> isValid(base_ptr);
         iterator insert(link_type cur, value_type &&value);
         void transplant(base_ptr x, base_ptr y);
         /*
@@ -523,8 +526,15 @@ namespace stl
             return {j, false};
         }
 
-        std::pair<iterator, bool> insert_unique(const_iterator pos, const value_type &value);
-        std::pair<iterator, bool> insert_unique(const_iterator pos, value_type &&value);
+        iterator insert_unique(const_iterator pos, const value_type &value)
+        {
+            value_type v(std::move(value));
+            return insert_unique(std::move(v));
+        }
+        iterator insert_unique(const_iterator pos, value_type &&value)
+        {
+            return insert_unique(std::move(value)).first;
+        }
 
         iterator insert_equal(const value_type &value)
         {
@@ -546,8 +556,20 @@ namespace stl
             return insert(static_cast<link_type>(pre), std::move(value));
         }
 
-        iterator insert_equal(const_iterator pos, const value_type &value);
-        iterator insert_equal(const_iterator pos, value_type &&value);
+        iterator insert_equal(const_iterator pos, const value_type &value)
+        {
+            value_type v(std::move(value));
+            return insert_equal(pos, std::move(v));
+        }
+        iterator insert_equal(const_iterator pos, value_type &&value)
+        {
+            if (*pos > value || !count(value)) // case 1: pos指向的值大于value或者value不存在，则直接插入
+                return insert_equal(std::move(value));
+            else // case 2: 新建一个node，替换pos的位置
+            {
+                // TODO
+            }
+        }
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void insert_unique(InputIt first, InputIt last)
@@ -844,6 +866,36 @@ namespace stl
 
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
+    std::pair<int, bool>
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::isValid(base_ptr p)
+    {
+        static bool first = true;
+        if (!p)
+            return {0, true};
+        else
+        {
+            auto l = isValid(p->left);
+            auto r = isValid(p->right);
+            if (!l.second || !r.second)
+            {
+                if (first)
+                {
+                    if (!l.second)
+                        cerr << "subtree " << static_cast<link_type>(p->left)->value_field << " is invalid" << endl;
+                    if (!r.second)
+                        cerr << "subtree " << static_cast<link_type>(p->right)->value_field << " is invalid" << endl;
+                }
+                first = false;
+                return {-1, false};
+            }
+
+            bool eq = l.first == r.first;
+            return {eq ? l.first + (p->color == Rb_tree_color::Black) : -1, eq};
+        }
+    }
+
+    template <typename Key, typename Value, typename KeyOfValue,
+              typename Compare, typename Alloc>
     typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
     Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(link_type cur, value_type &&value)
     {
@@ -1025,20 +1077,20 @@ namespace stl
     Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::lower_bound(const Key &k) const
     {
         base_ptr pre = header;
-        base_ptr now = root();
-        bool comp = false;
+        base_ptr cur = root();
 
-        while (now)
+        while (cur)
         {
-            pre = now;
-            comp = key_compare(key(now), KeyOfValue()(k));
-            now = comp ? right(now) : left(now);
+            if (!key_compare(key(cur), KeyOfValue()(k)))
+            {
+                pre = cur;
+                cur = left(cur);
+            }
+            else
+                cur = right(cur);
         }
 
-        auto iter = const_iterator(static_cast<link_type>(pre));
-        if (comp)
-            ++iter;
-        return iter;
+        return const_iterator(static_cast<link_type>(pre));
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
@@ -1047,20 +1099,20 @@ namespace stl
     Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::upper_bound(const Key &k) const
     {
         base_ptr pre = header;
-        base_ptr now = root();
-        bool comp = false;
+        base_ptr cur = root();
 
-        while (now)
+        while (cur)
         {
-            pre = now;
-            comp = key_compare(KeyOfValue()(k), key(now));
-            now = comp ? left(now) : right(now);
+            if (key_compare(KeyOfValue()(k), key(cur)))
+            {
+                pre = cur;
+                cur = left(cur);
+            }
+            else
+                cur = right(cur);
         }
 
-        auto iter = const_iterator(static_cast<link_type>(pre));
-        if (!comp)
-            ++iter;
-        return iter;
+        return const_iterator(static_cast<link_type>(pre));
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
