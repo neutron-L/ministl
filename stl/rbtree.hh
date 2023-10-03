@@ -501,7 +501,8 @@ namespace stl
 
         std::pair<iterator, bool> insert_unique(const value_type &value)
         {
-            value_type v(std::move(value));
+            // value_type v(std::move(value));
+            value_type v(value);
             return insert_unique(std::move(v));
         }
 
@@ -522,7 +523,7 @@ namespace stl
         {
             auto res = get_insert_hint_unique_pos(pos, KeyOfValue()(value));
             if (res.second)
-                return insert(res.first, res.second, std::move(value));
+                return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value));
             return res.first;
         }
 
@@ -534,6 +535,8 @@ namespace stl
 
         iterator insert_equal(value_type &&value)
         {
+            auto res = get_insert_equal_pos(KeyOfValue()(value));
+            return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value));
         }
 
         iterator insert_equal(const_iterator pos, const value_type &value)
@@ -853,14 +856,9 @@ namespace stl
 
         while (x)
         {
+            y = x;
             comp = key_compare(k, key(x));
-            if (comp)
-            {
-                y = x;
-                x = left(x);
-            }
-            else
-                x = right(x);
+            x = comp ? left(x) : right(x);
         }
 
         iterator j = iterator(static_cast<link_type>(y));
@@ -880,7 +878,7 @@ namespace stl
               typename Compare, typename Alloc>
     std::pair<typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr,
               typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::base_ptr>
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::get_insert_hint_unique_pos(const_iterator  pos, const key_type & k)
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::get_insert_hint_unique_pos(const_iterator pos, const key_type &k)
     {
         iterator p = iterator(static_cast<link_type>(pos.node));
 
@@ -900,8 +898,8 @@ namespace stl
             {
                 if (right(before.node) == nullptr)
                     return {0, before.node};
-                else 
-                    return {p.node, p.node}; 
+                else
+                    return {p.node, p.node};
             }
             else
                 return get_insert_unique_pos(k);
@@ -915,8 +913,8 @@ namespace stl
             {
                 if (left(after.node) == nullptr)
                     return {after.node, after.node};
-                else 
-                    return {0, p.node}; 
+                else
+                    return {0, p.node};
             }
             else
                 return get_insert_unique_pos(k);
