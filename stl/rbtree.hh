@@ -192,6 +192,11 @@ namespace stl
         using link_type = Rb_tree_node<Value> *;
         using const_link_type = const Rb_tree_node<Value> *;
 
+        using iterator = typename Rb_tree_iterator<value_type, reference, pointer>::iterator;
+        using const_iterator = typename Rb_tree_iterator<value_type, reference, pointer>::const_iterator;
+        using reverse_iterator = stl::reverse_iterator<iterator>;
+        using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
+
     protected:
         using base_ptr = Rb_tree_node_base *;
         using rb_tree_node = Rb_tree_node<value_type>;
@@ -316,11 +321,11 @@ namespace stl
             return static_cast<link_type>(Rb_tree_node_base::maximum(p));
         }
 
-    public:
-        using iterator = typename Rb_tree_iterator<value_type, reference, pointer>::iterator;
-        using const_iterator = typename Rb_tree_iterator<value_type, reference, pointer>::const_iterator;
-        using reverse_iterator = stl::reverse_iterator<iterator>;
-        using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
+        // Auxiliary functions for inserting methods
+        std::pair<base_ptr, base_ptr> get_insert_unique_pos(const key_type &);
+        std::pair<base_ptr, base_ptr> get_insert_hint_unique_pos(const_iterator, const key_type &);
+        std::pair<base_ptr, base_ptr> get_insert_equal_pos(const key_type &);
+        std::pair<base_ptr, base_ptr> get_insert_hint_equal_pos(const_iterator, const key_type &);
 
     private:
         // 通过判断black height，验证红黑树是否合法
