@@ -925,6 +925,7 @@ namespace stl
         rb_tree_insert_rebalance(node, header->parent);
         ++node_count;
 
+        assert(isValid(root()).second);
         return iterator(node);
     }
 
@@ -1035,6 +1036,8 @@ namespace stl
             put_node(static_cast<link_type>(nil));
             nil = nullptr;
         }
+
+        assert(isValid(root()).second);
 
         return ret;
     }
