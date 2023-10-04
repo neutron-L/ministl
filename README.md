@@ -48,7 +48,7 @@ STL库中的常见容器和算法的实现，主要包括四部分：
 目前算法相关的函数实现在stl/numeric.hh和stl/algobase.hh中，前者包括一些常见的数值计算相关的函数，后者包括一些常见的普通函数。  
 ## test cases
 几乎对于每个stl/目录下的文件中的算法或容器的实现，都有一个对应的测试程序位于tests/目录下，格式一般为test_xxxx.cc。比如，对于vector的实现，测试程序为test_vector.cc；对于iterator的实现，测试程序为test_iterator.cc。以vector测试为例，运行测试程序的方法为：
-在主目录（ministl）下，运行make指令：
+在主目录（ministl）下，执行make命令：
 ```c++
 $ make test_vector
 ```
@@ -56,4 +56,4 @@ $ make test_vector
 ```
 $ ./bin/test_vector
 ```
-可在终端查看测试运行的情况。
+可在终端查看测试的情况。
