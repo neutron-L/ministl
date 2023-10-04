@@ -13,6 +13,7 @@
 
 #include "rbtree.hh"
 #include "vector.hh"
+#include "list.hh"
 
 using std::cout;
 using std::endl;
@@ -20,6 +21,60 @@ using std::endl;
 void test_constructors_assign()
 {
     printf("=============%s=================\n", __FUNCTION__);
+    using Rb_tree = stl::Rb_tree<int, int, std::_Identity<int>, std::less<int>>;
+
+    stl::list<int> elems{10, 7, 8, 15, 5, 6, 11, 13, 12};
+
+    // 1. default constructor
+    Rb_tree t1;
+    assert(t1.empty() && t1.begin() == t1.end() && t1.cbegin() == t1.cend());
+
+    t1.insert_equal(elems.begin(), elems.end());
+    // 2. copy constructor
+    Rb_tree t2(t1);
+    assert(stl::equal(t1.begin(), t1.end(), t2.begin()));
+    assert(t1.size() == t2.size());
+
+    // 3. move constructor
+    Rb_tree t3(std::move(t1));
+    assert(stl::equal(t2.begin(), t2.end(), t3.begin()));
+    assert(t2.size() == t3.size() && t1.size() == 0);
+
+    cout << "t3: \n";
+    for (auto &i : t3)
+        cout << i << ' ';
+    cout << endl;
+
+    // 4. =
+    elems.clear();
+    elems = {1, 2, 3, 5, 0, 3};
+    t3.clear();
+    assert(t3.empty());
+    t3.insert_equal(elems.begin(), elems.end());
+    t1 = t3;
+    assert(stl::equal(t1.begin(), t1.end(), t3.begin()));
+    assert(t1.size() == t3.size());
+    cout << "t1: \n";
+    for (auto &i : t1)
+        cout << i << ' ';
+    cout << endl;
+
+    // 5. = move
+    t2 = std::move(t3);
+    assert(t3.empty());
+    assert(stl::equal(t1.begin(), t1.end(), t2.begin()));
+    assert(t1.size() == t2.size());
+    cout << "t2: \n";
+    for (auto &i : t2)
+        cout << i << ' ';
+    cout << endl;
+
+    // more test: erase and iterator
+    assert(*t1.begin() == 0);
+    t1.erase(t1.begin());
+    assert(*t1.begin() == 1);
+    t1.erase(5);
+    assert(*--t1.end() == 3);
 }
 
 void test_modifiers()
@@ -445,7 +500,7 @@ void test_insert_pos()
 {
     printf("=============%s=================\n", __FUNCTION__);
 
-    const int N = 20;
+    const int N = 100;
 
     using Rb_tree = stl::Rb_tree<int, int, std::_Identity<int>, std::less<int>>;
     Rb_tree rbtree;
@@ -453,7 +508,7 @@ void test_insert_pos()
 
     // 1. init vc
     // The initialization array contains N random numbers from 0 to 9,
-    cout << "init vc with 30 random lowercase letters from 'a' to 'k'\n";
+    cout << "init vc with "<< N << " random lowercase letters from 'a' to 'k'\n";
     vc.resize(N);
     for (auto &c : vc)
     {
