@@ -37,7 +37,7 @@ namespace stl
         using const_pointer = const value_type *;
         using iterator = ht_type::iterator;
         using const_iterator = ht_type::const_iterator;
-        using iterator = ht_type::local_iterator;
+        using local_iterator = ht_type::local_iterator;
         using const_local_iterator = ht_type::const_local_iterator;
 
         /*
@@ -120,13 +120,42 @@ namespace stl
         node_type extract(const Key &k);
 
         template <class H2, class P2>
-        void merge(std::unordered_set<Key, H2, P2, Allocator> &source);
+        void merge(std::unordered_set<Key, H2, P2, Alloc> &source);
         template <class H2, class P2>
-        void merge(std::unordered_set<Key, H2, P2, Allocator> &&source);
+        void merge(std::unordered_set<Key, H2, P2, Alloc> &&source);
         template <class H2, class P2>
-        void merge(std::unordered_multiset<Key, H2, P2, Allocator> &source);
+        void merge(std::unordered_multiset<Key, H2, P2, Alloc> &source);
         template <class H2, class P2>
-        void merge(std::unordered_multiset<Key, H2, P2, Allocator> &&source);
+        void merge(std::unordered_multiset<Key, H2, P2, Alloc> &&source);
+
+        /*
+         * Lookup
+         * */
+        size_type count(const Key &key) const;
+        const_iterator find(const Key &key) const;
+        bool contains(const Key &key) const;
+        std::pair<const_iterator, const_iterator>
+        equal_range(const Key &key) const;
+
+        /*
+         * Bucket interface
+         * */
+        local_iterator begin(size_type n);
+        const_local_iterator begin(size_type n) const;
+        const_local_iterator cbegin(size_type n) const;
+        local_iterator end(size_type n);
+        const_local_iterator end(size_type n) const;
+        const_local_iterator cend(size_type n) const;
+        size_type bucket_count() const;
+        size_type max_bucket_count() const;
+        size_type bucket_size(size_type n) const;
+        size_type bucket(const Key &key) const;
+
+        /*
+         * Observers
+         * */
+        hasher hash_function() const;
+        key_equal key_eq() const;
     };
 } // namespace stl
 
