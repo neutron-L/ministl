@@ -12,6 +12,8 @@
 #include "construct.hh"
 #include "iterator.hh"
 
+#include "vector.hh"
+
 namespace stl
 {
     template <typename Value>
@@ -27,8 +29,51 @@ namespace stl
               typename ExtractKey,
               typename KeyEqual = std::equal_to<Key>,
               typename Alloc = alloc>
-    struct Hashtable_const_iterator
+    struct Hashtable_iterator
     {
+        using hashtable = Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
+        using iterator = Hashtable_iterator<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
+        using self = iterator;
+        using node = Hashtable_node<Value>;
+
+        using iterator_category = stl::forward_iterator_tag;
+
+        using value_type = Value;
+        using size_type = std::size_t;
+        using difference_type = std::ptrdiff_t;
+        using reference = value_type &;
+        using pointer = value_type *;
+
+        node *cur{};
+        hashtable *ht;
+
+        Hashtable_iterator() = default;
+        Hashtable_iterator(node *n, hashtable *tab)
+            : cur(n), ht(tab)
+        {
+        }
+
+        reference operator*() const { return cur->val; }
+        pointer operator->() const { return &(operator*()); }
+        self &operator++()
+        {
+        }
+        self operator++(int)
+        {
+            auto tmp = *this;
+            ++*this;
+            return tmp;
+        }
+
+        bool operator==(const self &rhs) const
+        {
+            return cur == rhs.cur && ht == rhs.ht;
+        }
+        bool operator!=(const self &rhs) const
+
+        {
+            return !(*this == rhs);
+        }
     };
 
     template <typename Key,
@@ -37,8 +82,57 @@ namespace stl
               typename ExtractKey,
               typename KeyEqual = std::equal_to<Key>,
               typename Alloc = alloc>
-    struct Hashtable_iterator
+    struct Hashtable_const_iterator
     {
+        using hashtable = Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
+        using iterator = Hashtable_iterator<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
+        using self = Hashtable_const_iterator<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
+
+        using node = Hashtable_node<Value>;
+
+        using iterator_category = stl::forward_iterator_tag;
+
+        using value_type = Value;
+        using size_type = std::size_t;
+        using difference_type = std::ptrdiff_t;
+        using reference = const value_type &;
+        using pointer = const value_type *;
+
+        node *cur{};
+        hashtable *ht;
+
+        iterator const_cast()
+        {
+            return iterator(cur, ht);
+        }
+
+        Hashtable_const_iterator() = default;
+        Hashtable_const_iterator(node *n, hashtable *tab)
+            : cur(n), ht(tab)
+        {
+        }
+
+        reference operator*() const { return cur->val; }
+        pointer operator->() const { return &(operator*()); }
+        self &operator++()
+        {
+        }
+        self operator++(int)
+        {
+            auto tmp = *this;
+            ++*this;
+            return tmp;
+        }
+
+        bool operator==(const self &rhs) const
+        {
+            return cur == rhs.cur && ht == rhs.ht;
+        }
+        bool operator!=(const self &rhs) const
+
+        {
+            return !(*this == rhs);
+        }
     };
 
     template <typename Key,
@@ -51,7 +145,7 @@ namespace stl
     {
     public:
         using key_type = Key;
-        using value_type = Key;
+        using value_type = Value;
         using size_type = std::size_t;
         using difference_type = std::ptrdiff_t;
         using hasher = Hash;
@@ -62,14 +156,40 @@ namespace stl
         using pointer = value_type *;
         using const_pointer = const value_type *;
         using iterator = Hashtable_iterator<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
-        using const_iterator = ht_type::const_iterator;
-        using iterator = ht_type::local_iterator;
-        using const_local_iterator = ht_type::const_local_iterator;
+        using const_iterator = Hashtable_const_iterator<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
+        // using local_iterator = ht_type::local_iterator;
+        // using const_local_iterator = ht_type::const_local_iterator;
 
     private:
+                using node = Hashtable_node<Value>;
+        using hashtable_node_allocator = simple_alloc<node, Alloc>;
+
         hasher hash;
         key_equal equals;
         ExtractKey get_key;
+
+        stl::vector<node *> buckets{};
+        size_type num_elements{};
+
+        static const int stl_num_primes = 28;
+        static const unsigned long stl_prime_list[stl_num_primes] = 
+        {
+            53,97,193,389,769,
+            1543,
+        };
+
+        inline unsigned long stl_next_prime(unsigned long n)
+        {
+            const unsigned long * pos = stl::lower_bound(stl_prime_list, stl_prime_list + stl_num_primes, n);
+            return pos == stl_prime_list + stl_num_primes ? *(--pos) : *pos;
+        }
+
+        size_type max_bucket_count() const 
+        {
+            return stl_prime_list[stl_num_primes - 1];
+        }
+
+    protected:
 
     public:
         /*
