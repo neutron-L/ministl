@@ -253,6 +253,14 @@ namespace stl
         }
     };
 
+    template <typename Key,
+              typename Compare = std::less<Key>,
+              typename Alloc = alloc>
+    class multiset
+    {
+
+    };
+
 } // namespace stl
 
 #endif
