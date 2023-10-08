@@ -17,10 +17,30 @@ namespace stl
     template <typename Value>
     struct Hashtable_node
     {
-        Hashtable_node * next;
+        Hashtable_node *next;
         Value val;
     };
-    
+
+    template <typename Key,
+              typename Value,
+              typename Hash = std::hash<Key>,
+              typename ExtractKey,
+              typename KeyEqual = std::equal_to<Key>,
+              typename Alloc = alloc>
+    struct Hashtable_const_iterator
+    {
+    };
+
+    template <typename Key,
+              typename Value,
+              typename Hash = std::hash<Key>,
+              typename ExtractKey,
+              typename KeyEqual = std::equal_to<Key>,
+              typename Alloc = alloc>
+    struct Hashtable_iterator
+    {
+    };
+
     template <typename Key,
               typename Value,
               typename Hash = std::hash<Key>,
@@ -41,7 +61,7 @@ namespace stl
         using const_reference = const value_type &;
         using pointer = value_type *;
         using const_pointer = const value_type *;
-        using iterator = ht_type::iterator;
+        using iterator = Hashtable_iterator<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
         using const_iterator = ht_type::const_iterator;
         using iterator = ht_type::local_iterator;
         using const_local_iterator = ht_type::const_local_iterator;
@@ -132,13 +152,13 @@ namespace stl
         node_type extract(const Key &k);
 
         template <class H2, class P2>
-        void merge(std::unordered_set<Key, H2, P2, Allocator> &source);
+        void merge(std::unordered_set<Key, H2, P2, Alloc> &source);
         template <class H2, class P2>
-        void merge(std::unordered_set<Key, H2, P2, Allocator> &&source);
+        void merge(std::unordered_set<Key, H2, P2, Alloc> &&source);
         template <class H2, class P2>
-        void merge(std::unordered_multiset<Key, H2, P2, Allocator> &source);
+        void merge(std::unordered_multiset<Key, H2, P2, Alloc> &source);
         template <class H2, class P2>
-        void merge(std::unordered_multiset<Key, H2, P2, Allocator> &&source);
+        void merge(std::unordered_multiset<Key, H2, P2, Alloc> &&source);
     };
 } // namespace stl
 
