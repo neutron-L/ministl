@@ -210,22 +210,22 @@ namespace stl
             buckets.insert(buckets.end(), n_buckets, nullptr);
         }
 
-        size_type bkt_num(const value_type & obj, size_t n) const
+        size_type bkt_num(const value_type &obj, size_t n) const
         {
             return bkt_num_key(get_key(obj), n);
         }
 
-        size_type bkt_num(const value_type & obj) const
+        size_type bkt_num(const value_type &obj) const
         {
             return bkt_num_key(get_key(obj));
         }
 
-        size_type bkt_num_key(const key_type & key) const
+        size_type bkt_num_key(const key_type &key) const
         {
             return bkt_num_key(key, buckets.size());
         }
 
-        size_type bkt_num_key(const key_type & key, size_type n) const
+        size_type bkt_num_key(const key_type &key, size_type n) const
         {
             return hash(key) % n;
         }
@@ -299,9 +299,9 @@ namespace stl
          * */
         void clear() noexcept
         {
-            for (auto & bucket : buckets)
+            for (auto &bucket : buckets)
             {
-                node * cur = bucket;
+                node *cur = bucket;
                 node *next;
                 while (cur)
                 {
@@ -363,6 +363,35 @@ namespace stl
             return stl_prime_list[stl_num_primes - 1];
         }
     };
+
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    void
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::resize(size_type num_elements_hint)
+    {
+        size_type new_bucket_size = stl_next_prime(num_elements_hint);
+        if (new_bucket_size <= buckets.size())
+            return;
+        stl::vector<node *> new_buckets(new_bucket_size, nullptr);
+
+        for (auto &bucket : buckets)
+        {
+            node * first = bucket;
+
+            while (first)
+            {
+                bucket = bucket->next;
+                first->next = buckets[bkt_num(first->val)];
+                buckets[bkt_num(first->val)] = first;
+                first = bucket;
+            }
+        }
+        hashtable.swap(new_buckets);
+    }
 } // namespace stl
 
 #endif
