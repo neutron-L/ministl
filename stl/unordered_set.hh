@@ -21,7 +21,8 @@ namespace stl
     class unordered_set
     {
     private:
-        using ht_type = Hashtable<>;
+        using ht_type = Hashtable<Key, Key, Hash, std::_Identity<Key>, KeyEqual, Alloc>;
+        ht_type hashtable;
 
     public:
         using key_type = Key;
@@ -43,21 +44,42 @@ namespace stl
         /*
          * Constructors
          * */
-        unordered_set();
+        unordered_set()
+            : hashtable(0, Hash(), KeyEqual())
+        {
+        }
+
         explicit unordered_set(size_type bucket_count,
                                const Hash &hash = Hash(),
-                               const key_equal &equal = key_equal());
-        template <class InputIt>
+                               const key_equal &equal = key_equal())
+            : hashtable(bucket_count, hash, equal)
+        {
+        }
+        template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         unordered_set(InputIt first, InputIt last,
                       size_type bucket_count = /* implementation-defined */,
                       const Hash &hash = Hash(),
-                      const key_equal &equal = key_equal());
-        unordered_set(const unordered_set &other);
-        unordered_set(unordered_set &&other);
+                      const key_equal &equal = key_equal())
+            : hashtable(bucket_count, hash, equal)
+        {
+            insert(first, last);
+        }
+        unordered_set(const unordered_set &other) : hashtable(other.hashtable)
+        {
+        }
+
+        unordered_set(unordered_set &&other) : hashtable(std::move(other.hashtable))
+        {
+        }
+
         unordered_set(std::initializer_list<value_type> init,
                       size_type bucket_count = /* implementation-defined */,
                       const Hash &hash = Hash(),
-                      const key_equal &equal = key_equal());
+                      const key_equal &equal = key_equal())
+            : hashtable(bucket_count, hash, equal)
+        {
+            insert(init.begin(), init.end());
+        }
         /*
          * Destructor
          * */
