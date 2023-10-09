@@ -197,6 +197,15 @@ namespace stl
             return n;
         }
 
+        node *new_node(value_type &&obj)
+        {
+            node *n = hashtable_node_allocator::allocate();
+            n->next = nullptr;
+            stl::construct(&n->val, obj);
+
+            return n;
+        }
+
         void delete_node(node *n)
         {
             stl::destroy(&n->val);
@@ -284,7 +293,10 @@ namespace stl
         /*
          * Capacity
          * */
-        bool empty() const noexcept;
+        bool empty() const noexcept
+        {
+            return num_elements == 0;
+        }
         size_type size() const noexcept
         {
             return num_elements;
@@ -314,7 +326,11 @@ namespace stl
             num_elements = 0;
         }
 
-        std::pair<iterator, bool> insert_unique(const value_type &value);
+        std::pair<iterator, bool> insert_unique(const value_type &value)
+        {
+            value_type v(value);
+            return insert_unique(std::move(v));
+        }
         std::pair<iterator, bool> insert_unique(value_type &&value);
         iterator insert_unique(const_iterator hint, const value_type &value);
         iterator insert_unique(const_iterator hint, value_type &&value);
@@ -332,13 +348,13 @@ namespace stl
         void insert_equal(InputIt first, InputIt last);
         void insert_equal(std::initializer_list<value_type> ilist);
 
-        template <class... Args>
+        template <typename... Args>
         std::pair<iterator, bool> emplace(Args &&...args);
 
-        template <class... Args>
+        template <typename... Args>
         iterator emplace_hint(const_iterator hint, Args &&...args);
 
-        template <class... Args>
+        template <typename... Args>
         iterator emplace_hint(const_iterator hint, Args &&...args);
         iterator erase(const_iterator pos);
         iterator erase(const_iterator first, const_iterator last);
@@ -349,13 +365,13 @@ namespace stl
         node_type extract(const_iterator position);
         node_type extract(const Key &k);
 
-        template <class H2, class P2>
+        template <typename H2, typename P2>
         void merge(std::unordered_set<Key, H2, P2, Alloc> &source);
-        template <class H2, class P2>
+        template <typename H2, typename P2>
         void merge(std::unordered_set<Key, H2, P2, Alloc> &&source);
-        template <class H2, class P2>
+        template <typename H2, typename P2>
         void merge(std::unordered_multiset<Key, H2, P2, Alloc> &source);
-        template <class H2, class P2>
+        template <typename H2, typename P2>
         void merge(std::unordered_multiset<Key, H2, P2, Alloc> &&source);
 
         size_type max_bucket_count() const
@@ -380,7 +396,7 @@ namespace stl
 
         for (auto &bucket : buckets)
         {
-            node * first = bucket;
+            node *first = bucket;
 
             while (first)
             {
@@ -391,6 +407,51 @@ namespace stl
             }
         }
         hashtable.swap(new_buckets);
+    }
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    std::pair<typename Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::iterator, bool>
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::insert_unique(value_type &&value)
+    {
+        size_type bkt_idx = bkt_num(value);
+        bool nofound = true;
+        node **pnode = &buckets[bkt_idx];
+        while (*pnode && !equals(value, (*pnode)->val))
+            pnode = &((*pnode)->val);
+        if (!(*pnode))
+        {
+            *pnode = new_node(std::move(value));
+            ++num_elements;
+        }
+        else
+            nofound = false;
+        return {iterator(*pnode, this), nofound};
+    }
+
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    typename Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::iterator
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::insert_equal(value_type &&value)
+    {
+        size_type bkt_idx = bkt_num(value);
+        node **pnode = &buckets[bkt_idx];
+
+        while (*pnode && !equals(value, (*pnode)->val))
+            pnode = &((*pnode)->val);
+        node *item = new_node(std::move(value));
+        item->next = *pnode;
+        *pnode = item;
+
+        ++num_elements;
+        return {iterator(*pnode, this), nofound};
     }
 } // namespace stl
 
