@@ -135,14 +135,28 @@ namespace stl
         /*
          * Capacity
          * */
-        bool empty() const noexcept;
-        size_type size() const noexcept;
-        size_type max_size() const noexcept;
+        bool empty() const noexcept
+        {
+            return hashtable.empty();
+        }
+
+        size_type size() const noexcept
+        {
+            return hashtable.size();
+        }
+
+        size_type max_size() const noexcept
+        {
+            return hashtable.max_size();
+        }
 
         /*
          * Modifiers
          * */
-        void clear() noexcept;
+        void clear() noexcept
+        {
+            hashtable.clear();
+        }
 
         std::pair<iterator, bool> insert(const value_type &value);
         std::pair<iterator, bool> insert(value_type &&value);
