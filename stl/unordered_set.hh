@@ -88,20 +88,49 @@ namespace stl
         /*
          * assignment operation
          * */
-        unordered_set &operator=(const unordered_set &other);
-        unordered_set &operator=(unordered_set &&other) noexcept;
-        unordered_set &operator=(std::initializer_list<value_type> ilist);
+        unordered_set &operator=(const unordered_set &other)
+        {
+            hashtable = other.hashtable;
+            return *this;
+        }
+        unordered_set &operator=(unordered_set &&other) noexcept
+        {
+            hashtable = std::move(other.hashtable);
+            return *this;
+        }
+        unordered_set &operator=(std::initializer_list<value_type> ilist)
+        {
+            return *this;
+        }
 
         /*
          * Iterator function
          * */
-        iterator begin() noexcept;
-        const_iterator begin() const noexcept;
-        const_iterator begin() const noexcept;
+        iterator begin() noexcept
+        {
+            return hashtable.begin();
+        }
+        const_iterator begin() const noexcept
+        {
+            return hashtable.begin();
+        }
+        const_iterator cbegin() const noexcept
+        {
+            return hashtable.cbegin();
+        }
 
-        iterator end() noexcept;
-        const_iterator end() const noexcept;
-        const_iterator cend() const noexcept;
+        iterator end() noexcept
+        {
+            return hashtable.end();
+        }
+        const_iterator end() const noexcept
+        {
+            return hashtable.end();
+        }
+        const_iterator cend() const noexcept
+        {
+            return hashtable.cend();
+        }
 
         /*
          * Capacity
