@@ -161,7 +161,7 @@ namespace stl
         // using const_local_iterator = ht_type::const_local_iterator;
 
     private:
-                using node = Hashtable_node<Value>;
+        using node = Hashtable_node<Value>;
         using hashtable_node_allocator = simple_alloc<node, Alloc>;
 
         hasher hash;
@@ -172,55 +172,101 @@ namespace stl
         size_type num_elements{};
 
         static const int stl_num_primes = 28;
-        static const unsigned long stl_prime_list[stl_num_primes] = 
-        {
-            53,97,193,389,769,
-            1543,
-        };
+        static const unsigned long stl_prime_list[stl_num_primes] =
+            {
+                53, 97, 193, 389, 769,
+                1543, 3079, 6151, 12289, 24593,
+                49157, 98317, 196613, 393241, 786433,
+                1572869, 3145739, 6291469, 12582917, 25165843,
+                50331653, 100663319, 201326611, 402653189, 805306457,
+                1610612741, 3221225473ul, 4294967291ul};
 
         inline unsigned long stl_next_prime(unsigned long n)
         {
-            const unsigned long * pos = stl::lower_bound(stl_prime_list, stl_prime_list + stl_num_primes, n);
+            const unsigned long *pos = stl::lower_bound(stl_prime_list, stl_prime_list + stl_num_primes, n);
             return pos == stl_prime_list + stl_num_primes ? *(--pos) : *pos;
         }
 
-        size_type max_bucket_count() const 
+    protected:
+        node *new_node(const value_type &obj)
         {
-            return stl_prime_list[stl_num_primes - 1];
+            node *n = hashtable_node_allocator::allocate();
+            n->next = nullptr;
+            stl::construct(&n->val, obj);
+
+            return n;
         }
 
-    protected:
+        void delete_node(node *n)
+        {
+            stl::destroy(&n->val);
+            hashtable_node_allocator::deallocate(n);
+        }
+
+        void initialize_buckets(size_type n)
+        {
+            const size_type n_buckets = stl_next_prime(n);
+            buckets.reserve(n_buckets);
+            buckets.insert(buckets.end(), n_buckets, nullptr);
+        }
+
+        size_type bkt_num(const value_type & obj, size_t n) const
+        {
+            return bkt_num_key(get_key(obj), n);
+        }
+
+        size_type bkt_num(const value_type & obj) const
+        {
+            return bkt_num_key(get_key(obj));
+        }
+
+        size_type bkt_num_key(const key_type & key) const
+        {
+            return bkt_num_key(key, buckets.size());
+        }
+
+        size_type bkt_num_key(const key_type & key, size_type n) const
+        {
+            return hash(key) % n;
+        }
+
+        void resize(size_type num_elements_hint);
 
     public:
         /*
          * Constructors
          * */
-        unordered_set();
-        explicit unordered_set(size_type bucket_count,
-                               const Hash &hash = Hash(),
-                               const key_equal &equal = key_equal());
-        template <class InputIt>
-        unordered_set(InputIt first, InputIt last,
-                      size_type bucket_count = /* implementation-defined */,
-                      const Hash &hash = Hash(),
-                      const key_equal &equal = key_equal());
-        unordered_set(const unordered_set &other);
-        unordered_set(unordered_set &&other);
-        unordered_set(std::initializer_list<value_type> init,
-                      size_type bucket_count = /* implementation-defined */,
-                      const Hash &hash = Hash(),
-                      const key_equal &equal = key_equal());
+        Hashtable(size_type n = 0,
+                  const Hash &hf = Hash(),
+                  const key_equal &eq = key_equal())
+            : hash(hf), equal(eq), get_key(ExtractKey()), num_elements(n)
+        {
+            initialize_buckets(n);
+        }
+
+        Hashtable(const Hashtable &other);
+        Hashtable(Hashtable &&other) : buckets(std::move(other.buckets)), num_elements(other.num_elements)
+        {
+            other.buckets.resize(other.buckets.size(), nullptr);
+            other.num_elements = 0;
+        }
+
         /*
          * Destructor
          * */
-        ~unordered_set();
+        ~Hashtable()
+        {
+            clear();
+            num_elements = 0;
+            buckets.clear();
+        }
 
         /*
          * assignment operation
          * */
-        unordered_set &operator=(const unordered_set &other);
-        unordered_set &operator=(unordered_set &&other) noexcept;
-        unordered_set &operator=(std::initializer_list<value_type> ilist);
+        Hashtable &operator=(const Hashtable &other);
+        Hashtable &operator=(Hashtable &&other) noexcept;
+        Hashtable &operator=(std::initializer_list<value_type> ilist);
 
         /*
          * Iterator function
@@ -231,28 +277,60 @@ namespace stl
 
         iterator end() noexcept;
         const_iterator end() const noexcept;
-        const_iterator cend() const noexcept;
+        const_iterator cend() const noexcept
+        {
+        }
 
         /*
          * Capacity
          * */
         bool empty() const noexcept;
-        size_type size() const noexcept;
-        size_type max_size() const noexcept;
+        size_type size() const noexcept
+        {
+            return num_elements;
+        }
+        size_type max_size() const noexcept
+        {
+            return static_cast<size_type>(-1);
+        }
 
         /*
          * Modifiers
          * */
-        void clear() noexcept;
+        void clear() noexcept
+        {
+            for (auto & bucket : buckets)
+            {
+                node * cur = bucket;
+                node *next;
+                while (cur)
+                {
+                    next = cur->next;
+                    delete_node(cur);
+                    cur = next;
+                }
+                bucket = nullptr;
+            }
+            num_elements = 0;
+        }
 
-        std::pair<iterator, bool> insert(const value_type &value);
-        std::pair<iterator, bool> insert(value_type &&value);
-        iterator insert(const_iterator hint, const value_type &value);
-        iterator insert(const_iterator hint, value_type &&value);
+        std::pair<iterator, bool> insert_unique(const value_type &value);
+        std::pair<iterator, bool> insert_unique(value_type &&value);
+        iterator insert_unique(const_iterator hint, const value_type &value);
+        iterator insert_unique(const_iterator hint, value_type &&value);
 
         template <class InputIt>
-        void insert(InputIt first, InputIt last);
-        void insert(std::initializer_list<value_type> ilist);
+        void insert_unique(InputIt first, InputIt last);
+        void insert_unique(std::initializer_list<value_type> ilist);
+
+        iterator insert_equal(const value_type &value);
+        iterator insert_equal(value_type &&value);
+        iterator insert_equal(const_iterator hint, const value_type &value);
+        iterator insert_equal(const_iterator hint, value_type &&value);
+
+        template <class InputIt>
+        void insert_equal(InputIt first, InputIt last);
+        void insert_equal(std::initializer_list<value_type> ilist);
 
         template <class... Args>
         std::pair<iterator, bool> emplace(Args &&...args);
@@ -279,6 +357,11 @@ namespace stl
         void merge(std::unordered_multiset<Key, H2, P2, Alloc> &source);
         template <class H2, class P2>
         void merge(std::unordered_multiset<Key, H2, P2, Alloc> &&source);
+
+        size_type max_bucket_count() const
+        {
+            return stl_prime_list[stl_num_primes - 1];
+        }
     };
 } // namespace stl
 
