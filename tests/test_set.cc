@@ -12,6 +12,8 @@
 template <typename Set, typename RefSet>
 void test_constructors_assign()
 {
+    printf("=============%s=================\n", __FUNCTION__);
+
     // 1. Default constructor
     Set si1;
     assert(si1.empty() && si1.begin() == si1.end());
@@ -26,37 +28,62 @@ void test_constructors_assign()
 
     // 3. Copy constructor
     Set si3(si2);
-    assert(/*si2 == si3 && */std::equal(si3.begin(), si3.end(), rsi2.begin(), rsi2.end()));
+    assert(/*si2 == si3 && */ std::equal(si3.begin(), si3.end(), rsi2.begin(), rsi2.end()));
     assert(si3.size() == rsi2.size());
 
     // 4. Move constructor
     Set si4(std::move(si3));
-    assert(/*si2 == si4 && */std::equal(si4.begin(), si4.end(), rsi2.begin(), rsi2.end()));
+    assert(/*si2 == si4 && */ std::equal(si4.begin(), si4.end(), rsi2.begin(), rsi2.end()));
     assert(si3.empty());
 
     // 5. Initializer_list constructor
     Set si5{1, 2, 3, 4, 5, 6, 7, 6, 5, 3, 1, 2, 0};
-    assert(/*si2 == si5 && */std::equal(si5.begin(), si5.end(), rsi2.begin(), rsi2.end()));
+    assert(/*si2 == si5 && */ std::equal(si5.begin(), si5.end(), rsi2.begin(), rsi2.end()));
 
     // 6. copy assign
     Set si6;
     assert(si6.empty());
     si6 = si5;
-    assert(/*si2 == si6 && */std::equal(si6.begin(), si6.end(), rsi2.begin(), rsi2.end()));
+    assert(/*si2 == si6 && */ std::equal(si6.begin(), si6.end(), rsi2.begin(), rsi2.end()));
 
     // 7. move assign
     Set si7;
     si7 = std::move(si6);
-    assert(/*si2 == si7 && */std::equal(si7.begin(), si7.end(), rsi2.begin(), rsi2.end()));
+    assert(/*si2 == si7 && */ std::equal(si7.begin(), si7.end(), rsi2.begin(), rsi2.end()));
     assert(si6.empty());
 }
 
-int main()
+template <typename Set, typename RefSet>
+void test_modifiers()
 {
     printf("=============%s=================\n", __FUNCTION__);
+}
 
-    test_constructors_assign<stl::set<int>, std::set<int>>();
-    test_constructors_assign<stl::multiset<int>, std::multiset<int>>();
+template <typename Set, typename RefSet>
+void test_lookup()
+{
+    printf("=============%s=================\n", __FUNCTION__);
+}
+
+template <typename Set, typename RefSet>
+void test_insert_pos()
+{
+    printf("=============%s=================\n", __FUNCTION__);
+}
+
+template <typename Set, typename RefSet>
+void test_all()
+{
+    test_constructors_assign<Set, RefSet>();
+    test_modifiers<Set, RefSet>();
+    test_lookup<Set, RefSet>();
+    test_insert_pos<Set, RefSet>();
+}
+int main()
+{
+    test_all<stl::set<int>, std::set<int>>();
+    test_all<stl::multiset<int>, std::multiset<int>>();
+
     std::cout << "Pass!\n";
 
     return 0;

@@ -48,7 +48,7 @@ test_rbtree: $(TEST)/test_rbtree.cc $(STL)/rbtree.hh $(STL)/vector.hh $(STL)/all
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 
-test_set: $(TEST)/test_set.cc $(STL)/set.hh $(STL)/rbtree.hh $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
+test_set: $(TEST)/test_set.cc $(STL)/set.hh $(STL)/rbtree.hh $(STL)/deque.hh $(STL)/vector.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
 
