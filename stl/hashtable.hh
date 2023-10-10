@@ -394,27 +394,35 @@ namespace stl
             size_type times = 0;
 
             size_type bkt_idx = bkt_num(value);
-            node * cur = buckets[bkt_idx];
+            node *cur = buckets[bkt_idx];
 
-            if (cur)
+            // by default, the nodes with same value are in group
+            while (cur && !equals(cur->val, value))
+                cur = cur->next;
+            while (cur && equals(cur->val, value))
             {
-                // by default, the nodes with same value are in group
-                while (cur && !equals(cur->val, value))
-                    cur = cur->next;
-                while (cur && equals(cur->val, value))
-                {
-                    ++times;
-                    cur = cur->next;
-                }
+                ++times;
+                cur = cur->next;
             }
 
             return times;
         }
-        const_iterator find(const value_type &key) const;
-        bool contains(const value_type &key) const;
-        std::pair<const_iterator, const_iterator>
-        equal_range(const value_type &key) const;
+        const_iterator find(const value_type &value) const
+        {
+            size_type bkt_idx = bkt_num(value);
+            node *cur = buckets[bkt_idx];
 
+            while (cur && !equals(cur->val, value))
+                cur = cur->next;
+            if (cur)
+                return cur ? const_iterator(cur, this) : cend();
+        }
+        bool contains(const value_type &value) const
+        {
+            return find(value) != cend();
+        }
+        std::pair<const_iterator, const_iterator>
+        equal_range(const value_type &value) const;
     };
 
     template <typename Key,
