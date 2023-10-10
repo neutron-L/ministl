@@ -240,6 +240,10 @@ namespace stl
         }
 
         void resize(size_type num_elements_hint);
+        std::pair<iterator, bool> insert_unique_noresize(value_type &&value);
+        iterator insert_equal_noresize(value_type &&value);
+
+        void copy_from(const Hashtable &htb);
 
     public:
         /*
@@ -253,7 +257,10 @@ namespace stl
             initialize_buckets(n);
         }
 
-        Hashtable(const Hashtable &other);
+        Hashtable(const Hashtable &other)
+        {
+            copy_from(other);
+        }
         Hashtable(Hashtable &&other) : buckets(std::move(other.buckets)), num_elements(other.num_elements)
         {
             other.buckets.resize(other.buckets.size(), nullptr);
@@ -331,7 +338,11 @@ namespace stl
             value_type v(value);
             return insert_unique(std::move(v));
         }
-        std::pair<iterator, bool> insert_unique(value_type &&value);
+        std::pair<iterator, bool> insert_unique(value_type &&value)
+        {
+            resize(num_elements + 1);
+            return insert_unique_noresize(std::move(value));
+        }
         iterator insert_unique(const_iterator hint, const value_type &value)
         {
             value_type v(value);
@@ -346,8 +357,16 @@ namespace stl
             insert_unique(ilist.begin(), ilist.end());
         }
 
-        iterator insert_equal(const value_type &value);
-        iterator insert_equal(value_type &&value);
+        iterator insert_equal(const value_type &value)
+        {
+            value_type v(value);
+            return insert_equal(std::move(v));
+        }
+        iterator insert_equal(value_type &&value)
+        {
+            resize(num_elements + 1);
+            return insert_equal_noresize(std::move(value));
+        }
         iterator insert_equal(const_iterator hint, const value_type &value);
         iterator insert_equal(const_iterator hint, value_type &&value);
 
@@ -389,17 +408,17 @@ namespace stl
         /*
          * Lookup
          * */
-        size_type count(const value_type &value) const
+        size_type count(const key_type &key) const
         {
             size_type times = 0;
 
-            size_type bkt_idx = bkt_num(value);
+            size_type bkt_idx = bkt_num_key(key);
             node *cur = buckets[bkt_idx];
 
             // by default, the nodes with same value are in group
-            while (cur && !equals(cur->val, value))
+            while (cur && !equals(get_key(cur->val), key))
                 cur = cur->next;
-            while (cur && equals(cur->val, value))
+            while (cur && equals(get_key(cur->val), key))
             {
                 ++times;
                 cur = cur->next;
@@ -407,22 +426,21 @@ namespace stl
 
             return times;
         }
-        const_iterator find(const value_type &value) const
+        const_iterator find(const key_type &key) const
         {
-            size_type bkt_idx = bkt_num(value);
+            size_type bkt_idx = bkt_num_key(key);
             node *cur = buckets[bkt_idx];
 
-            while (cur && !equals(cur->val, value))
+            while (cur && !equals(get_key(cur->val), value))
                 cur = cur->next;
-            if (cur)
-                return cur ? const_iterator(cur, this) : cend();
+            return const_iterator(cur, this);
         }
-        bool contains(const value_type &value) const
+        bool contains(const key_type &key) const
         {
-            return find(value) != cend();
+            return find(key) != cend();
         }
         std::pair<const_iterator, const_iterator>
-        equal_range(const value_type &value) const;
+        equal_range(const key_type &key) const;
     };
 
     template <typename Key,
@@ -460,7 +478,7 @@ namespace stl
               typename KeyEqual,
               typename Alloc>
     std::pair<typename Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::iterator, bool>
-    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::insert_unique(value_type &&value)
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::insert_unique_noresize(value_type &&value)
     {
         size_type bkt_idx = bkt_num(value);
         bool nofound = true;
@@ -484,7 +502,7 @@ namespace stl
               typename KeyEqual,
               typename Alloc>
     typename Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::iterator
-    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::insert_equal(value_type &&value)
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::insert_equal_noresize(value_type &&value)
     {
         size_type bkt_idx = bkt_num(value);
         node **pnode = &buckets[bkt_idx];
@@ -496,8 +514,43 @@ namespace stl
         *pnode = item;
 
         ++num_elements;
-        return {iterator(*pnode, this), nofound};
+        return iterator(*pnode, this);
     }
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    void
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::copy_from(const Hashtable &htb)
+    {
+        clear();
+        buckets.clear(); 
+
+        buckets.reserve(htb.buckets.size());
+        buckets.insert(buckets.end(), htb.buckets.size(), nullptr);
+
+        size_type bsize = htb.buckets.size();
+        node * cur, *next, *copy;
+        for (size_type i = 0; i < bsize; ++i)
+        {
+            if (cur = htb.buckets[i])
+            {
+                copy = new_node(cur->val);
+                buckets[i] = copy;
+
+                while (cur->next)
+                {
+                    cur = cur->next;
+                    copy->next = new_node(cur->val);
+                    copy = copy->next;
+                }
+            }
+        }
+        num_elements = htb.num_elements;
+    }
+
 } // namespace stl
 
 #endif
