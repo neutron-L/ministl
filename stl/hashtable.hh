@@ -328,13 +328,7 @@ namespace stl
         }
         const_iterator begin() const noexcept
         {
-            if (empty())
-                return end();
-            for (auto &bucket : buckets)
-            {
-                if (bucket)
-                    return const_iterator(bucket, this);
-            }
+            return cbegin();
         }
         const_iterator cbegin() const noexcept
         {
@@ -416,7 +410,7 @@ namespace stl
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void insert_unique(InputIt first, InputIt last)
         {
-            while(first != last)
+            while (first != last)
                 insert_unique(*first++);
         }
         void insert_unique(std::initializer_list<value_type> ilist)
@@ -444,7 +438,7 @@ namespace stl
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void insert_equal(InputIt first, InputIt last)
         {
-            while(first != last)
+            while (first != last)
                 insert_equal(*first++);
         }
         void insert_equal(std::initializer_list<value_type> ilist)
@@ -468,8 +462,8 @@ namespace stl
         iterator erase(const_iterator first, const_iterator last);
         size_type erase(const Key &key);
 
-        void swap(unordered_set &other);
-        void swap(unordered_set &other) noexcept;
+        void swap(Hashtable &other);
+        void swap(Hashtable &other) noexcept;
         node_type extract(const_iterator position);
         node_type extract(const Key &k);
 
@@ -630,6 +624,73 @@ namespace stl
             }
         }
         num_elements = htb.num_elements;
+    }
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    typename Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::iterator
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::erase(const_iterator pos)
+    {
+        node * cur = pos.node;
+        // find the pre
+        size_type bkt_idx = bkt_num(cur->val);
+        node *& first = buckets[bkt_idx];
+
+        // 找到cur的pre node
+        while (first != cur && first->next != cur->val)
+            first = first->next;
+
+        if (first == cur)
+            first = cur->next;
+        else
+            first = nullptr;
+        iterator ret(pos.node, this);
+        ++ret;
+
+        delete_node(cur);
+
+        return ret;
+    }
+
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    typename Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::iterator
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::erase(const_iterator first, const_iterator last)
+    {
+        iterator ret;
+        while (first != last)
+            ret = erase(first++);
+        return ret;
+    }
+
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    typename Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::size_type 
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::erase(const Key &key)
+    {
+        size_type times = 0;
+        iterator it = find(key);
+        if (it == end())
+            return times;
+        
+        while (it != end() && equals(get_key(it->val), key))
+        {
+            ++times;
+            it = erase(it);
+        }
+
+        return times;
     }
 
 } // namespace stl
