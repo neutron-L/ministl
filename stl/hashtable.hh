@@ -287,14 +287,48 @@ namespace stl
         /*
          * Iterator function
          * */
-        iterator begin() noexcept;
-        const_iterator begin() const noexcept;
-        const_iterator begin() const noexcept;
+        iterator begin() noexcept
+        {
+            if (empty())
+                return end();
+            for (auto &bucket : buckets)
+            {
+                if (bucket)
+                    return iterator(bucket, this);
+            }
+        }
+        const_iterator begin() const noexcept
+        {
+            if (empty())
+                return end();
+            for (auto &bucket : buckets)
+            {
+                if (bucket)
+                    return const_iterator(bucket, this);
+            }
+        }
+        const_iterator cbegin() const noexcept
+        {
+            if (empty())
+                return cend();
+            for (auto &bucket : buckets)
+            {
+                if (bucket)
+                    return const_iterator(bucket, this);
+            }
+        }
 
-        iterator end() noexcept;
-        const_iterator end() const noexcept;
+        iterator end() noexcept
+        {
+            return iterator(nullptr, this);
+        }
+        const_iterator end() const noexcept
+        {
+            return const_iterator(nullptr, this);
+        }
         const_iterator cend() const noexcept
         {
+            return const_iterator(nullptr, this);
         }
 
         /*
@@ -315,7 +349,7 @@ namespace stl
 
         /*
          * Modifiers
-         * */
+         *  */
         void clear() noexcept
         {
             for (auto &bucket : buckets)
@@ -526,13 +560,13 @@ namespace stl
     Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::copy_from(const Hashtable &htb)
     {
         clear();
-        buckets.clear(); 
+        buckets.clear();
 
         buckets.reserve(htb.buckets.size());
         buckets.insert(buckets.end(), htb.buckets.size(), nullptr);
 
         size_type bsize = htb.buckets.size();
-        node * cur, *next, *copy;
+        node *cur, *next, *copy;
         for (size_type i = 0; i < bsize; ++i)
         {
             if (cur = htb.buckets[i])
