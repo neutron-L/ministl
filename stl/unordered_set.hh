@@ -163,24 +163,34 @@ namespace stl
         iterator insert(const_iterator hint, const value_type &value);
         iterator insert(const_iterator hint, value_type &&value);
 
-        template <class InputIt>
-        void insert(InputIt first, InputIt last);
-        void insert(std::initializer_list<value_type> ilist);
+        template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
+        void insert(InputIt first, InputIt last)
+        {
+            hashtable.insert(first, last);
+        }
+        void insert(std::initializer_list<value_type> ilist)
+        {
+            hashtable.insert(ilist);
+        }
 
-        template <class... Args>
+        template <typename... Args>
         std::pair<iterator, bool> emplace(Args &&...args);
 
-        template <class... Args>
+        template <typename... Args>
         iterator emplace_hint(const_iterator hint, Args &&...args);
 
-        template <class... Args>
+        template <typename... Args>
         iterator emplace_hint(const_iterator hint, Args &&...args);
         iterator erase(const_iterator pos);
         iterator erase(const_iterator first, const_iterator last);
         size_type erase(const Key &key);
 
-        void swap(unordered_set &other);
-        void swap(unordered_set &other) noexcept;
+        
+        void swap(unordered_set &other) noexcept
+        {
+            hashtable.swap(other.hashtable);
+        }
+
         node_type extract(const_iterator position);
         node_type extract(const Key &k);
 
@@ -196,11 +206,23 @@ namespace stl
         /*
          * Lookup
          * */
-        size_type count(const Key &key) const;
-        const_iterator find(const Key &key) const;
-        bool contains(const Key &key) const;
+        size_type count(const Key &key) const
+        {
+            return hashtable.count(key);
+        }
+        const_iterator find(const Key &key) const
+        {
+            return hashtable.find(key);
+        }
+        bool contains(const Key &key) const
+        {
+            return hashtable.contains(key);
+        }
         std::pair<const_iterator, const_iterator>
-        equal_range(const Key &key) const;
+        equal_range(const Key &key) const
+        {
+            return hashtable.equal_range(key);
+        }
 
         /*
          * Bucket interface
@@ -211,16 +233,34 @@ namespace stl
         local_iterator end(size_type n);
         const_local_iterator end(size_type n) const;
         const_local_iterator cend(size_type n) const;
-        size_type bucket_count() const;
-        size_type max_bucket_count() const;
-        size_type bucket_size(size_type n) const;
-        size_type bucket(const Key &key) const;
+        size_type bucket_count() const
+        {
+            return hashtable.bucket_count();
+        }
+        size_type max_bucket_count() const
+        {
+            return hashtable.max_bucket_count();
+        }
+        size_type bucket_size(size_type n) const
+        {
+            return hashtable.bucket_size(n);
+        }
+        size_type bucket(const Key &key) const
+        {
+            return hashtable.bucket(key);
+        }
 
         /*
          * Observers
          * */
-        hasher hash_function() const;
-        key_equal key_eq() const;
+        hasher hash_function() const
+        {
+            return hashtable.hash_function();
+        }
+        key_equal key_eq() const
+        {
+            return hashtable.key_eq();
+        }
     };
 } // namespace stl
 
