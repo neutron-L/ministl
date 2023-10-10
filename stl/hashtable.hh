@@ -332,12 +332,19 @@ namespace stl
             return insert_unique(std::move(v));
         }
         std::pair<iterator, bool> insert_unique(value_type &&value);
-        iterator insert_unique(const_iterator hint, const value_type &value);
+        iterator insert_unique(const_iterator hint, const value_type &value)
+        {
+            value_type v(value);
+            return insert_unique(hint, std::move(v));
+        }
         iterator insert_unique(const_iterator hint, value_type &&value);
 
-        template <class InputIt>
+        template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void insert_unique(InputIt first, InputIt last);
-        void insert_unique(std::initializer_list<value_type> ilist);
+        void insert_unique(std::initializer_list<value_type> ilist)
+        {
+            insert_unique(ilist.begin(), ilist.end());
+        }
 
         iterator insert_equal(const value_type &value);
         iterator insert_equal(value_type &&value);
@@ -378,6 +385,36 @@ namespace stl
         {
             return stl_prime_list[stl_num_primes - 1];
         }
+
+        /*
+         * Lookup
+         * */
+        size_type count(const value_type &value) const
+        {
+            size_type times = 0;
+
+            size_type bkt_idx = bkt_num(value);
+            node * cur = buckets[bkt_idx];
+
+            if (cur)
+            {
+                // by default, the nodes with same value are in group
+                while (cur && !equals(cur->val, value))
+                    cur = cur->next;
+                while (cur && equals(cur->val, value))
+                {
+                    ++times;
+                    cur = cur->next;
+                }
+            }
+
+            return times;
+        }
+        const_iterator find(const value_type &key) const;
+        bool contains(const value_type &key) const;
+        std::pair<const_iterator, const_iterator>
+        equal_range(const value_type &key) const;
+
     };
 
     template <typename Key,
