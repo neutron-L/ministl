@@ -240,6 +240,7 @@ namespace stl
         }
 
         void resize(size_type num_elements_hint);
+
         std::pair<iterator, bool> insert_unique_noresize(value_type &&value);
         iterator insert_equal_noresize(value_type &&value);
 
@@ -273,16 +274,44 @@ namespace stl
         ~Hashtable()
         {
             clear();
-            num_elements = 0;
-            buckets.clear();
         }
 
         /*
          * assignment operation
          * */
-        Hashtable &operator=(const Hashtable &other);
-        Hashtable &operator=(Hashtable &&other) noexcept;
-        Hashtable &operator=(std::initializer_list<value_type> ilist);
+        Hashtable &operator=(const Hashtable &other)
+        {
+            clear();
+            copy_from(other);
+
+            return *this;
+        }
+
+        Hashtable &operator=(Hashtable &&other) noexcept
+        {
+            clear();
+            buckets = std::move(other.buckets);
+
+            size_type bsize = other.buckets.size();
+            for (size_type i = 0; i < bsize; ++i)
+            {
+                buckets[i] = other.buckets[i];
+                other.buckets[i] = nullptr;
+            }
+
+            num_elements = other.num_elements;
+            other.num_elements = 0;
+
+            return *this;
+        }
+        Hashtable &operator=(std::initializer_list<value_type> ilist)
+        {
+            clear();
+
+            insert(ilist.begin(), ilist.end());
+
+            return *this;
+        }
 
         /*
          * Iterator function
@@ -385,7 +414,11 @@ namespace stl
         iterator insert_unique(const_iterator hint, value_type &&value);
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
-        void insert_unique(InputIt first, InputIt last);
+        void insert_unique(InputIt first, InputIt last)
+        {
+            while(first != last)
+                insert_unique(*first++);
+        }
         void insert_unique(std::initializer_list<value_type> ilist)
         {
             insert_unique(ilist.begin(), ilist.end());
@@ -401,15 +434,30 @@ namespace stl
             resize(num_elements + 1);
             return insert_equal_noresize(std::move(value));
         }
-        iterator insert_equal(const_iterator hint, const value_type &value);
+        iterator insert_equal(const_iterator hint, const value_type &value)
+        {
+            value_type v(value);
+            return insert_equal(hint, std::move(v));
+        }
         iterator insert_equal(const_iterator hint, value_type &&value);
 
-        template <class InputIt>
-        void insert_equal(InputIt first, InputIt last);
-        void insert_equal(std::initializer_list<value_type> ilist);
+        template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
+        void insert_equal(InputIt first, InputIt last)
+        {
+            while(first != last)
+                insert_equal(*first++);
+        }
+        void insert_equal(std::initializer_list<value_type> ilist)
+        {
+            insert_equal(ilist.begin(), ilist.end());
+        }
 
         template <typename... Args>
-        std::pair<iterator, bool> emplace(Args &&...args);
+        std::pair<iterator, bool> emplace(Args &&...args)
+        {
+            value v(std::forward<Args>(args)...);
+            return insert_unique(std::move(v));
+        }
 
         template <typename... Args>
         iterator emplace_hint(const_iterator hint, Args &&...args);
@@ -559,8 +607,7 @@ namespace stl
     void
     Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::copy_from(const Hashtable &htb)
     {
-        clear();
-        buckets.clear();
+        // by default, all elements are cleared, that is, clear() was called before
 
         buckets.reserve(htb.buckets.size());
         buckets.insert(buckets.end(), htb.buckets.size(), nullptr);
