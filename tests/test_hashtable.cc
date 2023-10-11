@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <cassert>
 
 #include "deque.hh"
 #include "hashtable.hh"
@@ -22,16 +23,37 @@ void test_constructors_assign()
     Hashtable ht1;
     assert(ht1.size() == 0);
 
-    // 2. 
+    // 2. init list insert
+    ht1.insert_unique(elems.begin(), elems.end());
+    for (auto & elem : elems)
+        assert(*ht1.find(elem) == elem);
 
+    // 3. Copy constructor
+    Hashtable ht2 = ht1;
+    assert(ht2 == ht1);
+
+     // 4. Move constructor
+    Hashtable ht3 = std::move(ht2);
+    assert(ht3 == ht1 && ht2.empty());
+    
+    ht2.insert_unique(elems.begin(), elems.end());
+    assert(ht3 == ht1 && ht2 == ht1);
+
+    // 5. copy assign
+    Hashtable ht4;
+    assert(ht4.empty() && ht4.begin() ==ht4.end());
+    ht4 = ht2;
+    assert(ht4 == ht3);
+
+    // 6. move assign
+    Hashtable ht5;
+    ht5 = std::move(ht2);
+    assert(ht5 == ht3 && ht2.empty());
 }
 void test_modifiers()
 {
 }
 void test_lookup()
-{
-}
-void test_insert_pos()
 {
 }
 

@@ -14,6 +14,9 @@
 
 #include "vector.hh"
 
+using std::cout;
+using std::endl;
+
 namespace stl
 {
     template <typename Key,
@@ -65,6 +68,14 @@ namespace stl
         pointer operator->() const { return &(operator*()); }
         self &operator++()
         {
+            size_type bkt_idx = ht->bkt_num(cur->val);
+
+            cur = cur->next;
+            while (!cur && ++bkt_idx < ht->bucket_count())
+            {
+                cur = ht->buckets[bkt_idx];
+            }
+            return *this;
         }
         self operator++(int)
         {
@@ -124,6 +135,13 @@ namespace stl
         pointer operator->() const { return &(operator*()); }
         self &operator++()
         {
+            size_type bkt_idx = ht->bkt_num(cur->val);
+            cur = cur->next;
+            while (!cur && ++bkt_idx < ht->bucket_count())
+            {
+                cur = ht->buckets[bkt_idx];
+            }
+            return *this;
         }
         self operator++(int)
         {
@@ -151,6 +169,9 @@ namespace stl
               typename Alloc = alloc>
     class Hashtable
     {
+        friend class Hashtable_iterator<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
+        friend class Hashtable_const_iterator<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
+
     public:
         using key_type = Key;
         using value_type = Value;
@@ -169,6 +190,7 @@ namespace stl
         // using const_local_iterator = ht_type::const_local_iterator;
 
     private:
+        using self = Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>;
         using node = Hashtable_node<Value>;
         using hashtable_node_allocator = simple_alloc<node, Alloc>;
 
@@ -312,14 +334,14 @@ namespace stl
 
             return *this;
         }
-        Hashtable &operator=(std::initializer_list<value_type> ilist)
-        {
-            clear();
+        // Hashtable &operator=(std::initializer_list<value_type> ilist)
+        // {
+        //     clear();
 
-            insert(ilist.begin(), ilist.end());
+        //     insert(ilist.begin(), ilist.end());
 
-            return *this;
-        }
+        //     return *this;
+        // }
 
         /*
          * Iterator function
@@ -333,6 +355,7 @@ namespace stl
                 if (bucket)
                     return iterator(bucket, this);
             }
+            return iterator(nullptr, this);
         }
         const_iterator begin() const noexcept
         {
@@ -345,8 +368,9 @@ namespace stl
             for (auto &bucket : buckets)
             {
                 if (bucket)
-                    return const_iterator(bucket, this);
+                    return const_iterator(bucket, const_cast<self *>(this));
             }
+            return const_iterator(nullptr, const_cast<self *>(this));
         }
 
         iterator end() noexcept
@@ -355,11 +379,11 @@ namespace stl
         }
         const_iterator end() const noexcept
         {
-            return const_iterator(nullptr, this);
+            return cend();
         }
         const_iterator cend() const noexcept
         {
-            return const_iterator(nullptr, this);
+            return const_iterator(nullptr, const_cast<self *>(this));
         }
 
         /*
@@ -511,10 +535,7 @@ namespace stl
         // template <typename H2, typename P2>
         // void merge(std::unordered_multiset<Key, H2, P2, Alloc> &&source);
 
-        size_type max_bucket_count() const
-        {
-            return stl_prime_list[stl_num_primes - 1];
-        }
+        
 
         /*
          * Lookup
@@ -544,7 +565,7 @@ namespace stl
 
             while (cur && !equals(get_key(cur->val), key))
                 cur = cur->next;
-            return const_iterator(cur, this);
+            return const_iterator(cur, const_cast<self *>(this));
         }
         bool contains(const key_type &key) const
         {
@@ -552,6 +573,35 @@ namespace stl
         }
         std::pair<const_iterator, const_iterator>
         equal_range(const key_type &key) const;
+
+        /*
+         * Bucket interface
+         * */
+
+        size_type bucket_count() const
+        {
+            return buckets.size();
+        }
+        size_type max_bucket_count() const
+        {
+            return stl_prime_list[stl_num_primes - 1];
+        }
+        size_type bucket_size(size_type n) const
+        {
+            node * cur = buckets[n];
+            size_type size{0};
+
+            while (cur)
+            {
+                cur = cur->next;
+                ++size;
+            }
+            return size;
+        }
+        size_type bucket(const Key &key) const
+        {
+            return bkt_num_key(key);
+        }
     };
 
     template <typename Key,
@@ -595,7 +645,7 @@ namespace stl
         bool nofound = true;
         node **pnode = &buckets[bkt_idx];
         while (*pnode && !equals(n->val, (*pnode)->val))
-            pnode = &((*pnode)->val);
+            pnode = &((*pnode)->next);
         if (!(*pnode))
         {
             *pnode = n;
@@ -641,7 +691,7 @@ namespace stl
         buckets.insert(buckets.end(), htb.buckets.size(), nullptr);
 
         size_type bsize = htb.buckets.size();
-        node *cur, *next, *copy;
+        node *cur, *copy;
         for (size_type i = 0; i < bsize; ++i)
         {
             if (cur = htb.buckets[i])
@@ -674,15 +724,15 @@ namespace stl
         node *&first = buckets[bkt_idx];
 
         // 找到cur的pre node
-        while (first != cur && first->next != cur->val)
+        while (first != cur && first->next != cur)
             first = first->next;
 
         if (first == cur)
             first = cur->next;
         else
-            first = nullptr;
-        iterator ret(pos.node, this);
-        ++ret;
+            first->next = cur->next;
+        iterator ret(first->next, this);
+        --num_elements;
 
         delete_node(cur);
 
@@ -714,9 +764,7 @@ namespace stl
     Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::erase(const Key &key)
     {
         size_type times = 0;
-        iterator it = find(key);
-        if (it == end())
-            return times;
+        const_iterator it = find(key);
 
         while (it != end() && equals(get_key(it->val), key))
         {
@@ -725,6 +773,69 @@ namespace stl
         }
 
         return times;
+    }
+
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    void
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::swap(Hashtable &other)
+    {
+        std::swap(buckets, other.buckets);
+        std::swap(num_elements, other.num_elements);
+    }
+
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    void
+    Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::swap(Hashtable &&other) noexcept
+    {
+        clear();
+        buckets(std::move(other.buckets));
+        num_elements = other.num_elements;
+        other.buckets.resize(other.num_elements, nullptr);
+        other.num_elements = 0;
+    }
+
+    /*
+     * Compare
+     * */
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    bool
+    operator==(const Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc> &lhs,
+               const Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc> &rhs)
+    {
+        if (lhs.size() != rhs.size())
+            return false;
+        for (auto &elem : lhs)
+            if (lhs.count(elem) != rhs.count(elem))
+                return false;
+        return true;
+    }
+
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    bool
+    operator!=(const Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc> &lhs,
+               const Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc> &rhs)
+    {
+        return !(lhs == rhs);
     }
 
 } // namespace stl
