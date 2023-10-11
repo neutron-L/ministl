@@ -16,6 +16,14 @@
 
 namespace stl
 {
+    template <typename Key,
+              typename Value,
+              typename Hash,
+              typename ExtractKey,
+              typename KeyEqual,
+              typename Alloc>
+    class Hashtable;
+
     template <typename Value>
     struct Hashtable_node
     {
@@ -25,7 +33,7 @@ namespace stl
 
     template <typename Key,
               typename Value,
-              typename Hash = std::hash<Key>,
+              typename Hash,
               typename ExtractKey,
               typename KeyEqual = std::equal_to<Key>,
               typename Alloc = alloc>
@@ -78,7 +86,7 @@ namespace stl
 
     template <typename Key,
               typename Value,
-              typename Hash = std::hash<Key>,
+              typename Hash,
               typename ExtractKey,
               typename KeyEqual = std::equal_to<Key>,
               typename Alloc = alloc>
@@ -101,7 +109,7 @@ namespace stl
         node *cur{};
         hashtable *ht;
 
-        iterator const_cast()
+        iterator ht_const_cast()
         {
             return iterator(cur, ht);
         }
@@ -137,7 +145,7 @@ namespace stl
 
     template <typename Key,
               typename Value,
-              typename Hash = std::hash<Key>,
+              typename Hash,
               typename ExtractKey,
               typename KeyEqual = std::equal_to<Key>,
               typename Alloc = alloc>
@@ -172,7 +180,7 @@ namespace stl
         size_type num_elements{};
 
         static const int stl_num_primes = 28;
-        static const unsigned long stl_prime_list[stl_num_primes] =
+        static constexpr unsigned long stl_prime_list[stl_num_primes] =
             {
                 53, 97, 193, 389, 769,
                 1543, 3079, 6151, 12289, 24593,
@@ -253,7 +261,7 @@ namespace stl
         Hashtable(size_type n = 0,
                   const Hash &hf = Hash(),
                   const key_equal &eq = key_equal())
-            : hash(hf), equal(eq), get_key(ExtractKey()), num_elements(n)
+            : hash(hf), equals(eq), get_key(ExtractKey()), num_elements(n)
         {
             initialize_buckets(n);
         }
@@ -405,7 +413,7 @@ namespace stl
         iterator insert_unique(const_iterator hint, const value_type &value)
         {
             (void)hint;
-            return insert_unique(v);
+            return insert_unique(value);
         }
         iterator insert_unique(const_iterator hint, value_type &&value)
         {
@@ -487,9 +495,9 @@ namespace stl
         size_type erase(const Key &key);
 
         void swap(Hashtable &other);
-        void swap(Hashtable &other) noexcept;
-        node_type extract(const_iterator position);
-        node_type extract(const Key &k);
+        void swap(Hashtable &&other) noexcept;
+        // node_type extract(const_iterator position);
+        // node_type extract(const Key &k);
 
         // template <typename H2, typename P2>
         // void merge(std::unordered_set<Key, H2, P2, Alloc> &source);
@@ -531,7 +539,7 @@ namespace stl
             size_type bkt_idx = bkt_num_key(key);
             node *cur = buckets[bkt_idx];
 
-            while (cur && !equals(get_key(cur->val), value))
+            while (cur && !equals(get_key(cur->val), key))
                 cur = cur->next;
             return const_iterator(cur, this);
         }
@@ -569,7 +577,7 @@ namespace stl
                 first = bucket;
             }
         }
-        hashtable.swap(new_buckets);
+        buckets.swap(new_buckets);
     }
     template <typename Key,
               typename Value,
@@ -604,13 +612,13 @@ namespace stl
     typename Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::iterator
     Hashtable<Key, Value, Hash, ExtractKey, KeyEqual, Alloc>::insert_equal_node(node *n)
     {
-        size_type bkt_idx = bkt_num(value);
+        size_type bkt_idx = bkt_num(n->val);
         node **pnode = &buckets[bkt_idx];
 
-        while (*pnode && !equals(value, (*pnode)->val))
+        while (*pnode && !equals(n->val, (*pnode)->val))
             pnode = &((*pnode)->val);
         n->next = *pnode;
-        *pnode = item;
+        *pnode = n;
 
         ++num_elements;
         return iterator(*pnode, this);
