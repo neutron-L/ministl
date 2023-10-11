@@ -467,28 +467,31 @@ namespace stl
         }
 
         template <typename... Args>
-        std::pair<iterator, bool> emplace(Args &&...args)
+        std::pair<iterator, bool> emplace_unique(Args &&...args)
         {
             resize(num_elements + 1);
-            // size_type bkt_idx = bkt_num(value);
-            // bool nofound = true;
-            // node **pnode = &buckets[bkt_idx];
-            // while (*pnode && !equals(value, (*pnode)->val))
-            //     pnode = &((*pnode)->val);
-            // if (!(*pnode))
-            // {
-            //     *pnode = new_node(std::forward<Args>(args)...);
-            //     ++num_elements;
-            // }
-            // else
-            //     nofound = false;
-            // return {iterator(*pnode, this), nofound};
+            node *n = new_node(std::forward<Args>(args)...);
+            return insert_unique_node(n);
         }
 
         template <typename... Args>
-        iterator emplace_hint(const_iterator hint, Args &&...args)
+        iterator emplace_unique_hint(const_iterator hint, Args &&...args)
         {
-            return emplace(std::forward<Args>(args)...).first;
+            return emplace_unique(std::forward<Args>(args)...).first;
+        }
+
+        template <typename... Args>
+        std::pair<iterator, bool> emplace_equal(Args &&...args)
+        {
+            resize(num_elements + 1);
+            node *n = new_node(std::forward<Args>(args)...);
+            return insert_equal_node(n);
+        }
+
+        template <typename... Args>
+        iterator emplace_equal_hint(const_iterator hint, Args &&...args)
+        {
+            return emplace_equal(std::forward<Args>(args)...).first;
         }
         iterator erase(const_iterator pos);
         iterator erase(const_iterator first, const_iterator last);
