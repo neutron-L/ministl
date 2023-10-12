@@ -185,7 +185,7 @@ namespace stl
         template <class... Args>
         std::pair<iterator, bool> emplace(Args &&...args)
         {
-            return tree.emplace(std::forward<Args>(args)...);
+            return tree.emplace_unique(std::forward<Args>(args)...);
         }
 
         // iterator erase(iterator pos)
@@ -427,7 +427,7 @@ namespace stl
         template <class... Args>
         std::pair<iterator, bool> emplace(Args &&...args)
         {
-            return tree.emplace(std::forward<Args>(args)...);
+            return tree.emplace_equal(std::forward<Args>(args)...);
         }
 
         // iterator erase(iterator pos)
