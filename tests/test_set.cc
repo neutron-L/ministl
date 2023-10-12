@@ -9,6 +9,9 @@
 #include "deque.hh"
 #include "set.hh"
 
+using std::cout;
+using std::endl;
+
 template <typename Set, typename RefSet>
 void test_constructors_assign()
 {
@@ -53,20 +56,143 @@ void test_constructors_assign()
     assert(si6.empty());
 }
 
+void test_insert_unique()
+{
+    printf("=============%s=================\n", __FUNCTION__);
+    const int N = 1000;
+    stl::set<int> si;
+    std::set<int> rsi;
+
+    /*
+     * Insert
+     * */
+    // 1. Random Insert
+    auto tmp = N;
+    while (tmp--)
+    {
+        int elem = rand() % 100;
+        auto r1 = si.insert(elem);
+        auto r2 = rsi.insert(elem);
+        assert(*r1.first == *r2.first && r1.second == r2.second);
+    }
+    assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
+}
+
+void test_insert_multi()
+{
+    printf("=============%s=================\n", __FUNCTION__);
+    const int N = 1000;
+    stl::multiset<int> si;
+    std::multiset<int> rsi;
+
+    /*
+     * Insert
+     * */
+    // 1. Insert
+    auto tmp = N;
+    while (tmp--)
+    {
+        int elem = rand() % 100;
+        auto r1 = si.insert(elem);
+        auto r2 = rsi.insert(elem);
+        assert(*r1 == *r2);
+    }
+    assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
+}
+
 template <typename Set, typename RefSet>
 void test_modifiers()
 {
     printf("=============%s=================\n", __FUNCTION__);
+
+    Set si;
+    RefSet rsi;
+
+    /*
+     * Insert
+     * */
+    // 1. Insert Range
+    stl::vector<int> vi{1, 3, 2, 4, 5, 76, 7, 567, 45, 3, 2, 2};
+    si.insert(vi.begin(), vi.end());
+    rsi.insert(vi.begin(), vi.end());
+    assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
+
+    // 2. Insert ilist
+    si.insert({1, 2, 3, 4, 5, 6, 7, 6, 5, 3, 1, 2, 0});
+    rsi.insert({1, 2, 3, 4, 5, 6, 7, 6, 5, 3, 1, 2, 0});
+    assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
+
+    // 3. clear
+    auto tsi = si;
+    auto trsi = rsi;
+    si.clear();
+    rsi.clear();
+    assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
+
+    si = tsi;
+    rsi = trsi;
+
+    // 4. insert pos
+    auto iter = si.begin();
+    auto riter = rsi.begin();
+
+    int n = si.size();
+    for (int i = 0; i < n; ++i)
+    {
+        // insert当前值
+        assert(*si.insert(iter, *iter) == *rsi.insert(riter, *riter));
+
+        // insert前驱值
+        if (iter != si.begin())
+        {
+            assert(riter != rsi.begin());
+            auto ix = iter;
+            --ix;
+            auto iy = riter;
+            --iy;
+            assert(*si.insert(iter, *ix) == *rsi.insert(riter, *iy));
+        }
+        // insert后继值
+        if (iter != --si.end())
+        {
+            assert(riter != --rsi.end());
+            auto ix = iter;
+            ++ix;
+            auto iy = riter;
+            ++iy;
+            assert(*si.insert(iter, *ix) == *rsi.insert(riter, *iy));
+        }
+        assert(stl::distance(si.begin(), iter) == stl::distance(rsi.begin(), riter));
+
+        iter = si.begin();
+        stl::advance(iter, i);
+        riter = rsi.begin();
+        stl::advance(riter, i);
+    }
+    assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
+
+
+    /*
+     * Erase
+     * */
+    // 1. erase range
+    auto f1 = si.begin();
+    auto l1 = f1;
+    stl::advance(l1, si.size() / 2);
+    auto f2 = rsi.begin();
+    auto l2 = f2;
+    stl::advance(l2, rsi.size() / 2);
+
+    assert(*si.erase(f1, l1) == *rsi.erase(f2, l2));
+    assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
+    
+    // 2. erase pos
+
+    // 3. erase key
 }
 
 template <typename Set, typename RefSet>
 void test_lookup()
-{
-    printf("=============%s=================\n", __FUNCTION__);
-}
-
-template <typename Set, typename RefSet>
-void test_insert_pos()
 {
     printf("=============%s=================\n", __FUNCTION__);
 }
@@ -77,13 +203,13 @@ void test_all()
     test_constructors_assign<Set, RefSet>();
     test_modifiers<Set, RefSet>();
     test_lookup<Set, RefSet>();
-    test_insert_pos<Set, RefSet>();
 }
 int main()
 {
+    test_insert_unique();
+    test_insert_multi();
     test_all<stl::set<int>, std::set<int>>();
     test_all<stl::multiset<int>, std::multiset<int>>();
-
     std::cout << "Pass!\n";
 
     return 0;
