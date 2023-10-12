@@ -202,8 +202,9 @@ void test_modifiers()
     assert(si.empty() && rsi.empty());
 
     // 3. erase key
-    si = tsi;
+    si.swap(tsi);
     rsi = trsi;
+    assert(tsi.empty());
     std::set<int> s(si.begin(), si.end());
     for (auto & elem : s)
         assert(si.erase(elem) == rsi.erase(elem));

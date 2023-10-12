@@ -651,8 +651,8 @@ namespace stl
         }
         void swap(Rb_tree &other) noexcept
         {
-            swap(header, other.header);
-            swap(node_count, other.node_count);
+            std::swap(header, other.header);
+            std::swap(node_count, other.node_count);
         }
 
         /*
