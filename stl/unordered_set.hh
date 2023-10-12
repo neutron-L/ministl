@@ -100,6 +100,9 @@ namespace stl
         }
         unordered_set &operator=(std::initializer_list<value_type> ilist)
         {
+            hashtable.clear();
+            hashtable.insert_unqiue(ilist);
+            
             return *this;
         }
 

@@ -52,13 +52,35 @@ void test_constructors_assign()
 }
 void test_modifiers()
 {
+    printf("=============%s=================\n", __FUNCTION__);
+    using Hashtable = stl::Hashtable<int, int, std::hash<int>, std::_Identity<int>>;
+
+    stl::deque<int> elems{10, 7, 8, 15, 5, 6, 11, 13, 12};
+
+    Hashtable ht1;
+    ht1.insert_equal(elems.begin(), elems.end());
+
+    // 1. Default constructor
+   
 }
 void test_lookup()
 {
+    printf("=============%s=================\n", __FUNCTION__);
+    using Hashtable = stl::Hashtable<int, int, std::hash<int>, std::_Identity<int>>;
+
+    stl::deque<int> elems{9,8,7};
+
+    Hashtable ht1;
+    ht1.insert_equal(elems.begin(), elems.end());
+
+    // 1. Default constructor
 }
 
 int main()
 {
     test_constructors_assign();
+    test_modifiers();
+    test_lookup();
+
     return 0;
 }
