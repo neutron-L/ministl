@@ -211,18 +211,27 @@ namespace stl
         static link_type get_node() { return rb_tree_node_allocator::allocate(); }
         static void put_node(link_type p) { rb_tree_node_allocator::deallocate(p); }
 
-        link_type create_node(const value_type &val)
+        link_type create_node(const value_type & value)
         {
             link_type node = get_node();
-            stl::construct(&node->value_field, val);
+            stl::construct(&node->value_field, value);
 
             return node;
         }
 
-        link_type create_node(value_type &&val)
+        link_type create_node(value_type && value)
         {
             link_type node = get_node();
-            stl::construct(&node->value_field, std::move(val));
+            stl::construct(&node->value_field, std::move(value));
+
+            return node;
+        }
+
+        template <class... Args>
+        link_type create_node(Args &&...args)
+        {
+            link_type node = get_node();
+            stl::construct(&node->value_field, std::forward<Args>(args)...);
 
             return node;
         }
@@ -327,14 +336,14 @@ namespace stl
         std::pair<base_ptr, base_ptr> get_insert_equal_pos(const key_type &);
         std::pair<base_ptr, base_ptr> get_insert_hint_equal_pos(const_iterator, const key_type &);
 
-        iterator insert_equal_lower(value_type &&);
+        iterator insert_equal_lower(link_type);
 
     private:
         // 通过判断black height，验证红黑树是否合法
         // 返回一个pair{balck height, is valid}
         static std::pair<int, bool> isValid(base_ptr);
-        iterator insert(link_type, link_type, value_type &&);
-        iterator insert_lower(link_type, value_type &&);
+        iterator insert(link_type, link_type, link_type);
+        iterator insert_lower(link_type, link_type);
         void insert_rebalance(bool, link_type, link_type, base_ptr &);
         void transplant(base_ptr x, base_ptr y);
         /*
@@ -505,55 +514,40 @@ namespace stl
 
         std::pair<iterator, bool> insert_unique(const value_type &value)
         {
-            // value_type v(std::move(value));
-            value_type v(value);
-            return insert_unique(std::move(v));
+            link_type node = create_node(value);
+            auto res = get_insert_unique_pos(KeyOfValue()(node->value_field));
+            if (res.second)
+                return {insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), node), true};
+            return {iterator(static_cast<link_type>(res.first)), false};
         }
 
         std::pair<iterator, bool> insert_unique(value_type &&value)
         {
-            auto res = get_insert_unique_pos(KeyOfValue()(value));
+            link_type node = create_node(std::move(value));
+
+            auto res = get_insert_unique_pos(KeyOfValue()(node->value_field));
             if (res.second)
-                return {insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value)), true};
+                return {insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), node), true};
             return {iterator(static_cast<link_type>(res.first)), false};
         }
 
         iterator insert_unique(const_iterator pos, const value_type &value)
         {
-            value_type v(value);
-            return insert_unique(pos, std::move(v));
+            link_type node = create_node(value);
+
+            auto res = get_insert_hint_unique_pos(pos, KeyOfValue()(node->value_field));
+            if (res.second)
+                return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), node);
+            return iterator(static_cast<link_type>(res.first));
         }
         iterator insert_unique(const_iterator pos, value_type &&value)
         {
-            auto res = get_insert_hint_unique_pos(pos, KeyOfValue()(value));
+            link_type node = create_node(std::move(value));
+
+            auto res = get_insert_hint_unique_pos(pos, KeyOfValue()(node->value_field));
             if (res.second)
-                return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value));
+                return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), node);
             return iterator(static_cast<link_type>(res.first));
-        }
-
-        iterator insert_equal(const value_type &value)
-        {
-            value_type v(value);
-            return insert_equal(std::move(v));
-        }
-
-        iterator insert_equal(value_type &&value)
-        {
-            auto res = get_insert_equal_pos(KeyOfValue()(value));
-            return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value));
-        }
-
-        iterator insert_equal(const_iterator pos, const value_type &value)
-        {
-            value_type v(std::move(value));
-            return insert_equal(pos, std::move(v));
-        }
-        iterator insert_equal(const_iterator pos, value_type &&value)
-        {
-            auto res = get_insert_hint_equal_pos(pos, KeyOfValue()(value));
-            if (res.second)
-                return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), std::move(value));
-            return insert_equal_lower(std::move(value));
         }
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
@@ -565,6 +559,50 @@ namespace stl
                 ++first;
             }
         }
+        template <class... Args>
+        std::pair<iterator, bool> emplace_unique(Args &&...args)
+        {
+            link_type node = create_node(std::forward<args>(args)...);
+            auto res = get_insert_unique_pos(KeyOfValue()(node->value_field));
+            if (res.second)
+                return {insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), node), true};
+            return {iterator(static_cast<link_type>(res.first)), false};
+        }
+
+        iterator insert_equal(const value_type &value)
+        {
+            link_type node = create_node(value);
+
+            auto res = get_insert_equal_pos(KeyOfValue()(node->value_field));
+            return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), node);
+        }
+
+        iterator insert_equal(value_type &&value)
+        {
+            link_type node = create_node(std::move(value));
+
+            auto res = get_insert_equal_pos(KeyOfValue()(node->value_field));
+            return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), node);
+        }
+
+        iterator insert_equal(const_iterator pos, const value_type &value)
+        {
+            link_type node = create_node(value);
+
+            auto res = get_insert_hint_equal_pos(pos, KeyOfValue()(node->value_field));
+            if (res.second)
+                return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), node);
+            return insert_equal_lower(node);
+        }
+        iterator insert_equal(const_iterator pos, value_type &&value)
+        {
+            link_type node = create_node(std::move(value));
+
+            auto res = get_insert_hint_equal_pos(pos, KeyOfValue()(node->value_field));
+            if (res.second)
+                return insert(static_cast<link_type>(res.first), static_cast<link_type>(res.second), node);
+            return insert_equal_lower(node);
+        }
 
         template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
         void insert_equal(InputIt first, InputIt last)
@@ -574,6 +612,12 @@ namespace stl
                 insert_equal(*first);
                 ++first;
             }
+        }
+
+        template <class... Args>
+        std::pair<iterator, bool> emplace_equal(Args &&...args)
+        {
+            // return tree.(std::forward<Args>(args)...);
         }
 
         iterator erase(iterator pos)
@@ -1002,7 +1046,7 @@ namespace stl
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
     typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_equal_lower(value_type &&value)
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_equal_lower(link_type node)
     {
         base_ptr y = header;
         base_ptr x = root();
@@ -1010,14 +1054,13 @@ namespace stl
         while (x)
         {
             y = x;
-            if (!key_compare(key(x), KeyOfValue()(value)))
+            if (!key_compare(key(x), KeyOfValue()(node->value_field)))
                 x = left(x);
             else
                 x = right(x);
         }
 
-
-        return insert_lower(static_cast<link_type>(y), std::move(value));
+        return insert_lower(static_cast<link_type>(y), node);
     }
 
     template <typename Key, typename Value, typename KeyOfValue,
@@ -1053,11 +1096,9 @@ namespace stl
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
     typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(link_type x, link_type y, value_type &&value)
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert(link_type x, link_type y, link_type node)
     {
-        link_type node = create_node(std::move(value));
-
-        bool insert_left = (y == header || x != nullptr || key_compare(KeyOfValue()(value), key(y)));
+        bool insert_left = (y == header || x != nullptr || key_compare(KeyOfValue()(node->value_field), key(y)));
         insert_rebalance(insert_left, node, y, header->parent);
         ++node_count;
 
@@ -1068,11 +1109,9 @@ namespace stl
     template <typename Key, typename Value, typename KeyOfValue,
               typename Compare, typename Alloc>
     typename Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::iterator
-    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_lower(link_type y, value_type &&value)
+    Rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::insert_lower(link_type y, link_type node)
     {
-        link_type node = create_node(std::move(value));
-
-        bool insert_left = (y == header || !key_compare(key(y), KeyOfValue()(value)));
+        bool insert_left = (y == header || !key_compare(key(y), KeyOfValue()(node->value_field)));
         insert_rebalance(insert_left, node, y, header->parent);
         ++node_count;
 
