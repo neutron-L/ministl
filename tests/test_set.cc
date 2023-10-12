@@ -171,7 +171,6 @@ void test_modifiers()
     }
     assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
 
-
     /*
      * Erase
      * */
@@ -185,10 +184,30 @@ void test_modifiers()
 
     assert(*si.erase(f1, l1) == *rsi.erase(f2, l2));
     assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
-    
+
     // 2. erase pos
+    n = si.size();
+    iter = si.begin();
+    riter = rsi.begin();
+    for (int i = 0; i < n; ++i)
+    {
+        iter = si.erase(iter);
+        riter = rsi.erase(riter);
+        if (iter != si.end())
+        {
+            assert(riter != rsi.end());
+            assert(*iter == *riter);
+        }
+    }
+    assert(si.empty() && rsi.empty());
 
     // 3. erase key
+    si = tsi;
+    rsi = trsi;
+    std::set<int> s(si.begin(), si.end());
+    for (auto & elem : s)
+        assert(si.erase(elem) == rsi.erase(elem));
+    assert(std::equal(si.begin(), si.end(), rsi.begin()) && si.size() == rsi.size());
 }
 
 template <typename Set, typename RefSet>
