@@ -16,7 +16,7 @@ STL库中的常见容器和算法的实现，主要包括四部分：
 - deque             
 
 ### Associative 
-- unordered_set        (TODO)
+- unordered_set        
 - unordered_multiset   (TODO)
 - unordered_map        (TODO)
 - unordered_multimap   (TODO)
@@ -24,7 +24,7 @@ STL库中的常见容器和算法的实现，主要包括四部分：
 ### Unordered associative
 - set                  
 - multiset             
-- map                  (TODO)
+- map                  
 - multimap             (TODO)
 
 ### Adaptors
