@@ -26,21 +26,24 @@ namespace stl {
  * 使用RCU机制实现线程安全版本的ths_vector
  * 考虑到并发的性能，仅支持只读迭代器
  * */
-template <typename T, typename Alloc = alloc> class ths_vector {
+template <typename T, typename Alloc = alloc> 
+class ths_vector {
   public:
+    using vector = std::vector<T>;
+
     /* Member types */
-    using value_type      = stl::vector<T>::value_type;
+    using value_type      = vector::value_type;
     using allocator_type  = Alloc;
     using size_type       = size_t;
     using difference_type = ptrdiff_t;
 
-    using reference       = stl::vector<T>::reference;
-    using const_reference = stl::vector<T>::const_reference;
-    using pointer         = stl::vector<T>::pointer;
-    using const_pointer   = stl::vector<T>::const_pointer;
+    using reference       = vector::reference;
+    using const_reference = vector::const_reference;
+    using pointer         = vector::pointer;
+    using const_pointer   = vector::const_pointer;
 
-    using iterator               = stl::vector<T>::iterator;
-    using const_iterator         = stl::vector<T>::const_iterator;
+    using iterator               = vector::iterator;
+    using const_iterator         = vector::const_iterator;
     using reverse_iterator       = stl::reverse_iterator<iterator>;
     using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
@@ -60,26 +63,26 @@ template <typename T, typename Alloc = alloc> class ths_vector {
     // void reallocate(size_type n);
 
     // iterator insert_aux(const_iterator pos, T &&elem);
-    std::shared_ptr<stl::vector<T>> p_vec{};
+    std::shared_ptr<vector> p_vec{};
     std::mutex                      mtx{};
 
   public:
     /*
      * constructor
      * */
-    ths_vector() : p_vec(std::make_shared<stl::vector<T>>()) {}
+    ths_vector() : p_vec(std::make_shared<vector>()) {}
 
     ths_vector(const ths_vector& other);
 
     ths_vector(ths_vector&& other) noexcept;
 
     explicit ths_vector(size_type n)
-        : p_vec(std::make_shared<stl::vector<T>>(n))
+        : p_vec(std::make_shared<vector>(n))
     {
     }
 
     ths_vector(size_type n, const T& elem)
-        : p_vec(std::make_shared<stl::vector<T>>(n, elem))
+        : p_vec(std::make_shared<vector>(n, elem))
     {
     }
 
@@ -87,7 +90,7 @@ template <typename T, typename Alloc = alloc> class ths_vector {
         typename InputIterator,
         typename = std::_RequireInputIter<InputIterator>>
     ths_vector(InputIterator first, InputIterator last)
-        : p_vec(std::make_shared<stl::vector<T>>(first, last))
+        : p_vec(std::make_shared<vector>(first, last))
     {
     }
 
@@ -98,8 +101,6 @@ template <typename T, typename Alloc = alloc> class ths_vector {
      * */
     ~ths_vector()
     {
-        stl::destroy(start, finish);
-        deallocate();
     }
 
     /*
@@ -375,131 +376,26 @@ template <typename T, typename Alloc = alloc> class ths_vector {
     void swap(ths_vector& other) noexcept;
 };
 
-/*
- * Protected function
- * */
-template <typename T, typename Alloc>
-auto ths_vector<T, Alloc>::allocate_and_fill(size_type n, const T& value)
-    -> iterator
-{
-    iterator result = data_allocator::allocate(n);
-    uninitialized_fill_n(result, n, value);
-    return result;
-}
 
-template <typename T, typename Alloc> void ths_vector<T, Alloc>::deallocate()
-{
-    if (start)
-        data_allocator::deallocate(start, end_of_storage - start);
-}
-
-template <typename T, typename Alloc>
-void ths_vector<T, Alloc>::fill_initialize(size_type n, const T& value)
-{
-    start  = allocate_and_fill(n, value);
-    finish = start;
-    stl::advance(finish, n);
-    end_of_storage = finish;
-}
-
-template <typename T, typename Alloc>
-void ths_vector<T, Alloc>::reallocate(size_type n)
-{
-    T* new_start  = nullptr;
-    T* new_finish = nullptr;
-    if (n) {
-        new_start  = data_allocator::allocate(n);
-        new_finish = new_start;
-        new_finish = stl::uninitialized_copy(begin(), end(), new_finish);
-    }
-
-    // destroy and release old storage
-    stl::destroy(begin(), end());
-    deallocate();
-
-    start  = new_start;
-    finish = new_finish;
-    if (start)
-        end_of_storage = start + n;
-}
-
-template <typename T, typename Alloc>
-typename ths_vector<T, Alloc>::iterator
-ths_vector<T, Alloc>::insert_aux(const_iterator pos, T&& elem)
-{
-    iterator ipos = const_cast<iterator>(pos);
-
-    if (finish != end_of_storage && start != nullptr) {
-        if (ipos == finish) {
-            stl::construct(finish, std::move(elem));
-            ++finish;
-        }
-        else {
-            stl::construct(finish, *(finish - 1));
-            ++finish;
-            stl::copy_backward(ipos, finish - 2, finish - 1);
-            *ipos = std::forward<T>(elem);
-        }
-    }
-    else {
-        const size_type old_size   = size();
-        const size_type len        = old_size ? 2 * old_size : 1;
-        auto            new_start  = data_allocator::allocate(len);
-        auto            new_finish = new_start;
-        try {
-            if (start != nullptr)
-                new_finish = stl::uninitialized_copy(begin(), ipos, new_finish);
-            // update ipos
-            auto old_ipos = ipos;
-            ipos          = new_finish;
-
-            stl::construct(new_finish++, std::forward<T>(elem));
-            if (start != nullptr)
-                new_finish =
-                    stl::uninitialized_copy(old_ipos, end(), new_finish);
-        }
-        catch (std::exception e) {
-            stl::destroy(new_start, new_finish);
-            data_allocator::deallocate(new_start, len);
-            throw;
-        }
-
-        // release old storage
-        stl::destroy(begin(), end());
-        deallocate();
-
-        start          = new_start;
-        finish         = new_finish;
-        end_of_storage = start + len;
-    }
-
-    return ipos;
-}
 
 /*
  * Constructors
  * */
 template <typename T, typename Alloc>
 ths_vector<T, Alloc>::ths_vector(const ths_vector& rhs)
+:p_vec(rhs.p_vec)
 {
-    size_type size = rhs.size();
-    start = finish = data_allocator::allocate(size);
-
-    for (auto& item : rhs)
-        stl::construct(finish++, item);
-    end_of_storage = finish;
 }
 
 template <typename T, typename Alloc>
 ths_vector<T, Alloc>::ths_vector(ths_vector&& rhs) noexcept
-    : start(rhs.start), finish(rhs.finish), end_of_storage(rhs.end_of_storage)
+:p_vec(std::move(rhs.p_vec))
 {
-    rhs.start = rhs.finish = rhs.end_of_storage = nullptr;
 }
 
 template <typename T, typename Alloc>
 ths_vector<T, Alloc>::ths_vector(std::initializer_list<T> lst)
-    : ths_vector(lst.begin(), lst.end())
+    : p_vec(std::make_shared<vector>(lst))
 {
 }
 
@@ -510,7 +406,22 @@ template <typename T, typename Alloc>
 ths_vector<T, Alloc>&
 ths_vector<T, Alloc>::operator=(const ths_vector<T, Alloc>& rhs)
 {
-    assign(rhs.begin(), rhs.end());
+    if (this != &rhs)
+    {
+        // 按地址大小顺序获取锁，防止死锁
+        if (&mtx < rhs.mtx)
+        {
+            std::lock_guard<std::mutex> guard1(mtx);
+            std::lock_guard<std::mutex> guard1(rhs.mtx);
+            p_vec = rhs.p_vec;
+        }
+        else
+        {
+            std::lock_guard<std::mutex> guard1(rhs.mtx);
+            std::lock_guard<std::mutex> guard1(mtx);
+            p_vec = rhs.p_vec;
+        }
+    }
     return *this;
 }
 
@@ -518,16 +429,22 @@ template <typename T, typename Alloc>
 ths_vector<T, Alloc>&
 ths_vector<T, Alloc>::operator=(ths_vector<T, Alloc>&& rhs) noexcept
 {
-    // release old storage
-    stl::destroy(begin(), end());
-    deallocate();
-
-    start          = rhs.start;
-    finish         = rhs.finish;
-    end_of_storage = rhs.end_of_storage;
-
-    rhs.start = rhs.finish = rhs.end_of_storage = nullptr;
-
+    if (this != &rhs)
+    {
+        // 按地址大小顺序获取锁，防止死锁
+        if (&mtx < rhs.mtx)
+        {
+            std::lock_guard<std::mutex> guard1(mtx);
+            std::lock_guard<std::mutex> guard2(rhs.mtx);
+            p_vec = std::move(rhs.p_vec); // 在这之后rh.p_vec会变为nullptr
+        }
+        else
+        {
+            std::lock_guard<std::mutex> guard1(rhs.mtx);
+            std::lock_guard<std::mutex> guard2(mtx);
+            p_vec = std::move(rhs.p_vec);
+        }
+    }
     return *this;
 }
 
