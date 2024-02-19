@@ -29,10 +29,82 @@ namespace stl {
  *     使得其他使用者绕过锁修改内部数据
  * */
 
-template <typename T>
-class ths_vector_iterator
-{
+template <typename Vector> class ths_vector_iterator {
+  public:
+    using iterator  = typename Vector::const_iterator;
+    using self      = ths_vector_iterator;
+    using reference = typename Vector::const_reference;
+    using pointer   = typename Vector::const_pointer;
 
+  private:
+    std::shared_ptr<const Vector> ptr{};
+    iterator                      iter{};
+    bool                          is_end{};
+
+  public:
+    ths_vector_iterator() = default;
+
+    ths_vector_iterator(std::shared_ptr<Vector>& p, int index) : ptr(p)
+    {
+        iter = ptr->begin();
+        std::advance(iter, index);
+    }
+
+    ~ths_vector_iterator() = default;
+
+    self& operator++()
+    {
+        ++iter;
+        if (iter == ptr->end())
+            is_end = true;
+        return *this;
+    }
+
+    self operator++(int)
+    {
+        auto temp = *this;
+        ++*this;
+        return temp;
+    }
+
+    self& operator--()
+    {
+        --iter;
+        if (iter != ptr->end())
+            is_end = false;
+        return *this;
+    }
+
+    self operator--(int)
+    {
+        auto temp = *this;
+        --*this;
+        return temp;
+    }
+
+    reference operator*() const
+    {
+        return *iter;
+    }
+
+    pointer operator->() const
+    {
+        return &(operator*());
+    }
+
+    bool operator==(const self& rhs) const
+    {
+        if (is_end != rhs.is_end)
+            return false;
+        if (is_end)
+            return true;
+        return ptr == rhs.ptr && iter == rhs.iter;
+    }
+
+    bool operator!=(const self& rhs) const
+    {
+        return !(*this == rhs);
+    }
 };
 
 template <typename T, typename Alloc = alloc> class ths_vector {
@@ -630,7 +702,8 @@ ths_vector<T, Alloc>::emplace(const_iterator pos, Args&&... args)
     }
     assert(p_vec.unique());
     // 在新的副本上修改
-    return p_vec->emplace(pos, std::forward<Args...>(args));;
+    return p_vec->emplace(pos, std::forward<Args...>(args));
+    ;
 }
 
 template <typename T, typename Alloc>
