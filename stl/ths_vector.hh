@@ -50,7 +50,7 @@ template <typename Vector> class ths_vector_iterator {
   public:
     ths_vector_iterator() = default;
 
-    ths_vector_iterator(std::shared_ptr<Vector>& p, int index) : ptr(p)
+    ths_vector_iterator(const std::shared_ptr<Vector>& p, int index) : ptr(p)
     {
         iter = ptr->begin();
         std::advance(iter, index);
