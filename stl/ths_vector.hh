@@ -29,22 +29,29 @@ namespace stl {
  *     使得其他使用者绕过锁修改内部数据
  * */
 
-template <typename Vector> class ths_vector_iterator {
-  public:
-    using iterator  = typename Vector::const_iterator;
-    using self      = ths_vector_iterator;
+
+template <typename Vector> class ths_vector_iterator
+{
+public:
+    using iterator = typename Vector::const_iterator;
+    using self = ths_vector_iterator;
+    
+    using value_type = typename Vector::value_type;
+    using difference_type = std::ptrdiff_t;
+    using iterator_category = std::bidirectional_iterator_tag;
+
     using reference = typename Vector::const_reference;
-    using pointer   = typename Vector::const_pointer;
+    using pointer = typename Vector::const_pointer;
 
-  private:
+private:
     std::shared_ptr<const Vector> ptr{};
-    iterator                      iter{};
-    bool                          is_end{};
-
-  public:
+    iterator iter{};
+    bool is_end{};
+public:
     ths_vector_iterator() = default;
 
-    ths_vector_iterator(std::shared_ptr<Vector>& p, int index) : ptr(p)
+    ths_vector_iterator(std::shared_ptr<Vector> &p, int index)
+            : ptr(p)
     {
         iter = ptr->begin();
         std::advance(iter, index);
@@ -52,7 +59,7 @@ template <typename Vector> class ths_vector_iterator {
 
     ~ths_vector_iterator() = default;
 
-    self& operator++()
+    self & operator++()
     {
         ++iter;
         if (iter == ptr->end())
@@ -62,12 +69,13 @@ template <typename Vector> class ths_vector_iterator {
 
     self operator++(int)
     {
-        auto temp = *this;
-        ++*this;
-        return temp;
+     auto temp=*this;
+     ++*this;
+     return temp;
     }
 
-    self& operator--()
+
+    self & operator--()
     {
         --iter;
         if (iter != ptr->end())
@@ -77,22 +85,24 @@ template <typename Vector> class ths_vector_iterator {
 
     self operator--(int)
     {
-        auto temp = *this;
+        auto temp=*this;
         --*this;
         return temp;
     }
 
-    reference operator*() const
+    reference
+    operator*() const
     {
         return *iter;
     }
 
-    pointer operator->() const
+    pointer
+    operator->() const
     {
         return &(operator*());
     }
 
-    bool operator==(const self& rhs) const
+    bool operator==(const self &rhs) const
     {
         if (is_end != rhs.is_end)
             return false;
@@ -101,11 +111,12 @@ template <typename Vector> class ths_vector_iterator {
         return ptr == rhs.ptr && iter == rhs.iter;
     }
 
-    bool operator!=(const self& rhs) const
+    bool operator!=(const self &rhs) const
     {
-        return !(*this == rhs);
+        return !(*this==rhs);
     }
 };
+
 
 template <typename T, typename Alloc = alloc> class ths_vector {
   public:
@@ -122,8 +133,8 @@ template <typename T, typename Alloc = alloc> class ths_vector {
     using pointer         = vector::pointer;
     using const_pointer   = vector::const_pointer;
 
-    using iterator               = vector::iterator;
-    using const_iterator         = vector::const_iterator;
+    using iterator               = ths_vector_iterator<vector>;
+    using const_iterator         = ths_vector_iterator<vector>;
     using reverse_iterator       = stl::reverse_iterator<iterator>;
     using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
@@ -228,67 +239,53 @@ template <typename T, typename Alloc = alloc> class ths_vector {
     /*
      * Iterator function
      * */
-    iterator begin() noexcept
-    {
-        return const_cast<iterator>(
-            const_cast<const ths_vector&>(*this).begin());
-    }
-
     const_iterator begin() const noexcept
     {
-        return start;
+        std::lock_guard<std::mutex> guard(mtx);
+        return iterator(p_vec, 0);
     }
 
     const_iterator cbegin() const noexcept
     {
-        return start;
-    }
-
-    iterator end() noexcept
-    {
-        return const_cast<iterator>(const_cast<const ths_vector&>(*this).end());
+        std::lock_guard<std::mutex> guard(mtx);
+        return iterator(p_vec, 0);
     }
 
     const_iterator end() const noexcept
     {
-        return finish;
+        std::lock_guard<std::mutex> guard(mtx);
+        return iterator(p_vec, p_vec->size());
     }
 
     const_iterator cend() const noexcept
     {
-        return finish;
-    }
-
-    reverse_iterator rbegin() noexcept
-    {
-        return const_cast<reverse_iterator>(
-            const_cast<const ths_vector&>(*this).rbegin());
+        std::lock_guard<std::mutex> guard(mtx);
+        return iterator(p_vec, p_vec->size());
     }
 
     const_reverse_iterator rbegin() const noexcept
     {
-        return const_reverse_iterator(end());
+        std::lock_guard<std::mutex> guard(mtx);
+        return reverse_iterator(iterator(p_vec, 0));
     }
 
     const_reverse_iterator crbegin() const noexcept
     {
-        return const_reverse_iterator(end());
+        std::lock_guard<std::mutex> guard(mtx);
+        return const_reverse_iterator(iterator(p_vec, 0));
     }
 
-    reverse_iterator rend() noexcept
-    {
-        return const_cast<reverse_iterator>(
-            const_cast<const ths_vector&>(*this).rend());
-    }
 
     const_reverse_iterator rend() const noexcept
     {
-        return const_reverse_iterator(begin());
+        std::lock_guard<std::mutex> guard(mtx);
+        return reverse_iterator(iterator(p_vec, p_vec->size()));
     }
 
     const_reverse_iterator crend() const noexcept
     {
-        return const_reverse_iterator(begin());
+        std::lock_guard<std::mutex> guard(mtx);
+        return const_reverse_iterator(iterator(p_vec, p_vec->size()));
     }
 
     /*
