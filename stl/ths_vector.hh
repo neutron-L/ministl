@@ -29,29 +29,27 @@ namespace stl {
  *     使得其他使用者绕过锁修改内部数据
  * */
 
-
-template <typename Vector> class ths_vector_iterator
-{
-public:
+template <typename Vector> class ths_vector_iterator {
+  public:
     using iterator = typename Vector::const_iterator;
-    using self = ths_vector_iterator;
-    
-    using value_type = typename Vector::value_type;
-    using difference_type = std::ptrdiff_t;
+    using self     = ths_vector_iterator;
+
+    using value_type        = typename Vector::value_type;
+    using difference_type   = std::ptrdiff_t;
     using iterator_category = std::bidirectional_iterator_tag;
 
     using reference = typename Vector::const_reference;
-    using pointer = typename Vector::const_pointer;
+    using pointer   = typename Vector::const_pointer;
 
-private:
+  private:
     std::shared_ptr<const Vector> ptr{};
-    iterator iter{};
-    bool is_end{};
-public:
+    iterator                      iter{};
+    bool                          is_end{};
+
+  public:
     ths_vector_iterator() = default;
 
-    ths_vector_iterator(std::shared_ptr<Vector> &p, int index)
-            : ptr(p)
+    ths_vector_iterator(std::shared_ptr<Vector>& p, int index) : ptr(p)
     {
         iter = ptr->begin();
         std::advance(iter, index);
@@ -59,7 +57,7 @@ public:
 
     ~ths_vector_iterator() = default;
 
-    self & operator++()
+    self& operator++()
     {
         ++iter;
         if (iter == ptr->end())
@@ -69,13 +67,12 @@ public:
 
     self operator++(int)
     {
-     auto temp=*this;
-     ++*this;
-     return temp;
+        auto temp = *this;
+        ++*this;
+        return temp;
     }
 
-
-    self & operator--()
+    self& operator--()
     {
         --iter;
         if (iter != ptr->end())
@@ -85,24 +82,22 @@ public:
 
     self operator--(int)
     {
-        auto temp=*this;
+        auto temp = *this;
         --*this;
         return temp;
     }
 
-    reference
-    operator*() const
+    reference operator*() const
     {
         return *iter;
     }
 
-    pointer
-    operator->() const
+    pointer operator->() const
     {
         return &(operator*());
     }
 
-    bool operator==(const self &rhs) const
+    bool operator==(const self& rhs) const
     {
         if (is_end != rhs.is_end)
             return false;
@@ -111,12 +106,11 @@ public:
         return ptr == rhs.ptr && iter == rhs.iter;
     }
 
-    bool operator!=(const self &rhs) const
+    bool operator!=(const self& rhs) const
     {
-        return !(*this==rhs);
+        return !(*this == rhs);
     }
 };
-
 
 template <typename T, typename Alloc = alloc> class ths_vector {
   public:
@@ -275,7 +269,6 @@ template <typename T, typename Alloc = alloc> class ths_vector {
         return const_reverse_iterator(iterator(p_vec, 0));
     }
 
-
     const_reverse_iterator rend() const noexcept
     {
         std::lock_guard<std::mutex> guard(mtx);
@@ -333,74 +326,14 @@ template <typename T, typename Alloc = alloc> class ths_vector {
     template <typename InputIt, typename = std::_RequireInputIter<InputIt>>
     iterator insert(const_iterator pos, InputIt first, InputIt last)
     {
-        iterator ipos  = const_cast<iterator>(pos);
-        auto     count = stl::distance(first, last);
+        std::lock_guard<std::mutex> guard(mtx);
 
-        if (count) {
-            if (stl::distance(finish, end_of_storage) >= count) {
-                const size_type elems_after = stl::distance(ipos, end());
-
-                if (elems_after > count) {
-                    stl::uninitialized_copy(finish - count, finish, finish);
-                    stl::copy_backward(ipos, finish - count, finish);
-
-                    auto iter = ipos;
-                    while (first != last)
-                        *iter++ = *first++;
-
-                    finish += count;
-                }
-                else {
-                    iterator old_finish = finish;
-                    finish += count - elems_after;
-                    stl::uninitialized_copy(ipos, old_finish, finish);
-                    finish += elems_after;
-
-                    auto iter = ipos;
-                    while (iter != old_finish)
-                        *iter++ = *first++;
-
-                    while (first != last)
-                        stl::construct(&*iter++, *first++);
-                }
-            }
-
-            else {
-                const size_type old_size = size();
-                const size_type len =
-                    old_size + stl::max(old_size, (size_type)count);
-
-                // allocate new storage
-                iterator new_start  = data_allocator::allocate(len);
-                iterator new_finish = new_start;
-
-                try {
-                    /* code */
-                    new_finish =
-                        stl::uninitialized_copy(start, ipos, new_start);
-                    auto old_ipos = ipos;        // save old ipos
-                    ipos          = new_finish;  // update ipos
-                    while (first != last)
-                        stl::construct(&*new_finish++, *first++);
-                    new_finish =
-                        stl::uninitialized_copy(old_ipos, finish, new_finish);
-                }
-                catch (const std::exception& e) {
-                    stl::destroy(new_start, new_finish);
-                    data_allocator::deallocate(new_start, len);
-                    throw;
-                }
-                // release old storage
-                stl::destroy(begin(), end());
-                deallocate();
-
-                start          = new_start;
-                finish         = new_finish;
-                end_of_storage = new_start + len;
-            }
+        if (!p_vec.unique()) {
+            p_vec.reset(new vector(*p_vec));
         }
-
-        return ipos;
+        assert(p_vec.unique());
+        // 在新的副本上修改
+        return p_vec->insert(pos, first, last);
     }
 
     iterator insert(const_iterator pos, std::initializer_list<T> ilist);
@@ -711,23 +644,27 @@ ths_vector<T, Alloc>::erase(const_iterator first, const_iterator last)
 template <typename T, typename Alloc>
 void ths_vector<T, Alloc>::push_back(const T& elem)
 {
-    if (finish != end_of_storage) {
-        stl::construct(finish, elem);
-        ++finish;
+    std::lock_guard<std::mutex> guard(mtx);
+
+    if (!p_vec.unique()) {
+        p_vec.reset(new vector(*p_vec));
     }
-    else
-        (void)insert_aux(end(), elem);
+    assert(p_vec.unique());
+    // 在新的副本上修改
+    p_vec->push_back(elem);
 }
 
 template <typename T, typename Alloc>
 void ths_vector<T, Alloc>::push_back(T&& elem)
 {
-    if (finish != end_of_storage) {
-        stl::construct(finish, std::move(elem));
-        ++finish;
+    std::lock_guard<std::mutex> guard(mtx);
+
+    if (!p_vec.unique()) {
+        p_vec.reset(new vector(*p_vec));
     }
-    else
-        (void)insert_aux(end(), std::move(elem));
+    assert(p_vec.unique());
+    // 在新的副本上修改
+    p_vec->push_back(std::move(elem));
 }
 
 template <typename T, typename Alloc>
@@ -735,21 +672,26 @@ template <typename... Args>
 typename ths_vector<T, Alloc>::reference
 ths_vector<T, Alloc>::emplace_back(Args&&... args)
 {
-    if (finish != end_of_storage) {
-        stl::construct(finish, std::forward<Args>(args)...);
-        ++finish;
+    std::lock_guard<std::mutex> guard(mtx);
+
+    if (!p_vec.unique()) {
+        p_vec.reset(new vector(*p_vec));
     }
-    else {
-        T elem(std::forward<Args>(args)...);
-        (void)insert_aux(end(), std::move(elem));
-    }
-    return *end();
+    assert(p_vec.unique());
+    // 在新的副本上修改
+    return p_vec->emplace_back(std::forward<Args...>(args));
 }
 
 template <typename T, typename Alloc> void ths_vector<T, Alloc>::pop_back()
 {
-    --finish;
-    stl::destroy(finish);
+    std::lock_guard<std::mutex> guard(mtx);
+
+    if (!p_vec.unique()) {
+        p_vec.reset(new vector(*p_vec));
+    }
+    assert(p_vec.unique());
+    // 在新的副本上修改
+    p_vec->pop_back();
 }
 
 template <typename T, typename Alloc>
@@ -761,46 +703,47 @@ void ths_vector<T, Alloc>::resize(size_type size)
 template <typename T, typename Alloc>
 void ths_vector<T, Alloc>::resize(size_type size, const value_type& elem)
 {
-    const size_type s = this->size();
+    std::lock_guard<std::mutex> guard(mtx);
 
-    if (size > s) {
-        // whether or not need to allocate more storage space
-        if (size > capacity()) {
-            auto new_start  = data_allocator::allocate(size);
-            auto new_finish = new_start;
-
-            try {
-                if (start)
-                    new_finish =
-                        stl::uninitialized_copy(start, finish, new_start);
-            }
-            catch (const std::exception& e) {
-                stl::destroy(new_start, new_finish);
-                data_allocator::deallocate(new_start, size);
-
-                throw;
-            }
-            start          = new_start;
-            finish         = new_finish;
-            end_of_storage = start + size;
-        }
-
-        stl::uninitialized_fill(finish, start + size, elem);
-        finish = start + size;
+    if (!p_vec.unique()) {
+        p_vec.reset(new vector(*p_vec));
     }
-    else if (size < s) {
-        auto old_finish = finish;
-        finish          = start + size;
-        stl::destroy(finish, old_finish);
-    }
+    assert(p_vec.unique());
+    // 在新的副本上修改
+    p_vec->resize(size, elem);
 }
 
 template <typename T, typename Alloc>
 void ths_vector<T, Alloc>::swap(ths_vector& other) noexcept
 {
-    stl::swap(start, other.start);
-    stl::swap(finish, other.finish);
-    stl::swap(end_of_storage, other.end_of_storage);
+    if (this == &rhs)
+        return;
+
+    // 按地址大小顺序获取锁，防止死锁
+    if (&mtx < rhs.mtx) {
+        std::lock_guard<std::mutex> guard1(mtx);
+        std::lock_guard<std::mutex> guard2(rhs.mtx);
+
+        // RCU，如果当前vector存在其他读者，则复制一份再修改
+        if (!p_vec.unique()) {
+            p_vec.reset(new vector(*p_vec));
+        }
+        assert(p_vec.unique());
+
+        p_vec->swap(*rhs.p_vec);
+    }
+    else {
+        std::lock_guard<std::mutex> guard1(rhs.mtx);
+        std::lock_guard<std::mutex> guard2(mtx);
+
+        // RCU，如果当前vector存在其他读者，则复制一份再修改
+        if (!p_vec.unique()) {
+            p_vec.reset(new vector(*p_vec));
+        }
+        assert(p_vec.unique());
+
+        p_vec->swap(*rhs.p_vec);
+    }
 }
 
 /* Non-member functions */
