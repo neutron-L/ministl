@@ -296,12 +296,16 @@ template <typename T, typename Alloc = alloc> class ths_vector {
      * */
     bool empty() const noexcept
     {
-        return begin() == end();
+        std::lock_guard<std::mutex> guard(mtx);
+
+        return p_vec->empty();
     }
 
     size_type size() const noexcept
     {
-        return stl::distance(begin(), end());
+        std::lock_guard<std::mutex> guard(mtx);
+
+        return p_vec->size();
     }
 
     size_type max_size() const noexcept  // copy from cppreference
@@ -313,7 +317,9 @@ template <typename T, typename Alloc = alloc> class ths_vector {
 
     size_type capacity() const noexcept
     {
-        return size_type(end_of_storage - start);
+        std::lock_guard<std::mutex> guard(mtx);
+
+        return p_vec->capacity();
     }
 
     void shrink_to_fit();
