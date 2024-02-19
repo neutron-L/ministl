@@ -130,19 +130,9 @@ template <typename T, typename Alloc = alloc> class ths_vector {
   protected:
     using data_allocator = simple_alloc<value_type, Alloc>;
 
-    // iterator start{};
-    // iterator finish{};
-    // iterator end_of_storage{};
-
-    // iterator allocate_and_fill(size_type n, const T &value);
-
-    // void deallocate();
-
-    // void fill_initialize(size_type n, const T &value);
-
-    // void reallocate(size_type n);
-
-    // iterator insert_aux(const_iterator pos, T &&elem);
+    // 两个数据成员
+    // 1. 指向non-thread-safe的vector的共享指针
+    // 2. 互斥锁
     std::shared_ptr<vector> p_vec{};
     std::mutex              mtx{};
 
@@ -197,61 +187,42 @@ template <typename T, typename Alloc = alloc> class ths_vector {
 
     /*
      * Element access
+     * Read-only
      * */
-    reference at(size_type pos)
-    {
-        return const_cast<reference>(
-            static_cast<const ths_vector&>(*this).at(pos));
-    }
-
     const_reference at(size_type pos) const
     {
+        std::lock_guard<std::mutex> guard(mtx);
+
         if (pos >= size()) {
             error("%ld is larger than size %ld", pos, size());
             throw new std::out_of_range("");
         }
-        return *(begin() + pos);
-    }
-
-    reference operator[](size_type pos)
-    {
-        return const_cast<reference>(const_cast<const ths_vector&>(*this)[pos]);
+        return *(p_vec->begin() + pos);
     }
 
     const_reference operator[](size_type pos) const
     {
-        return *(begin() + pos);
-    }
-
-    reference front()
-    {
-        return const_cast<reference>(
-            const_cast<const ths_vector&>(*this).front());
+        std::lock_guard<std::mutex> guard(mtx);
+        return *(p_vec->begin() + pos);
     }
 
     const_reference front() const
     {
-        return *begin();
-    }
+        std::lock_guard<std::mutex> guard(mtx);
 
-    reference back()
-    {
-        return const_cast<reference>(
-            const_cast<const ths_vector&>(*this).back());
+        return *p_vec->begin();
     }
 
     const_reference back() const
     {
-        return *(end() - 1);
+        std::lock_guard<std::mutex> guard(mtx);
+        return *(p_vec->end() - 1);
     }
 
-    T* data() noexcept
+    const_pointer data() const noexcept
     {
-        return const_cast<T*>(const_cast<const ths_vector&>(*this).data());
-    }
-    const T* data() const noexcept
-    {
-        return start;
+        std::lock_guard<std::mutex> guard(mtx);
+        return p_vec->data();
     }
 
     /*
