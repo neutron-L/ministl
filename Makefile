@@ -62,5 +62,10 @@ test_numeric: $(TEST)/test_numeric.cc $(STL)/numeric.hh $(STL)/type_traits.hh
 test_algobase: $(TEST)/test_algobase.cc $(STL)/list.hh $(STL)/vector.hh $(STL)/deque.hh $(STL)/algobase.hh
 	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
 
+# 测试线程安全版本容器
+
+test_ths_vector: $(TEST)/test_ths_vector.cc $(STL)/ths_vector.hh $(STL)/alloc.hh $(STL)/iterator.hh $(STL)/uninitialized.hh $(TEST)/type.hh $(TEST)/utils.hh
+	$(CXX) $(CFLAGS) -o $(BIN)/$@ $^
+
 clean:
 	-rm $(BIN)/test_*
